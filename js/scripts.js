@@ -203,7 +203,7 @@
         type: 'follow',
         icon: 'fas fa-user-check',
         color: '#2668f1',
-        bgColor: '#dbeafe',
+        bgColor: '#0c4a6e',
         title: 'Nouveau suivi',
         text: 'Thomas Dubois suit votre profil.',
         time: '1 h',
@@ -214,7 +214,7 @@
         type: 'post',
         icon: 'fas fa-heart',
         color: '#dc2626',
-        bgColor: '#fee2e2',
+        bgColor: '#7f1d1d',
         title: 'Aime votre publication',
         text: 'Sophie Caron a aimé votre post sur l\'UX design.',
         time: '3 h',
@@ -225,7 +225,7 @@
         type: 'update',
         icon: 'fas fa-sync-alt',
         color: '#d97706',
-        bgColor: '#fef3c7',
+        bgColor: '#78350f',
         title: 'Mise à jour disponible',
         text: 'Nouvelle version (v2.1.0) avec améliorations.',
         time: 'Hier',
@@ -236,7 +236,7 @@
         type: 'mention',
         icon: 'fas fa-at',
         color: '#9333ea',
-        bgColor: '#f3e8ff',
+        bgColor: '#4c1d95',
         title: 'Vous avez été mentionné',
         text: '@antoine.lf vous a mentionné dans un commentaire.',
         time: 'Hier',
@@ -275,10 +275,10 @@
       // Assigner icône et couleur selon le type
       const typeConfig = {
         message: { icon: 'fas fa-comment', color: 'var(--emerald-600)', bgColor: 'var(--emerald-100)' },
-        follow: { icon: 'fas fa-user-check', color: '#2563eb', bgColor: '#dbeafe' },
-        post: { icon: 'fas fa-heart', color: '#dc2626', bgColor: '#fee2e2' },
-        mention: { icon: 'fas fa-at', color: '#9333ea', bgColor: '#f3e8ff' },
-        update: { icon: 'fas fa-sync-alt', color: '#d97706', bgColor: '#fef3c7' }
+        follow: { icon: 'fas fa-user-check', color: '#2563eb', bgColor: '#0c4a6e' },
+        post: { icon: 'fas fa-heart', color: '#dc2626', bgColor: '#7f1d1d' },
+        mention: { icon: 'fas fa-at', color: '#9333ea', bgColor: '#4c1d95' },
+        update: { icon: 'fas fa-sync-alt', color: '#d97706', bgColor: '#78350f' }
       };
       
       Object.assign(newNotif, typeConfig[type] || typeConfig.message);
@@ -313,130 +313,126 @@
     // ========== PERSONNALISATION DU THEME ==========
     // Fonction pour appliquer les changements d'arrière-plan
     function applyBackgroundTheme(theme) {
-      const isDarkMode = body.classList.contains('dark');
-      
-      if (!isDarkMode) {
-        // ===== MODE CLAIR (sans toggle sombre) =====
-        if (theme === 'light') {
-          // === LIGHT: Blanc classique avec émeraude standard ===
-          root.style.setProperty('--emerald-500', '#10b981');
-          root.style.setProperty('--emerald-600', '#059669');
-          root.style.setProperty('--emerald-700', '#047857');
-          root.style.setProperty('--bg-page', '#f1f5f9');
-          root.style.setProperty('--bg-container', '#ffffff');
-          root.style.setProperty('--card-bg', '#ffffff');
-          root.style.setProperty('--sidebar-bg', '#ffffff');
-          root.style.setProperty('--hover-bg', '#f8fafc');
-          root.style.setProperty('--emerald-50', '#d1fae5');
-          root.style.setProperty('--emerald-100', '#a7f3d0');
-          root.style.setProperty('--slate-50', '#f8fafc');
-          root.style.setProperty('--slate-100', '#f1f5f9');
-          root.style.setProperty('--slate-200', '#e2e8f0');
-          root.style.setProperty('--slate-800', '#334155');
-          root.style.setProperty('--text-primary', '#334155');
-          root.style.setProperty('--text-secondary', '#64748b');
-          root.style.setProperty('--border-light', '#e2e8f0');
-        } else if (theme === 'dim') {
-          // === DIM: Gris moyen avec cyan/turquoise ===
-          root.style.setProperty('--emerald-500', '#20c997');
-          root.style.setProperty('--emerald-600', '#12b981');
-          root.style.setProperty('--emerald-700', '#0d9488');
-          root.style.setProperty('--bg-page', '#334155');
-          root.style.setProperty('--bg-container', '#1e293b');
-          root.style.setProperty('--card-bg', '#2d3748');
-          root.style.setProperty('--sidebar-bg', '#1e293b');
-          root.style.setProperty('--hover-bg', '#475569');
-          root.style.setProperty('--emerald-50', '#d0f9f2');
-          root.style.setProperty('--emerald-100', '#a9f3d8');
-          root.style.setProperty('--slate-50', '#475569');
-          root.style.setProperty('--slate-100', '#475569');
-          root.style.setProperty('--slate-200', '#4b5563');
-          root.style.setProperty('--slate-800', '#1a202c');
-          root.style.setProperty('--text-primary', '#f1f5f9');
-          root.style.setProperty('--text-secondary', '#cbd5e1');
-          root.style.setProperty('--border-light', '#475569');
-        } else if (theme === 'dark') {
-          // === DARK: Ultra sombre avec cyan brillant ===
-          root.style.setProperty('--emerald-500', '#2dd4bf');
-          root.style.setProperty('--emerald-600', '#14b8a6');
-          root.style.setProperty('--emerald-700', '#0d9488');
-          root.style.setProperty('--bg-page', '#0f172a');
-          root.style.setProperty('--bg-container', '#020617');
-          root.style.setProperty('--card-bg', '#1e293b');
-          root.style.setProperty('--sidebar-bg', '#020617');
-          root.style.setProperty('--hover-bg', '#1e293b');
-          root.style.setProperty('--emerald-50', '#ccfbf1');
-          root.style.setProperty('--emerald-100', '#99f6e4');
-          root.style.setProperty('--slate-50', '#1e293b');
-          root.style.setProperty('--slate-100', '#1e293b');
-          root.style.setProperty('--slate-200', '#334155');
-          root.style.setProperty('--slate-800', '#0a0f1f');
-          root.style.setProperty('--text-primary', '#f1f5f9');
-          root.style.setProperty('--text-secondary', '#94a3b8');
-          root.style.setProperty('--border-light', '#1e293b');
+        const isDarkMode = body.classList.contains('dark');
+        
+        if (!isDarkMode) {
+            // MODE CLAIR (inchangé, car il concerne le thème "Light")
+            if (theme === 'light') {
+            root.style.setProperty('--emerald-500', '#047857');
+            root.style.setProperty('--emerald-600', '#059669');
+            root.style.setProperty('--emerald-700', '#047857');
+            root.style.setProperty('--bg-page', '#f1f5f9');
+            root.style.setProperty('--bg-container', '#ffffff');
+            root.style.setProperty('--card-bg', '#ffffff');
+            root.style.setProperty('--sidebar-bg', '#ffffff');
+            root.style.setProperty('--hover-bg', '#f8fafc');
+            root.style.setProperty('--emerald-50', '#d1fae5');
+            root.style.setProperty('--emerald-100', '#a7f3d0');
+            root.style.setProperty('--slate-50', '#f8fafc');
+            root.style.setProperty('--slate-100', '#f1f5f9');
+            root.style.setProperty('--slate-200', '#e2e8f0');
+            root.style.setProperty('--slate-800', '#334155');
+            root.style.setProperty('--text-primary', '#334155');
+            root.style.setProperty('--text-secondary', '#64748b');
+            root.style.setProperty('--border-light', '#e2e8f0');
+            } else if (theme === 'dim') {
+            // DIM : gris foncé avec cyan discret
+            root.style.setProperty('--emerald-500', '#2aa198');   // cyan-vert sobre
+            root.style.setProperty('--emerald-600', '#268e86');
+            root.style.setProperty('--emerald-700', '#1e6f6b');
+            root.style.setProperty('--bg-page', '#1e293b');
+            root.style.setProperty('--bg-container', '#0f172a');
+            root.style.setProperty('--card-bg', '#1e293b');
+            root.style.setProperty('--sidebar-bg', '#0f172a');
+            root.style.setProperty('--hover-bg', '#334155');
+            root.style.setProperty('--emerald-50', '#1a3a3a');
+            root.style.setProperty('--emerald-100', '#1a3a3a');
+            root.style.setProperty('--slate-50', '#1e293b');
+            root.style.setProperty('--slate-100', '#1e293b');
+            root.style.setProperty('--slate-200', '#334155');
+            root.style.setProperty('--slate-800', '#0f172a');
+            root.style.setProperty('--text-primary', '#f1f5f9');
+            root.style.setProperty('--text-secondary', '#94a3b8');
+            root.style.setProperty('--border-light', '#334155');
+            } else if (theme === 'dark') {
+            // DARK : ultra sombre avec cyan brillant (mais pas vert agressif)
+            root.style.setProperty('--emerald-500', '#06d6a0');   // cyan vif
+            root.style.setProperty('--emerald-600', '#05b58a');
+            root.style.setProperty('--emerald-700', '#048a6e');
+            root.style.setProperty('--bg-page', '#000000');
+            root.style.setProperty('--bg-container', '#0a0f1f');
+            root.style.setProperty('--card-bg', '#0f172a');
+            root.style.setProperty('--sidebar-bg', '#000000');
+            root.style.setProperty('--hover-bg', '#1e293b');
+            root.style.setProperty('--emerald-50', '#1a2e2e');
+            root.style.setProperty('--emerald-100', '#1a2e2e');
+            root.style.setProperty('--slate-50', '#0f172a');
+            root.style.setProperty('--slate-100', '#0f172a');
+            root.style.setProperty('--slate-200', '#1e293b');
+            root.style.setProperty('--slate-800', '#000000');
+            root.style.setProperty('--text-primary', '#ffffff');
+            root.style.setProperty('--text-secondary', '#a1aec7');
+            root.style.setProperty('--border-light', '#1e293b');
+            }
+        } else {
+            // SI LE TOGGLE "MODE SOMBRE" EST ACTIVÉ (body.dark)
+            if (theme === 'light') {
+            root.style.setProperty('--emerald-500', '#2aa198');
+            root.style.setProperty('--emerald-600', '#268e86');
+            root.style.setProperty('--emerald-700', '#1e6f6b');
+            root.style.setProperty('--bg-page', '#1e293b');
+            root.style.setProperty('--bg-container', '#0f172a');
+            root.style.setProperty('--card-bg', '#1e293b');
+            root.style.setProperty('--sidebar-bg', '#0f172a');
+            root.style.setProperty('--hover-bg', '#334155');
+            root.style.setProperty('--emerald-50', '#1a3a3a');
+            root.style.setProperty('--emerald-100', '#1a3a3a');
+            root.style.setProperty('--slate-50', '#1e293b');
+            root.style.setProperty('--slate-100', '#1e293b');
+            root.style.setProperty('--slate-200', '#334155');
+            root.style.setProperty('--slate-800', '#0f172a');
+            root.style.setProperty('--text-primary', '#f1f5f9');
+            root.style.setProperty('--text-secondary', '#94a3b8');
+            root.style.setProperty('--border-light', '#334155');
+            } else if (theme === 'dim') {
+            root.style.setProperty('--emerald-500', '#06d6a0');
+            root.style.setProperty('--emerald-600', '#05b58a');
+            root.style.setProperty('--emerald-700', '#048a6e');
+            root.style.setProperty('--bg-page', '#000000');
+            root.style.setProperty('--bg-container', '#0a0f1f');
+            root.style.setProperty('--card-bg', '#0f172a');
+            root.style.setProperty('--sidebar-bg', '#000000');
+            root.style.setProperty('--hover-bg', '#1e293b');
+            root.style.setProperty('--emerald-50', '#1a2e2e');
+            root.style.setProperty('--emerald-100', '#1a2e2e');
+            root.style.setProperty('--slate-50', '#0f172a');
+            root.style.setProperty('--slate-100', '#0f172a');
+            root.style.setProperty('--slate-200', '#1e293b');
+            root.style.setProperty('--slate-800', '#000000');
+            root.style.setProperty('--text-primary', '#ffffff');
+            root.style.setProperty('--text-secondary', '#a1aec7');
+            root.style.setProperty('--border-light', '#1e293b');
+            } else if (theme === 'dark') {
+            // Ultra sombre AMOLED
+            root.style.setProperty('--emerald-500', '#06d6a0');
+            root.style.setProperty('--emerald-600', '#05b58a');
+            root.style.setProperty('--emerald-700', '#048a6e');
+            root.style.setProperty('--bg-page', '#000000');
+            root.style.setProperty('--bg-container', '#000000');
+            root.style.setProperty('--card-bg', '#0a0a0a');
+            root.style.setProperty('--sidebar-bg', '#000000');
+            root.style.setProperty('--hover-bg', '#1a1a1a');
+            root.style.setProperty('--emerald-50', '#1a2e2e');
+            root.style.setProperty('--emerald-100', '#1a2e2e');
+            root.style.setProperty('--slate-50', '#0a0a0a');
+            root.style.setProperty('--slate-100', '#0a0a0a');
+            root.style.setProperty('--slate-200', '#1a1a1a');
+            root.style.setProperty('--slate-800', '#000000');
+            root.style.setProperty('--text-primary', '#ffffff');
+            root.style.setProperty('--text-secondary', '#a1aec7');
+            root.style.setProperty('--border-light', '#1e293b');
+            }
         }
-      } else {
-        // ===== MODE SOMBRE (body.dark actif - hérité, compatible) =====
-        // Même palette que mode clair pour cohérence
-        if (theme === 'light') {
-          // === LIGHT (mode sombre): Gris léger avec cyan ===
-          root.style.setProperty('--emerald-500', '#2dd4bf');
-          root.style.setProperty('--emerald-600', '#14b8a6');
-          root.style.setProperty('--emerald-700', '#0d9488');
-          root.style.setProperty('--bg-page', '#1e293b');
-          root.style.setProperty('--bg-container', '#334155');
-          root.style.setProperty('--card-bg', '#475569');
-          root.style.setProperty('--sidebar-bg', '#334155');
-          root.style.setProperty('--hover-bg', '#475569');
-          root.style.setProperty('--emerald-50', '#d0f9f2');
-          root.style.setProperty('--emerald-100', '#a9f3d8');
-          root.style.setProperty('--slate-50', '#64748b');
-          root.style.setProperty('--slate-100', '#64748b');
-          root.style.setProperty('--slate-200', '#64748b');
-          root.style.setProperty('--slate-800', '#1a2332');
-          root.style.setProperty('--text-primary', '#f1f5f9');
-          root.style.setProperty('--text-secondary', '#cbd5e1');
-          root.style.setProperty('--border-light', '#475569');
-        } else if (theme === 'dim') {
-          // === DIM (mode sombre): Ultra sombre avec cyan ===
-          root.style.setProperty('--emerald-500', '#1ee0c6');
-          root.style.setProperty('--emerald-600', '#12b981');
-          root.style.setProperty('--emerald-700', '#0d9488');
-          root.style.setProperty('--bg-page', '#0f172a');
-          root.style.setProperty('--bg-container', '#020617');
-          root.style.setProperty('--card-bg', '#1e293b');
-          root.style.setProperty('--sidebar-bg', '#020617');
-          root.style.setProperty('--hover-bg', '#1e293b');
-          root.style.setProperty('--emerald-50', '#d0f9f2');
-          root.style.setProperty('--emerald-100', '#a9f3d8');
-          root.style.setProperty('--slate-50', '#1e293b');
-          root.style.setProperty('--slate-100', '#1e293b');
-          root.style.setProperty('--slate-200', '#334155');
-          root.style.setProperty('--slate-800', '#0a0f1f');
-          root.style.setProperty('--text-primary', '#e2e8f0');
-          root.style.setProperty('--text-secondary', '#94a3b8');
-          root.style.setProperty('--border-light', '#0f172a');
-        } else if (theme === 'dark') {
-          // === DARK (mode sombre): AMOLED ultra sombre avec cyan brillant ===
-          root.style.setProperty('--emerald-500', '#06d6a6');
-          root.style.setProperty('--emerald-600', '#14b8a6');
-          root.style.setProperty('--emerald-700', '#0d9488');
-          root.style.setProperty('--bg-page', '#000000');
-          root.style.setProperty('--bg-container', '#0a0f1f');
-          root.style.setProperty('--card-bg', '#0f172a');
-          root.style.setProperty('--sidebar-bg', '#000000');
-          root.style.setProperty('--hover-bg', '#0f172a');
-          root.style.setProperty('--emerald-50', '#ccfbf1');
-          root.style.setProperty('--emerald-100', '#99f6e4');
-          root.style.setProperty('--slate-50', '#1e293b');
-          root.style.setProperty('--slate-100', '#0f172a');
-          root.style.setProperty('--slate-200', '#1e293b');
-          root.style.setProperty('--slate-800', '#000000');
-          root.style.setProperty('--text-primary', '#ffffff');
-          root.style.setProperty('--text-secondary', '#a1aec7');
-          root.style.setProperty('--border-light', '#1e293b');
-        }
-      }
     }
 
     // Fonction pour restaurer la couleur primaire personnalisée
