@@ -418,7 +418,7 @@ let currentUserProfile = {
   name: "Alexandre Gauthier",
   username: "@alex_gauthier",
   bio: "Lead Designer & Front-end Dev. Passionné par les interfaces modernes et l'UX.",
-  location: "Paris, France",
+  location: "Butembo, DRC",
   memberSince: "Janvier 2024",
   avatarInitials: "AG",
   postsCount: 12,
