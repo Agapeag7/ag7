@@ -328,12 +328,10 @@
         // Dim theme: très sombre avec saturation élevée pour rester visible
         root.style.setProperty('--active-bg', `hsl(${hue}, 50%, 22%)`);
         root.style.setProperty('--active-text-color', '#ffffff');
-        root.style.setProperty('--sidebar-bg', `hsl(${hue}, 45%, 10%)`);
       } else if (theme === 'dark') {
         // Dark theme: ultra sombre sur fond noir AMOLED
         root.style.setProperty('--active-bg', `hsl(${hue}, 55%, 12%)`);
         root.style.setProperty('--active-text-color', '#ffffff');
-        root.style.setProperty('--sidebar-bg', `hsl(${hue}, 50%, 6%)`);
       }
     }
 
