@@ -1486,6 +1486,53 @@
   outline: none;
   border-color: var(--emerald-500);
 }
+.post-images-preview {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--slate-50);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+}
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+.preview-image {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.preview-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.preview-image .remove-image-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: 0.2s;
+}
+.preview-image .remove-image-btn:hover {
+  background: rgba(0,0,0,0.8);
+}
 .create-post-actions {
   display: flex;
   justify-content: space-between;
@@ -1553,6 +1600,34 @@
   object-fit: cover;
   margin: 8px 0;
 }
+
+.post-images-grid {
+  display: grid;
+  gap: 3px;
+  margin: 8px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.post-images-grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.post-images-grid-3 {
+  grid-template-columns: 1.5fr 1fr 1fr;
+}
+
+.post-images-grid-more {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  display: block;
+}
+
 .post-stats {
   padding: 12px 20px;
   border-top: 1px solid var(--border-light);
@@ -1708,6 +1783,21 @@ body.dark .comment-input input::placeholder {
   font-size: 40px;
   color: white;
   cursor: pointer;
+}
+
+.story-viewers-count {
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.3);
+  padding: 8px 12px;
+  border-radius: 20px;
 }
 
 /* Modale création story */
@@ -1928,6 +2018,58 @@ body.dark .comment-input input::placeholder {
 }
 
 .comment-like-btn.liked {
+  color: var(--emerald-500);
+}
+
+.see-replies-btn {
+  margin-top: 8px;
+  padding: 6px 0;
+  color: var(--emerald-500);
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.2s;
+}
+
+.see-replies-btn:hover {
+  opacity: 0.8;
+}
+
+.reply-item {
+  background: var(--slate-50);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.reply-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.reply-like-btn, .reply-reply-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+
+.reply-like-btn:hover, .reply-reply-btn:hover {
+  background: var(--slate-200);
+  color: var(--text-primary);
+}
+
+.reply-like-btn.liked {
   color: var(--emerald-500);
 }
 

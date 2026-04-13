@@ -815,9 +815,9 @@ const storiesContainer = document.getElementById('storiesContainer');
 let userStories = [];
 
 let otherStories = [
-  { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000) },
-  { id: 'thomas-1', type: 'text-image', text: 'Nouveau projet excitant !', image: 'https://randomuser.me/api/portraits/men/32.jpg', userName: 'Thomas', timestamp: new Date(Date.now() - 30 * 60 * 1000) },
-  { id: 'sophie-1', type: 'text-image', text: 'En pleine réflexion...', image: 'https://randomuser.me/api/portraits/women/45.jpg', userName: 'Sophie', timestamp: new Date(Date.now() - 15 * 60 * 1000) },
+  { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), viewers: 124 },
+  { id: 'thomas-1', type: 'text-image', text: 'Nouveau projet excitant !', image: 'https://randomuser.me/api/portraits/men/32.jpg', userName: 'Thomas', timestamp: new Date(Date.now() - 30 * 60 * 1000), viewers: 87 },
+  { id: 'sophie-1', type: 'text-image', text: 'En pleine réflexion...', image: 'https://randomuser.me/api/portraits/women/45.jpg', userName: 'Sophie', timestamp: new Date(Date.now() - 15 * 60 * 1000), viewers: 156 },
 ];
 
 let selectedStoryImage = null;
@@ -833,6 +833,9 @@ storyImageInput.addEventListener('change', (e) => {
       selectedStoryImage = event.target.result;
       storyImagePreview.src = selectedStoryImage;
       storyImagePreview.style.display = 'block';
+      uploadStoryImageBtn.disabled = true;
+      uploadStoryImageBtn.style.opacity = '0.5';
+      uploadStoryImageBtn.style.cursor = 'not-allowed';
     };
     reader.readAsDataURL(file);
   }
@@ -844,11 +847,27 @@ addStoryBtn.addEventListener('click', () => {
   storyTextInput.value = '';
   selectedStoryImage = null;
   storyImagePreview.style.display = 'none';
+  storyImageInput.value = '';
+  uploadStoryImageBtn.disabled = false;
+  uploadStoryImageBtn.style.opacity = '1';
+  uploadStoryImageBtn.style.cursor = 'pointer';
 });
 
 // Fermer modales
-createStoryClose.addEventListener('click', () => createStoryModal.classList.add('hidden'));
-cancelStoryBtn.addEventListener('click', () => createStoryModal.classList.add('hidden'));
+createStoryClose.addEventListener('click', () => {
+  createStoryModal.classList.add('hidden');
+  storyImageInput.value = '';
+  uploadStoryImageBtn.disabled = false;
+  uploadStoryImageBtn.style.opacity = '1';
+  uploadStoryImageBtn.style.cursor = 'pointer';
+});
+cancelStoryBtn.addEventListener('click', () => {
+  createStoryModal.classList.add('hidden');
+  storyImageInput.value = '';
+  uploadStoryImageBtn.disabled = false;
+  uploadStoryImageBtn.style.opacity = '1';
+  uploadStoryImageBtn.style.cursor = 'pointer';
+});
 storyClose.addEventListener('click', () => storyModal.classList.add('hidden'));
 
 createStoryModal.addEventListener('click', (e) => {
@@ -895,7 +914,7 @@ function renderStories() {
   addBtn.addEventListener('click', () => createStoryModal.classList.remove('hidden'));
   storiesContainer.appendChild(addBtn);
   
-  // Stories de l'utilisateur
+  // Stories de l'utilisateur - avec compteur de vues
   userStories.forEach(story => {
     const storyEl = document.createElement('div');
     storyEl.className = 'story-item';
@@ -903,11 +922,11 @@ function renderStories() {
       <div class="story-avatar" style="background-image: url('${story.image}');"></div>
       <span class="story-name">${story.userName}</span>
     `;
-    storyEl.addEventListener('click', () => openStory(story.image, story.text));
+    storyEl.addEventListener('click', () => openStory(story.image, story.text, story.viewers || 0, true));
     storiesContainer.appendChild(storyEl);
   });
   
-  // Stories des autres
+  // Stories des autres - pas de compteur de vues
   otherStories.forEach(story => {
     const storyEl = document.createElement('div');
     storyEl.className = 'story-item';
@@ -915,14 +934,22 @@ function renderStories() {
       <div class="story-avatar" style="background-image: url('${story.image}');"></div>
       <span class="story-name">${story.userName}</span>
     `;
-    storyEl.addEventListener('click', () => openStory(story.image, story.text));
+    storyEl.addEventListener('click', () => openStory(story.image, story.text, 0, false));
     storiesContainer.appendChild(storyEl);
   });
 }
 
-function openStory(imageUrl, caption) {
+function openStory(imageUrl, caption, viewers = 0, isUserStory = false) {
   storyImage.src = imageUrl;
   storyCaption.textContent = caption || '';
+  const viewersCountEl = document.getElementById('storyViewersCount');
+  // Afficher le compteur SEULEMENT pour les stories de l'utilisateur
+  if (isUserStory && viewers > 0) {
+    viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${viewers}`;
+    viewersCountEl.style.display = 'flex';
+  } else {
+    viewersCountEl.style.display = 'none';
+  }
   storyModal.classList.remove('hidden');
 }
 
@@ -1002,13 +1029,15 @@ let posts = [
     author: 'Design Team',
     avatar: 'DT',
     content: "Les nouvelles maquettes de l'application Ag7 sont disponibles !",
-    image: 'https://picsum.photos/id/20/600/400',
+    images: ['https://picsum.photos/id/20/600/400'],
     time: 'Il y a 2 heures',
     likes: 24,
     liked: false,
     comments: [
-      { text: 'Super boulot !', isAnonymous: true, author: 'Anonyme' },
-      { text: "J'ai hâte de voir ça", isAnonymous: false, author: 'Vous' }
+      { id: 1, text: 'Super boulot !', isAnonymous: true, author: 'Anonyme', likes: 3, replies: [
+        { text: 'Merci !', isAnonymous: false, author: 'Vous', likes: 1 }
+      ]},
+      { id: 2, text: "J'ai hâte de voir ça", isAnonymous: false, author: 'Vous', likes: 5, replies: [] }
     ]
   },
   {
@@ -1016,13 +1045,16 @@ let posts = [
     author: 'Marie Lambert',
     avatar: 'ML',
     content: "Quelqu'un pour un café-débat sur l'UX ce midi ?",
-    image: null,
+    images: [],
     time: 'Hier',
     likes: 12,
     liked: false,
     comments: [
-      { text: 'Je suis partante !', isAnonymous: true, author: 'Anonyme' },
-      { text: 'À la pause déjeuner', isAnonymous: false, author: 'Vous' }
+      { id: 3, text: 'Je suis partante !', isAnonymous: true, author: 'Anonyme', likes: 2, replies: [] },
+      { id: 4, text: 'À la pause déjeuner', isAnonymous: false, author: 'Vous', likes: 4, replies: [
+        { text: 'Top !', isAnonymous: false, author: 'Marie', likes: 0 },
+        { text: 'Génial', isAnonymous: true, author: 'Anonyme', likes: 1 }
+      ]}
     ]
   }
 ];
@@ -1030,6 +1062,13 @@ let posts = [
 const feedContainer = document.getElementById('feedContainer');
 const publishBtn = document.getElementById('publishPostBtn');
 const postContentInput = document.getElementById('postContent');
+
+// Variables pour les images de post
+const addImageBtn = document.getElementById('addImageBtn');
+const postImageInput = document.getElementById('postImageInput');
+const postImagesPreview = document.getElementById('postImagesPreview');
+const clearImagesBtn = document.getElementById('clearImagesBtn');
+let postImages = [];
 
 function renderFeed() {
   if (!feedContainer) return;
@@ -1042,6 +1081,23 @@ function renderFeed() {
     // Get only last comment
     const lastComment = post.comments.length > 0 ? post.comments[post.comments.length - 1] : null;
     
+    // Gérer les images - support des deux formats (image et images)
+    const images = post.images || (post.image ? [post.image] : []);
+    let imagesHtml = '';
+    
+    if (images.length === 1) {
+      imagesHtml = `<img src="${images[0]}" class="post-image" alt="image post">`;
+    } else if (images.length > 1) {
+      const gridClass = images.length === 2 ? 'post-images-grid-2' : 
+                       images.length === 3 ? 'post-images-grid-3' : 
+                       'post-images-grid-more';
+      imagesHtml = `
+        <div class="post-images-grid ${gridClass}">
+          ${images.map((img, idx) => `<img src="${img}" class="grid-image" alt="post image ${idx+1}" />`).join('')}
+        </div>
+      `;
+    }
+    
     postDiv.innerHTML = `
       <div class="post-header">
         <div class="post-avatar">${post.avatar}</div>
@@ -1052,7 +1108,7 @@ function renderFeed() {
       </div>
       <div class="post-content">
         <p>${escapeHtml(post.content)}</p>
-        ${post.image ? `<img src="${post.image}" class="post-image" alt="image post">` : ''}
+        ${imagesHtml}
       </div>
       <div class="post-stats">
         <span>${post.likes} likes</span>
@@ -1118,10 +1174,14 @@ function handleComment(e) {
   const postId = parseInt(postCard.dataset.id);
   const post = posts.find(p => p.id === postId);
   if (post) {
+    const newCommentId = Math.max(...post.comments.map(c => c.id || 0), 0) + 1;
     post.comments.push({
+      id: newCommentId,
       text: commentText,
       isAnonymous: anonymousCheckbox.checked,
-      author: 'Vous'
+      author: 'Vous',
+      likes: 0,
+      replies: []
     });
     input.value = '';
     renderFeed();
@@ -1155,6 +1215,9 @@ function handleOpenComments(e) {
   commentsModal.classList.remove('hidden');
 }
 
+// Variables pour gérer les réponses expansées
+let expandedReplies = {};
+
 function renderCommentsModal() {
   const post = posts.find(p => p.id === currentPostId);
   if (!post) return;
@@ -1164,24 +1227,35 @@ function renderCommentsModal() {
   if (post.comments.length === 0) {
     allCommentsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Pas de commentaires pour le moment</p>';
   } else {
-    post.comments.forEach((comment, index) => {
+    post.comments.forEach((comment) => {
       const commentEl = document.createElement('div');
       commentEl.className = 'comment-item-full';
-      commentEl.dataset.index = index;
+      commentEl.dataset.commentId = comment.id;
+      
+      const repliesCount = (comment.replies && comment.replies.length) || 0;
+      const repliesHtml = repliesCount > 0 ? `
+        <div class="see-replies-btn" data-comment-id="${comment.id}">
+          <i class="fas fa-comment"></i> Voir ${repliesCount} réponse${repliesCount > 1 ? 's' : ''}
+        </div>
+      ` : '';
+      
       commentEl.innerHTML = `
         <div>
           <div>
             ${comment.isAnonymous ? '<i class="fas fa-mask"></i>' : '<strong>' + comment.author + '</strong>'} 
             ${comment.text}
+            <span class="comment-likes-count" style="margin-left: 8px; color: var(--text-secondary); font-size: 12px;">${comment.likes} ${comment.likes > 1 ? 'likes' : 'like'}</span>
           </div>
           <div class="comment-actions">
-            <button class="comment-like-btn" data-index="${index}">
+            <button class="comment-like-btn" data-comment-id="${comment.id}">
               <i class="fas fa-thumbs-up"></i> Like
             </button>
-            <button class="comment-reply-btn" data-index="${index}">
+            <button class="comment-reply-btn" data-comment-id="${comment.id}">
               <i class="fas fa-reply"></i> Répondre
             </button>
           </div>
+          ${repliesHtml}
+          <div class="replies-container" id="replies-${comment.id}" style="display: none; margin-left: 20px; margin-top: 12px; padding-top: 12px; border-left: 2px solid var(--border-light);"></div>
         </div>
       `;
       allCommentsList.appendChild(commentEl);
@@ -1198,13 +1272,83 @@ function renderCommentsModal() {
     btn.removeEventListener('click', handleCommentReply);
     btn.addEventListener('click', handleCommentReply);
   });
+  
+  document.querySelectorAll('.see-replies-btn').forEach(btn => {
+    btn.removeEventListener('click', handleShowReplies);
+    btn.addEventListener('click', handleShowReplies);
+  });
 }
+
+function handleShowReplies(e) {
+  e.preventDefault();
+  const commentId = e.currentTarget.dataset.commentId;
+  const repliesContainer = document.getElementById(`replies-${commentId}`);
+  const post = posts.find(p => p.id === currentPostId);
+  const comment = post.comments.find(c => c.id === commentId);
+  
+  if (expandedReplies[commentId]) {
+    repliesContainer.style.display = 'none';
+    expandedReplies[commentId] = false;
+  } else {
+    repliesContainer.innerHTML = '';
+    comment.replies.forEach(reply => {
+      const replyEl = document.createElement('div');
+      replyEl.className = 'reply-item';
+      replyEl.innerHTML = `
+        <div>
+          <div>
+            ${reply.isAnonymous ? '<i class="fas fa-mask"></i>' : '<strong>' + reply.author + '</strong>'} 
+            ${reply.text}
+            <span class="reply-likes-count" style="margin-left: 8px; color: var(--text-secondary); font-size: 12px;">${reply.likes} ${reply.likes > 1 ? 'likes' : 'like'}</span>
+          </div>
+          <div class="reply-actions">
+            <button class="reply-like-btn">
+              <i class="fas fa-thumbs-up"></i> Like
+            </button>
+            <button class="reply-reply-btn">
+              <i class="fas fa-reply"></i> Répondre
+            </button>
+          </div>
+        </div>
+      `;
+      repliesContainer.appendChild(replyEl);
+    });
+    repliesContainer.style.display = 'block';
+    expandedReplies[commentId] = true;
+    
+    // Attach events for reply likes
+    document.querySelectorAll('.reply-like-btn').forEach(btn => {
+      btn.removeEventListener('click', handleReplyLike);
+      btn.addEventListener('click', handleReplyLike);
+    });
+  }
+}
+
 
 function handleCommentLike(e) {
   e.preventDefault();
   const btn = e.currentTarget;
+  const commentId = parseInt(btn.dataset.commentId);
+  const post = posts.find(p => p.id === currentPostId);
+  const comment = post.comments.find(c => c.id === commentId);
+  
+  if (btn.classList.contains('liked')) {
+    comment.likes--;
+    btn.classList.remove('liked');
+  } else {
+    comment.likes++;
+    btn.classList.add('liked');
+  }
+  
+  btn.innerHTML = btn.classList.contains('liked') ? `<i class="fas fa-thumbs-up"></i> Aimé` : `<i class="fas fa-thumbs-up"></i> Like`;
+  renderCommentsModal();
+}
+
+function handleReplyLike(e) {
+  e.preventDefault();
+  const btn = e.currentTarget;
   btn.classList.toggle('liked');
-  btn.innerHTML = btn.classList.contains('liked') ? '<i class="fas fa-thumbs-up"></i> Aimé' : '<i class="fas fa-thumbs-up"></i> Like';
+  btn.innerHTML = btn.classList.contains('liked') ? `<i class="fas fa-thumbs-up"></i> Aimé` : `<i class="fas fa-thumbs-up"></i> Like`;
 }
 
 function handleCommentReply(e) {
@@ -1220,10 +1364,14 @@ function handleModalComment() {
   
   const post = posts.find(p => p.id === currentPostId);
   if (post) {
+    const newCommentId = Math.max(...post.comments.map(c => c.id || 0), 0) + 1;
     post.comments.push({
+      id: newCommentId,
       text: commentText,
       isAnonymous: modalAnonymousCheckbox.checked,
-      author: 'Vous'
+      author: 'Vous',
+      likes: 0,
+      replies: []
     });
     modalCommentInput.value = '';
     modalCommentInput.placeholder = 'Ajouter un commentaire...';
@@ -1252,17 +1400,74 @@ if (modalCommentInput) {
   });
 }
 
+// Gestion des images pour les posts
+if (addImageBtn) {
+  addImageBtn.addEventListener('click', () => {
+    postImageInput.click();
+  });
+}
+
+if (postImageInput) {
+  postImageInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        postImages.push({
+          src: event.target.result,
+          file: file
+        });
+        renderPostImagesPreview();
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
+if (clearImagesBtn) {
+  clearImagesBtn.addEventListener('click', () => {
+    postImages = [];
+    postImageInput.value = '';
+    renderPostImagesPreview();
+  });
+}
+
+function renderPostImagesPreview() {
+  const previewGrid = postImagesPreview.querySelector('.preview-grid');
+  previewGrid.innerHTML = '';
+  
+  if (postImages.length === 0) {
+    postImagesPreview.style.display = 'none';
+  } else {
+    postImagesPreview.style.display = 'block';
+    postImages.forEach((img, index) => {
+      const previewItem = document.createElement('div');
+      previewItem.className = 'preview-image';
+      previewItem.innerHTML = `
+        <img src="${img.src}" alt="preview">
+        <button type="button" class="remove-image-btn" data-index="${index}">×</button>
+      `;
+      previewItem.querySelector('.remove-image-btn').addEventListener('click', () => {
+        postImages.splice(index, 1);
+        renderPostImagesPreview();
+      });
+      previewGrid.appendChild(previewItem);
+    });
+  }
+}
+
 // Publier un nouveau post
 if (publishBtn) {
   publishBtn.addEventListener('click', () => {
     const content = postContentInput.value.trim();
-    if (!content) return;
+    if (!content && postImages.length === 0) return;
+    
     const newPost = {
       id: Date.now(),
       author: 'Alexandre Gauthier',
       avatar: 'AG',
       content: content,
-      image: null, // on pourrait ajouter une image via un input
+      images: postImages.map(img => img.src), // Array d'images au lieu d'une seule
       time: 'À l\'instant',
       likes: 0,
       liked: false,
@@ -1271,6 +1476,9 @@ if (publishBtn) {
     posts.unshift(newPost);
     renderFeed();
     postContentInput.value = '';
+    postImages = [];
+    postImageInput.value = '';
+    renderPostImagesPreview();
   });
 }
 
