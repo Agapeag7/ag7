@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ag7</title>
+  <link rel="website icon" type="png" href="img/AG7.png">
+  <!-- Icone -->
+  <link rel="icon" type="image/x-icon" href="ico/AG7.png">
+  <!-- Font Awesome 6 (icônes réelles) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    
+  </style>
+</head>
+<body>
+
+<!-- SECTION LOGIN (affichée par défaut) -->
+<div id="login-section" class="section">
+  <div class="login-container">
+    <div class="login-header">
+      <div class="login-logo">A7</div>
+      <h2 id="login-title">Se connecter</h2>
+      <p id="login-subtitle">Accédez à votre espace de discussion</p>
+    </div>
+
+    <!-- Formulaire dynamique (connexion / inscription) -->
+    <form id="auth-form" class="login-form">
+      <!-- Champ Nom (caché en mode connexion) -->
+      <div id="name-field" class="input-group" style="display: none;">
+        <i class="fas fa-user"></i>
+        <input type="text" placeholder="Nom complet" id="signup-name">
+      </div>
+      <div class="input-group">
+        <i class="fas fa-envelope"></i>
+        <input type="email" placeholder="Email" id="auth-email" required>
+      </div>
+      <div class="input-group">
+        <i class="fas fa-lock"></i>
+        <input type="password" placeholder="Mot de passe" id="auth-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="auth-submit-btn">Se connecter</button>
+    </form>
+
+    <div class="toggle-mode">
+      <span id="toggle-message">Pas encore de compte ?</span>
+      <a href="#" id="toggle-auth-mode">Créer un compte</a>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION APPLICATION (cachée initialement) -->
+<div id="app-section" class="section hidden">
+
+<div class="app-wrapper">
+
+  <!-- SIDEBAR NAVIGATION FIXE -->
+  <div class="nav-sidebar">
+    <div class="nav-logo">A7</div>
+    <ul class="nav-menu">
+      <li class="nav-item active" data-view="chat"><a href="#" data-title="Chat"><i class="fas fa-comment-dots"></i><span>Chat</span></a></li>
+      <li class="nav-item" data-view="contacts"><a href="#" data-title="Contacts"><i class="fas fa-address-book"></i><span>Contacts</span></a></li>
+      <li class="nav-item" data-view="notifications"><a href="#" data-title="Notifications"><i class="fas fa-bell"></i><span>Notifs</span></a></li>
+      <li class="nav-item" data-view="profile"><a href="#" data-title="Profil"><i class="fas fa-user-circle"></i><span>Profil</span></a></li>
+      <li class="nav-item" data-view="settings"><a href="#" data-title="Paramètres"><i class="fas fa-sliders-h"></i><span>Réglages</span></a></li>
+    </ul>
+    <div class="nav-footer">
+      <div class="nav-item"><a href="#" data-title="Déconnexion" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a></div>
+    </div>
+  </div>
+
+  <!-- CONTENEUR DES VUES (SPA) -->
+  <div class="main-view">
+    <!-- ========== VUE CHAT ========== -->
+    <div id="view-chat" class="view active">
+      <div class="chat-layout">
+        <!-- Liste conversations -->
+        <div class="chat-sidebar-list">
+          <div class="section-title"><i class="fas fa-comment-dots" style="margin-right: 8px;"></i>Messages</div>
+          <div class="search-box">
+            <input type="text" placeholder="Rechercher une conversation...">
+            <button><i class="fas fa-search"></i></button>
+          </div>
+          <ul class="conversation-list">
+            <li class="conversation-item-chat active">
+              <div class="avatar"><i class="fas fa-users"></i></div>
+              <div class="conversation-info">
+                <div class="conversation-name">Équipe Design</div>
+                <div class="conversation-lastmsg">Claire : Les maquettes sont prêtes !</div>
+              </div>
+              <div class="conversation-meta">
+                <div class="timestamp">12:30</div>
+                <span class="unread-badge">3</span>
+              </div>
+            </li>
+            <li class="conversation-item-chat">
+              <div class="avatar">ML</div>
+              <div class="conversation-info">
+                <div class="conversation-name">Marie Lambert</div>
+                <div class="conversation-lastmsg">On se voit demain ?</div>
+              </div>
+              <div class="conversation-meta">
+                <div class="timestamp">09:15</div>
+              </div>
+            </li>
+            <li class="conversation-item-chat">
+              <div class="avatar">TD</div>
+              <div class="conversation-info">
+                <div class="conversation-name">Thomas Dubois</div>
+                <div class="conversation-lastmsg">Merci pour les infos !</div>
+              </div>
+              <div class="conversation-meta">
+                <div class="timestamp">Hier</div>
+                <span class="unread-badge">1</span>
+              </div>
+            </li>
+            <li class="conversation-item-chat">
+              <div class="avatar"><i class="fas fa-code"></i></div>
+              <div class="conversation-info">
+                <div class="conversation-name">Projet Ag7</div>
+                <div class="conversation-lastmsg">Commit final pushé 🚀</div>
+              </div>
+              <div class="conversation-meta">
+                <div class="timestamp">Lun</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <!-- Zone de discussion -->
+        <div class="chat-conversation-area">
+          <div class="conversation-header">
+            <button class="back-btn" id="backToList"><i class="fas fa-arrow-left"></i></button>
+            <div class="avatar" style="width:44px;height:44px;margin-right:14px;"><i class="fas fa-users"></i></div>
+            <div>
+              <div class="conversation-name">Équipe Design</div>
+              <div style="font-size:13px;color:var(--text-secondary);"><span class="status-dot online"></span> En ligne · 4 membres</div>
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 12px;">
+              <i class="fas fa-phone-alt" style="color: var(--text-secondary); cursor: pointer;"></i>
+              <i class="fas fa-video" style="color: var(--text-secondary); cursor: pointer;"></i>
+            </div>
+          </div>
+          <div class="messages-container">
+            <div class="message-bubble">
+              Salut tout le monde ! 👋 Prêts pour la review ?
+              <div class="message-time">10:15</div>
+            </div>
+            <div class="message-bubble me">
+              Hello ! Oui, j'ai préparé les slides et le prototype.
+              <div class="message-time">10:18</div>
+            </div>
+            <div class="message-bubble">
+              Parfait, on se connecte à 14h. J'ai partagé le lien Meet.
+              <div class="message-time">10:20</div>
+            </div>
+            <div class="message-bubble me">
+              Super, à tout à l'heure !
+              <div class="message-time">10:21</div>
+            </div>
+          </div>
+          <div class="message-input-area">
+            <textarea placeholder="Écrivez votre message..." rows="1"></textarea>
+            <button class="send-btn"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== VUE CONTACTS ========== -->
+    <div id="view-contacts" class="view">
+      <div class="view-header">
+        <h2><i class="fas fa-address-book" style="margin-right: 12px;"></i>Contacts</h2>
+        <button class="btn-primary"><i class="fas fa-user-plus"></i> Nouveau contact</button>
+      </div>
+      <div class="list-card">
+        <div class="contact-avatar">ML</div>
+        <div style="flex:1"><strong style="font-size: 1.1rem;">Marie Lambert</strong><br><span style="color:var(--text-secondary);"><span class="status-dot online"></span>En ligne</span></div>
+        <div style="display: flex; gap: 16px;">
+          <i class="fas fa-comment-dots" style="color: var(--emerald-500); font-size: 20px; cursor: pointer;"></i>
+          <i class="fas fa-phone-alt" style="color: var(--text-secondary); font-size: 20px; cursor: pointer;"></i>
+        </div>
+      </div>
+      <div class="list-card">
+        <div class="contact-avatar">TD</div>
+        <div style="flex:1"><strong style="font-size: 1.1rem;">Thomas Dubois</strong><br><span style="color:var(--text-secondary);"><span class="status-dot offline"></span>Hors ligne</span></div>
+        <div style="display: flex; gap: 16px;">
+          <i class="fas fa-comment-dots" style="color: var(--emerald-500); font-size: 20px; cursor: pointer;"></i>
+        </div>
+      </div>
+      <div class="list-card">
+        <div class="contact-avatar">SC</div>
+        <div style="flex:1"><strong style="font-size: 1.1rem;">Sophie Caron</strong><br><span style="color:var(--text-secondary);"><span class="status-dot online"></span>En ligne</span></div>
+        <div style="display: flex; gap: 16px;">
+          <i class="fas fa-comment-dots" style="color: var(--emerald-500); font-size: 20px; cursor: pointer;"></i>
+          <i class="fas fa-video" style="color: var(--text-secondary); font-size: 20px; cursor: pointer;"></i>
+        </div>
+      </div>
+      <div class="list-card">
+        <div class="contact-avatar">AL</div>
+        <div style="flex:1"><strong style="font-size: 1.1rem;">Antoine Lefevre</strong><br><span style="color:var(--text-secondary);"><span class="status-dot offline"></span>Vue il y a 2h</span></div>
+        <i class="fas fa-ellipsis-h" style="color: var(--text-secondary); font-size: 20px; cursor: pointer;"></i>
+      </div>
+    </div>
+
+    <!-- ========== VUE NOTIFICATIONS ========== -->
+    <div id="view-notifications" class="view">
+      <div class="view-header">
+        <h2><i class="fas fa-bell" style="margin-right: 12px;"></i>Notifications</h2>
+        <button class="btn-primary"><i class="fas fa-check-double"></i> Tout marquer lu</button>
+      </div>
+      <div style="background: var(--card-bg); border-radius: 24px; border: 1px solid var(--border-light); padding: 8px 0;">
+        <div class="notification-item">
+          <div style="margin-right: 18px; background: var(--emerald-100); width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--emerald-600);"><i class="fas fa-comment"></i></div>
+          <div style="flex:1"><strong>Nouveau message</strong><br><span style="color:var(--text-secondary);">Marie Lambert vous a envoyé un message.</span></div>
+          <div style="color:var(--text-secondary); font-size: 13px;">2 min</div>
+        </div>
+        <div class="notification-item">
+          <div style="margin-right: 18px; background: #dbeafe; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #2563eb;"><i class="fas fa-users"></i></div>
+          <div style="flex:1"><strong>Invitation groupe</strong><br><span style="color:var(--text-secondary);">Vous avez été ajouté à "Projet Ag7".</span></div>
+          <div style="color:var(--text-secondary); font-size: 13px;">1 h</div>
+        </div>
+        <div class="notification-item">
+          <div style="margin-right: 18px; background: #fef3c7; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #d97706;"><i class="fas fa-sync-alt"></i></div>
+          <div style="flex:1"><strong>Mise à jour</strong><br><span style="color:var(--text-secondary);">Nouvelle version disponible (v2.1.0).</span></div>
+          <div style="color:var(--text-secondary); font-size: 13px;">Hier</div>
+        </div>
+        <div class="notification-item">
+          <div style="margin-right: 18px; background: #f1f5f9; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);"><i class="fas fa-calendar"></i></div>
+          <div style="flex:1"><strong>Rappel réunion</strong><br><span style="color:var(--text-secondary);">Design review à 14h aujourd'hui.</span></div>
+          <div style="color:var(--text-secondary); font-size: 13px;">Hier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== VUE PROFIL ========== -->
+    <div id="view-profile" class="view">
+      <div class="profile-card">
+        <div class="profile-avatar-large">AG</div>
+        <h2 style="margin-bottom: 6px;">Alexandre Gauthier</h2>
+        <p style="color:var(--text-secondary); margin-bottom: 28px;"><i class="fas fa-envelope" style="margin-right: 6px;"></i>alex@ag7.dev</p>
+        <div style="text-align: left; background: var(--slate-50); border-radius: 24px; padding: 24px; margin-bottom: 28px;">
+          <p style="margin-bottom: 12px;"><i class="fas fa-quote-right" style="margin-right: 8px; color: var(--emerald-500);"></i>Lead Designer & Front-end Dev. Passionné par les interfaces modernes et l'UX.</p>
+          <p style="margin-bottom: 12px;"><i class="fas fa-map-pin" style="margin-right: 8px; color: var(--emerald-500);"></i>Paris, France</p>
+          <p><i class="fas fa-calendar-alt" style="margin-right: 8px; color: var(--emerald-500);"></i>Membre depuis Janvier 2024</p>
+        </div>
+        <button class="btn-primary" style="width: 100%; justify-content: center; padding: 14px;"><i class="fas fa-pen"></i> Modifier le profil</button>
+      </div>
+    </div>
+
+    <!-- ========== VUE PARAMETRES ========== -->
+    <div id="view-settings" class="view">
+      <div class="view-header">
+        <h2><i class="fas fa-sliders-h" style="margin-right: 12px;"></i>Paramètres</h2>
+      </div>
+      <div class="settings-group">
+        <h3 style="margin-bottom: 24px; font-size: 20px;"><i class="fas fa-palette" style="margin-right: 8px;"></i>Apparence</h3>
+        <div class="toggle-switch">
+          <span><i class="fas fa-moon" style="margin-right: 12px; width: 20px;"></i>Mode sombre</span>
+          <input type="checkbox" id="darkModeToggle">
+        </div>
+      </div>
+      <div class="settings-group">
+        <h3 style="margin-bottom: 24px; font-size: 20px;"><i class="fas fa-bell" style="margin-right: 8px;"></i>Notifications</h3>
+        <div class="toggle-switch" style="margin-bottom: 20px;">
+          <span><i class="fas fa-mobile-alt" style="margin-right: 12px;"></i>Notifications push</span>
+          <input type="checkbox" checked>
+        </div>
+        <div class="toggle-switch">
+          <span><i class="fas fa-volume-up" style="margin-right: 12px;"></i>Sons de message</span>
+          <input type="checkbox" checked>
+        </div>
+      </div>
+      <div class="settings-group">
+        <h3 style="margin-bottom: 24px; font-size: 20px;"><i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Confidentialité</h3>
+        <div class="toggle-switch">
+          <span><i class="fas fa-user-secret" style="margin-right: 12px;"></i>Afficher statut en ligne</span>
+          <input type="checkbox" checked>
+        </div>
+      </div>
+      <div style="margin-top: 20px; color: var(--text-secondary); font-size: 14px; text-align: center;">
+        <i class="far fa-save"></i> Les préférences sont sauvegardées automatiquement
+      </div>
+    </div>
+  </div>
+</div>
+
+</div> <!-- Fin app-section -->
+
+<script src="js/scripts.js"></script>
+<!-- Petite police système pour un rendu optimal -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</body>
+</html>
