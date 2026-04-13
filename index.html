@@ -64,6 +64,7 @@
       <li class="nav-item" data-view="notifications"><a href="#" data-title="Notifications"><i class="fas fa-bell"></i><span>Notifs</span></a></li>
       <li class="nav-item" data-view="profile"><a href="#" data-title="Profil"><i class="fas fa-user-circle"></i><span>Profil</span></a></li>
       <li class="nav-item" data-view="settings"><a href="#" data-title="Paramètres"><i class="fas fa-sliders-h"></i><span>Réglages</span></a></li>
+      <li class="nav-item" data-view="feed"><a href="#" data-title="Actualités"><i class="fas fa-newspaper"></i><span>Actus</span></a></li>
     </ul>
     <div class="nav-footer">
       <div class="nav-item"><a href="#" data-title="Déconnexion" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a></div>
@@ -125,7 +126,7 @@
               <div class="avatar"><i class="fas fa-code"></i></div>
               <div class="conversation-info">
                 <div class="conversation-name">Projet Ag7</div>
-                <div class="conversation-lastmsg">Commit final pushé 🚀</div>
+                <div class="conversation-lastmsg">Commit final pushé</div>
               </div>
               <div class="conversation-meta">
                 <div class="timestamp">Lun</div>
@@ -149,7 +150,7 @@
           </div>
           <div class="messages-container">
             <div class="message-bubble">
-              Salut tout le monde ! 👋 Prêts pour la review ?
+              Salut tout le monde ! Prêts pour la review ?
               <div class="message-time">10:15</div>
             </div>
             <div class="message-bubble me">
@@ -290,6 +291,59 @@
       </div>
       <div style="margin-top: 20px; color: var(--text-secondary); font-size: 14px; text-align: center;">
         <i class="far fa-save"></i> Les préférences sont sauvegardées automatiquement
+      </div>
+    </div>
+
+    <!-- ========== VUE ACTUALITÉS (FEED + STORIES) ========== -->
+    <div id="view-feed" class="view">
+      <!-- Stories horizontales -->
+      <div class="stories-container">
+        <div class="story-item" data-story="user">
+          <div class="story-avatar add-story">
+            <i class="fas fa-plus"></i>
+          </div>
+          <span class="story-name">Ajouter</span>
+        </div>
+        <div class="story-item" data-story="story1">
+          <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/68.jpg');"></div>
+          <span class="story-name">Marie</span>
+        </div>
+        <div class="story-item" data-story="story2">
+          <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/men/32.jpg');"></div>
+          <span class="story-name">Thomas</span>
+        </div>
+        <div class="story-item" data-story="story3">
+          <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/45.jpg');"></div>
+          <span class="story-name">Sophie</span>
+        </div>
+      </div>
+
+      <!-- Création d'une publication -->
+      <div class="create-post-card">
+        <div class="create-post-header">
+          <div class="mini-avatar">AG</div>
+          <textarea id="postContent" rows="2" placeholder="Quoi de neuf, Alexandre ?"></textarea>
+        </div>
+        <div class="create-post-actions">
+          <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
+          <button id="publishPostBtn" class="btn-primary">Publier</button>
+        </div>
+      </div>
+
+      <!-- Flux des publications -->
+      <div id="feedContainer" class="feed-container">
+        <!-- Les posts seront injectés ici dynamiquement -->
+      </div>
+    </div>
+
+    <!-- Modale story (cachée) -->
+    <div id="storyModal" class="story-modal hidden">
+      <div class="story-modal-content">
+        <button class="story-close">&times;</button>
+        <div class="story-viewer">
+          <img id="storyImage" src="" alt="Story">
+          <div class="story-caption"></div>
+        </div>
       </div>
     </div>
   </div>

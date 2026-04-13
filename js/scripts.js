@@ -83,7 +83,8 @@
       contacts: document.getElementById('view-contacts'),
       notifications: document.getElementById('view-notifications'),
       profile: document.getElementById('view-profile'),
-      settings: document.getElementById('view-settings')
+      settings: document.getElementById('view-settings'),
+      feed: document.getElementById('view-feed')
     };
 
     function switchView(viewId) {
@@ -211,3 +212,187 @@
 
     // Notification de bienvenue (optionnelle)
   })();
+
+
+  // ========== GESTION DES STORIES ==========
+const storyModal = document.getElementById('storyModal');
+const storyImage = document.getElementById('storyImage');
+const storyCaption = document.querySelector('.story-caption');
+const storyClose = document.querySelector('.story-close');
+const storyItems = document.querySelectorAll('.story-item:not([data-story="user"])');
+
+function openStory(imageUrl, caption) {
+  storyImage.src = imageUrl;
+  storyCaption.textContent = caption || '';
+  storyModal.classList.remove('hidden');
+}
+storyClose.addEventListener('click', () => storyModal.classList.add('hidden'));
+storyModal.addEventListener('click', (e) => {
+  if (e.target === storyModal) storyModal.classList.add('hidden');
+});
+
+storyItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const storyId = item.getAttribute('data-story');
+    let img = '';
+    let txt = '';
+    if (storyId === 'story1') { img = 'https://randomuser.me/api/portraits/women/68.jpg'; txt = 'Bonjour à tous ! ☀️'; }
+    else if (storyId === 'story2') { img = 'https://randomuser.me/api/portraits/men/32.jpg'; txt = 'Nouveau projet excitant !'; }
+    else { img = 'https://randomuser.me/api/portraits/women/45.jpg'; txt = 'En pleine réflexion...'; }
+    openStory(img, txt);
+  });
+});
+
+// Ajout d'une story par l'utilisateur
+const addStoryBtn = document.querySelector('.story-item[data-story="user"]');
+if (addStoryBtn) {
+  addStoryBtn.addEventListener('click', () => {
+    const fakeStoryUrl = 'https://picsum.photos/400/600?random=' + Date.now();
+    const caption = prompt('Légende de votre story :', 'Nouvelle story !');
+    openStory(fakeStoryUrl, caption || '');
+    // Optionnel : ajouter visuellement la story dans la liste (simulation)
+  });
+}
+
+// ========== GESTION DU FEED (PUBLICATIONS) ==========
+let posts = [
+  {
+    id: 1,
+    author: 'Design Team',
+    avatar: 'DT',
+    content: 'Les nouvelles maquettes de l’application Ag7 sont disponibles !',
+    image: 'https://picsum.photos/id/20/600/400',
+    time: 'Il y a 2 heures',
+    likes: 24,
+    liked: false,
+    comments: ['Super boulot !', 'J’ai hâte de voir ça']
+  },
+  {
+    id: 2,
+    author: 'Marie Lambert',
+    avatar: 'ML',
+    content: 'Quelqu’un pour un café-débat sur l’UX ce midi ?',
+    image: null,
+    time: 'Hier',
+    likes: 12,
+    liked: false,
+    comments: ['Je suis partante !', 'À la pause déjeuner']
+  }
+];
+
+const feedContainer = document.getElementById('feedContainer');
+const publishBtn = document.getElementById('publishPostBtn');
+const postContentInput = document.getElementById('postContent');
+
+function renderFeed() {
+  if (!feedContainer) return;
+  feedContainer.innerHTML = '';
+  posts.forEach(post => {
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post-card';
+    postDiv.dataset.id = post.id;
+    postDiv.innerHTML = `
+      <div class="post-header">
+        <div class="post-avatar">${post.avatar}</div>
+        <div>
+          <div class="post-author">${post.author}</div>
+          <div class="post-time">${post.time}</div>
+        </div>
+      </div>
+      <div class="post-content">
+        <p>${escapeHtml(post.content)}</p>
+        ${post.image ? `<img src="${post.image}" class="post-image" alt="image post">` : ''}
+      </div>
+      <div class="post-stats">
+        <span><i class="far fa-heart"></i> ${post.likes} likes</span>
+        <span><i class="far fa-comment"></i> ${post.comments.length} commentaires</span>
+      </div>
+      <div class="post-actions">
+        <button class="post-action-btn like-btn ${post.liked ? 'liked' : ''}"><i class="far fa-heart"></i> Like</button>
+        <button class="post-action-btn comment-btn"><i class="far fa-comment"></i> Commenter</button>
+      </div>
+      <div class="comments-section">
+        <div class="comments-list">
+          ${post.comments.map(c => `<div class="comment-item"><strong>Anonyme</strong> ${escapeHtml(c)}</div>`).join('')}
+        </div>
+        <div class="comment-input">
+          <input type="text" placeholder="Ajouter un commentaire..." class="new-comment-input">
+          <button class="submit-comment">Envoyer</button>
+        </div>
+      </div>
+    `;
+    feedContainer.appendChild(postDiv);
+  });
+  attachPostEvents();
+}
+
+function attachPostEvents() {
+  document.querySelectorAll('.like-btn').forEach(btn => {
+    btn.removeEventListener('click', handleLike);
+    btn.addEventListener('click', handleLike);
+  });
+  document.querySelectorAll('.submit-comment').forEach(btn => {
+    btn.removeEventListener('click', handleComment);
+    btn.addEventListener('click', handleComment);
+  });
+}
+
+function handleLike(e) {
+  const btn = e.currentTarget;
+  const postCard = btn.closest('.post-card');
+  const postId = parseInt(postCard.dataset.id);
+  const post = posts.find(p => p.id === postId);
+  if (post) {
+    post.liked = !post.liked;
+    post.likes += post.liked ? 1 : -1;
+    renderFeed();
+  }
+}
+
+function handleComment(e) {
+  const btn = e.currentTarget;
+  const postCard = btn.closest('.post-card');
+  const input = postCard.querySelector('.new-comment-input');
+  const commentText = input.value.trim();
+  if (!commentText) return;
+  const postId = parseInt(postCard.dataset.id);
+  const post = posts.find(p => p.id === postId);
+  if (post) {
+    post.comments.push(commentText);
+    renderFeed();
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+// Publier un nouveau post
+if (publishBtn) {
+  publishBtn.addEventListener('click', () => {
+    const content = postContentInput.value.trim();
+    if (!content) return;
+    const newPost = {
+      id: Date.now(),
+      author: 'Alexandre Gauthier',
+      avatar: 'AG',
+      content: content,
+      image: null, // on pourrait ajouter une image via un input
+      time: 'À l\'instant',
+      likes: 0,
+      liked: false,
+      comments: []
+    };
+    posts.unshift(newPost);
+    renderFeed();
+    postContentInput.value = '';
+  });
+}
+
+// Initialisation du feed
+renderFeed();
