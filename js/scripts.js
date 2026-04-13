@@ -412,3 +412,113 @@ if (publishBtn) {
 
 // Initialisation du feed
 renderFeed();
+
+// ========== PROFIL AVEC FOLLOWERS (DONNÉES SIMULÉES) ==========
+let currentUserProfile = {
+  name: "Alexandre Gauthier",
+  username: "@alex_gauthier",
+  bio: "Lead Designer & Front-end Dev. Passionné par les interfaces modernes et l'UX.",
+  location: "Paris, France",
+  memberSince: "Janvier 2024",
+  avatarInitials: "AG",
+  postsCount: 12,
+  followers: [
+    { name: "Marie Lambert", username: "@marie_lam", avatar: "ML" },
+    { name: "Thomas Dubois", username: "@thomas_d", avatar: "TD" },
+    { name: "Sophie Caron", username: "@sophie_c", avatar: "SC" },
+    { name: "Antoine Lefevre", username: "@antoine_l", avatar: "AL" }
+  ],
+  following: [
+    { name: "Design System", username: "@designsys", avatar: "DS" },
+    { name: "UI Daily", username: "@ui_daily", avatar: "UI" },
+    { name: "Paul Martin", username: "@paul_m", avatar: "PM" },
+    { name: "Claire Dupont", username: "@claire_d", avatar: "CD" }
+  ],
+  posts: [
+    { id: 1, image: "https://picsum.photos/id/10/400/300", likes: 34, comments: 5 },
+    { id: 2, image: "https://picsum.photos/id/20/400/300", likes: 78, comments: 12 },
+    { id: 3, image: "https://picsum.photos/id/30/400/300", likes: 45, comments: 8 },
+    { id: 4, image: "https://picsum.photos/id/40/400/300", likes: 22, comments: 3 },
+    { id: 5, image: "https://picsum.photos/id/50/400/300", likes: 91, comments: 17 },
+    { id: 6, image: "https://picsum.photos/id/60/400/300", likes: 56, comments: 9 }
+  ]
+};
+
+function updateProfileUI() {
+  document.getElementById("profileName").innerText = currentUserProfile.name;
+  document.querySelector(".profile-username").innerText = currentUserProfile.username;
+  document.querySelector(".profile-bio-text").innerText = currentUserProfile.bio;
+  document.querySelector(".profile-location-date span:first-child").innerHTML = `<i class="fas fa-map-pin"></i> ${currentUserProfile.location}`;
+  document.querySelector(".profile-location-date span:last-child").innerHTML = `<i class="fas fa-calendar-alt"></i> Membre depuis ${currentUserProfile.memberSince}`;
+  document.getElementById("profileAvatar").innerText = currentUserProfile.avatarInitials;
+  document.getElementById("postsCount").innerText = currentUserProfile.postsCount;
+  document.getElementById("followersCount").innerText = currentUserProfile.followers.length;
+  document.getElementById("followingCount").innerText = currentUserProfile.following.length;
+
+  // Générer grille des posts
+  const grid = document.getElementById("profilePostsGrid");
+  if (grid) {
+    grid.innerHTML = currentUserProfile.posts.map(post => `
+      <div class="grid-post-card">
+        <img src="${post.image}" class="grid-post-image" alt="post">
+        <div class="grid-post-info">
+          <div class="grid-post-stats">
+            <span><i class="far fa-heart"></i> ${post.likes}</span>
+            <span><i class="far fa-comment"></i> ${post.comments}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// Modale followers/following
+const followModal = document.getElementById("followModal");
+const followModalTitle = document.getElementById("followModalTitle");
+const followList = document.getElementById("followList");
+let currentModalType = "";
+
+function openFollowModal(type) {
+  currentModalType = type;
+  const list = type === "followers" ? currentUserProfile.followers : currentUserProfile.following;
+  followModalTitle.innerText = type === "followers" ? "Abonnés" : "Abonnements";
+  followList.innerHTML = list.map(user => `
+    <div class="follow-list-item">
+      <div class="follow-avatar">${user.avatar}</div>
+      <div class="follow-info">
+        <div class="follow-name">${user.name}</div>
+        <div class="follow-username">${user.username}</div>
+      </div>
+      <button class="btn-follow-sm">Suivre</button>
+    </div>
+  `).join('');
+  followModal.classList.remove("hidden");
+}
+
+document.querySelectorAll(".stat-item").forEach(stat => {
+  stat.addEventListener("click", (e) => {
+    const type = stat.getAttribute("data-type");
+    if (type === "followers") openFollowModal("followers");
+    if (type === "following") openFollowModal("following");
+  });
+});
+
+// Fermeture modale
+document.querySelector(".follow-modal-close")?.addEventListener("click", () => {
+  followModal.classList.add("hidden");
+});
+followModal?.addEventListener("click", (e) => {
+  if (e.target === followModal) followModal.classList.add("hidden");
+});
+
+// Bouton modifier profil (simulation)
+document.querySelector(".edit-profile-btn")?.addEventListener("click", () => {
+  const newName = prompt("Nouveau nom :", currentUserProfile.name);
+  const newBio = prompt("Nouvelle bio :", currentUserProfile.bio);
+  if (newName) currentUserProfile.name = newName;
+  if (newBio) currentUserProfile.bio = newBio;
+  updateProfileUI();
+});
+
+// Initialisation
+updateProfileUI();

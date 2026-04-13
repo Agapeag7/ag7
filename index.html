@@ -60,11 +60,11 @@
     <div class="nav-logo"></div>
     <ul class="nav-menu">
       <li class="nav-item active" data-view="chat"><a href="#" data-title="Chat"><i class="fas fa-comment-dots"></i><span>Chat</span></a></li>
+      <li class="nav-item" data-view="feed"><a href="#" data-title="Actualités"><i class="fas fa-newspaper"></i><span>Actus</span></a></li>
       <li class="nav-item" data-view="contacts"><a href="#" data-title="Contacts"><i class="fas fa-address-book"></i><span>Contacts</span></a></li>
       <li class="nav-item" data-view="notifications"><a href="#" data-title="Notifications"><i class="fas fa-bell"></i><span>Notifs</span></a></li>
       <li class="nav-item" data-view="profile"><a href="#" data-title="Profil"><i class="fas fa-user-circle"></i><span>Profil</span></a></li>
       <li class="nav-item" data-view="settings"><a href="#" data-title="Paramètres"><i class="fas fa-sliders-h"></i><span>Réglages</span></a></li>
-      <li class="nav-item" data-view="feed"><a href="#" data-title="Actualités"><i class="fas fa-newspaper"></i><span>Actus</span></a></li>
     </ul>
     <div class="nav-footer">
       <div class="nav-item"><a href="#" data-title="Déconnexion" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a></div>
@@ -246,16 +246,58 @@
 
     <!-- ========== VUE PROFIL ========== -->
     <div id="view-profile" class="view">
-      <div class="profile-card">
-        <div class="profile-avatar-large">AG</div>
-        <h2 style="margin-bottom: 6px;">Alexandre Gauthier</h2>
-        <p style="color:var(--text-secondary); margin-bottom: 28px;"><i class="fas fa-envelope" style="margin-right: 6px;"></i>alex@ag7.dev</p>
-        <div style="text-align: left; background: var(--slate-50); border-radius: 24px; padding: 24px; margin-bottom: 28px;">
-          <p style="margin-bottom: 12px;"><i class="fas fa-quote-right" style="margin-right: 8px; color: var(--emerald-500);"></i>Lead Designer & Front-end Dev. Passionné par les interfaces modernes et l'UX.</p>
-          <p style="margin-bottom: 12px;"><i class="fas fa-map-pin" style="margin-right: 8px; color: var(--emerald-500);"></i>Paris, France</p>
-          <p><i class="fas fa-calendar-alt" style="margin-right: 8px; color: var(--emerald-500);"></i>Membre depuis Janvier 2024</p>
+      <div class="profile-cover">
+        <img src="https://picsum.photos/id/104/1200/300" alt="cover" class="cover-img">
+        <button class="change-cover-btn"><i class="fas fa-camera"></i></button>
+      </div>
+      <div class="profile-info-wrapper">
+        <div class="profile-avatar-large" id="profileAvatar">AG</div>
+        <div class="profile-actions">
+          <button class="btn-primary edit-profile-btn"><i class="fas fa-pen"></i> Modifier le profil</button>
         </div>
-        <button class="btn-primary" style="width: 100%; justify-content: center; padding: 14px;"><i class="fas fa-pen"></i> Modifier le profil</button>
+      </div>
+      <div class="profile-bio">
+        <h2 id="profileName">Alexandre Gauthier</h2>
+        <p class="profile-username">@alex_gauthier</p>
+        <p class="profile-bio-text">Lead Designer & Front-end Dev. Passionné par les interfaces modernes et l'UX.</p>
+        <div class="profile-location-date">
+          <span><i class="fas fa-map-pin"></i> Paris, France</span>
+          <span><i class="fas fa-calendar-alt"></i> Membre depuis Janvier 2024</span>
+        </div>
+      </div>
+
+      <!-- Statistiques interactives -->
+      <div class="profile-stats">
+        <div class="stat-item" data-type="posts">
+          <span class="stat-number" id="postsCount">12</span>
+          <span class="stat-label">Publications</span>
+        </div>
+        <div class="stat-item" data-type="followers">
+          <span class="stat-number" id="followersCount">245</span>
+          <span class="stat-label">Abonnés</span>
+        </div>
+        <div class="stat-item" data-type="following">
+          <span class="stat-number" id="followingCount">189</span>
+          <span class="stat-label">Abonnements</span>
+        </div>
+      </div>
+
+      <!-- Grille des publications de l'utilisateur -->
+      <div class="profile-posts-grid" id="profilePostsGrid">
+        <!-- Posts générés dynamiquement -->
+      </div>
+    </div>
+
+    <!-- MODALE POUR LISTE FOLLOWERS/FOLLOWING -->
+    <div id="followModal" class="follow-modal hidden">
+      <div class="follow-modal-content">
+        <div class="follow-modal-header">
+          <h3 id="followModalTitle">Abonnés</h3>
+          <button class="follow-modal-close">&times;</button>
+        </div>
+        <div class="follow-list" id="followList">
+          <!-- Liste générée dynamiquement -->
+        </div>
       </div>
     </div>
 
