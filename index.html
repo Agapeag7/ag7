@@ -30,7 +30,7 @@
       <!-- Champ Nom (caché en mode connexion) -->
       <div id="name-field" class="input-group" style="display: none;">
         <i class="fas fa-user"></i>
-        <input type="text" placeholder="Nom complet" id="signup-name">
+        <input type="text" placeholder="Nom" id="signup-name">
       </div>
       
       <!-- Sélecteur photo profil (caché en mode connexion) -->
@@ -46,7 +46,7 @@
       
       <div class="input-group">
         <i class="fas fa-user-tag"></i>
-        <input type="text" placeholder="Pseudo ou nom" id="auth-username" required>
+        <input type="text" placeholder="Pseudo" id="auth-username" required>
       </div>
       <div class="input-group">
         <i class="fas fa-lock"></i>
@@ -282,6 +282,9 @@
           <span><i class="fas fa-moon" style="margin-right: 12px; width: 20px;"></i>Mode sombre</span>
           <input type="checkbox" id="darkModeToggle">
         </div>
+        <button id="customizeThemeBtn" style="background: var(--emerald-500); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; margin-top: 16px; width: 100%; font-weight: 600; transition: 0.2s;">
+          <i class="fas fa-sliders-h"></i> Personnaliser le thème
+        </button>
       </div>
       <div class="settings-group">
         <h3 style="margin-bottom: 24px; font-size: 20px;"><i class="fas fa-bell" style="margin-right: 8px;"></i>Notifications</h3>
@@ -303,6 +306,62 @@
       </div>
       <div style="margin-top: 20px; color: var(--text-secondary); font-size: 14px; text-align: center;">
         <i class="far fa-save"></i> Les préférences sont sauvegardées automatiquement
+      </div>
+
+      <!-- ========== MODAL PERSONNALISATION THEME ========== -->
+      <div id="themeModal" class="customize-theme">
+        <div class="customize-theme-card">
+          <button class="customize-theme-close">&times;</button>
+          <h2>Personnalisez votre vue</h2>
+          <p class="customize-theme-subtitle">Gérez la taille, la couleur et l'arrière-plan</p>
+
+          <!-- TAILLE DE POLICE -->
+          <div class="customize-font-size">
+            <h4><i class="fas fa-font"></i> Taille de police</h4>
+            <div class="font-size-display">
+              <span class="font-size-preview-small">Aa</span>
+              <div class="font-sizes-selector">
+                <span class="font-size-1" title="Petite"></span>
+                <span class="font-size-2 active" title="Normale"></span>
+                <span class="font-size-3" title="Grande"></span>
+                <span class="font-size-4" title="Très grande"></span>
+                <span class="font-size-5" title="Énorme"></span>
+              </div>
+              <span class="font-size-preview-large">Aa</span>
+            </div>
+          </div>
+
+          <!-- COULEUR PRIMAIRE -->
+          <div class="customize-color">
+            <h4><i class="fas fa-palette"></i> Couleur primaire</h4>
+            <div class="colors-selector">
+              <span class="color-1 active" style="background: #10b981;" title="Émeraude"></span>
+              <span class="color-2" style="background: #3b82f6;" title="Bleu"></span>
+              <span class="color-3" style="background: #ec4899;" title="Rose"></span>
+              <span class="color-4" style="background: #f59e0b;" title="Orange"></span>
+              <span class="color-5" style="background: #8b5cf6;" title="Violet"></span>
+            </div>
+          </div>
+
+          <!-- ARRIERE-PLAN -->
+          <div class="customize-background">
+            <h4><i class="fas fa-image"></i> Arrière-plan</h4>
+            <div class="backgrounds-selector">
+              <div class="bg-1 active" title="Clair">
+                <span class="bg-preview"></span>
+                <span class="bg-label">Clair</span>
+              </div>
+              <div class="bg-2" title="Dim">
+                <span class="bg-preview"></span>
+                <span class="bg-label">Dim</span>
+              </div>
+              <div class="bg-3" title="Sombre">
+                <span class="bg-preview"></span>
+                <span class="bg-label">Sombre</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

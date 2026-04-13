@@ -332,6 +332,165 @@
       });
     }
 
+    // ========== PERSONNALISATION DU THEME ==========
+    const themeModal = document.getElementById('themeModal');
+    const customizeThemeBtn = document.getElementById('customizeThemeBtn');
+    const customizeThemeClose = document.querySelector('.customize-theme-close');
+    const root = document.documentElement;
+
+    // Sélecteurs de taille de police
+    const fontSizes = document.querySelectorAll('.font-sizes-selector span');
+    
+    // Sélecteurs de couleur
+    const colorPalette = document.querySelectorAll('.colors-selector span');
+    
+    // Sélecteurs d'arrière-plan
+    const bgOptions = {
+      bg1: document.querySelector('.backgrounds-selector .bg-1'),
+      bg2: document.querySelector('.backgrounds-selector .bg-2'),
+      bg3: document.querySelector('.backgrounds-selector .bg-3')
+    };
+
+    // Ouvrir le modal
+    customizeThemeBtn?.addEventListener('click', () => {
+      themeModal.classList.add('active');
+    });
+
+    // Fermer le modal
+    customizeThemeClose?.addEventListener('click', () => {
+      themeModal.classList.remove('active');
+    });
+
+    themeModal?.addEventListener('click', (e) => {
+      if (e.target === themeModal) {
+        themeModal.classList.remove('active');
+      }
+    });
+
+    // ====== GESTION TAILLE DE POLICE ======
+    fontSizes.forEach(size => {
+      size.addEventListener('click', () => {
+        fontSizes.forEach(s => s.classList.remove('active'));
+        size.classList.add('active');
+        
+        let fontSize;
+        if (size.classList.contains('font-size-1')) {
+          fontSize = '12px';
+        } else if (size.classList.contains('font-size-2')) {
+          fontSize = '14px';
+        } else if (size.classList.contains('font-size-3')) {
+          fontSize = '16px';
+        } else if (size.classList.contains('font-size-4')) {
+          fontSize = '18px';
+        } else if (size.classList.contains('font-size-5')) {
+          fontSize = '20px';
+        }
+        
+        document.documentElement.style.fontSize = fontSize;
+        localStorage.setItem('ag7-font-size', fontSize);
+      });
+    });
+
+    // Appliquer la taille sauvegardée
+    const savedFontSize = localStorage.getItem('ag7-font-size');
+    if (savedFontSize) {
+      document.documentElement.style.fontSize = savedFontSize;
+      const fontIndex = ['12px', '14px', '16px', '18px', '20px'].indexOf(savedFontSize);
+      if (fontIndex >= 0) {
+        fontSizes.forEach(s => s.classList.remove('active'));
+        fontSizes[fontIndex].classList.add('active');
+      }
+    }
+
+    // ====== GESTION COULEUR PRIMAIRE ======
+    const primaryColors = {
+      'color-1': { hue: 160, name: 'emerald' },
+      'color-2': { hue: 217, name: 'blue' },
+      'color-3': { hue: 330, name: 'pink' },
+      'color-4': { hue: 38, name: 'amber' },
+      'color-5': { hue: 280, name: 'purple' }
+    };
+
+    colorPalette.forEach(color => {
+      color.addEventListener('click', () => {
+        colorPalette.forEach(c => c.classList.remove('active'));
+        color.classList.add('active');
+        
+        const colorClass = color.className.split(' ').find(c => c.startsWith('color-'));
+        if (primaryColors[colorClass]) {
+          const { hue, name } = primaryColors[colorClass];
+          
+          // Appliquer les nouvelles couleurs
+          root.style.setProperty('--emerald-500', `hsl(${hue}, 84%, 60%)`);
+          root.style.setProperty('--emerald-100', `hsl(${hue}, 84%, 97%)`);
+          root.style.setProperty('--emerald-600', `hsl(${hue}, 84%, 50%)`);
+          root.style.setProperty('--emerald-700', `hsl(${hue}, 84%, 40%)`);
+          
+          localStorage.setItem('ag7-primary-color', name);
+          localStorage.setItem('ag7-primary-hue', hue);
+        }
+      });
+    });
+
+    // Appliquer la couleur sauvegardée
+    const savedColorHue = localStorage.getItem('ag7-primary-hue');
+    if (savedColorHue) {
+      const hue = parseInt(savedColorHue);
+      root.style.setProperty('--emerald-500', `hsl(${hue}, 84%, 60%)`);
+      root.style.setProperty('--emerald-100', `hsl(${hue}, 84%, 97%)`);
+      root.style.setProperty('--emerald-600', `hsl(${hue}, 84%, 50%)`);
+      root.style.setProperty('--emerald-700', `hsl(${hue}, 84%, 40%)`);
+      
+      const colorName = localStorage.getItem('ag7-primary-color');
+      const colorIndex = Object.values(primaryColors).findIndex(c => c.name === colorName);
+      if (colorIndex >= 0) {
+        colorPalette.forEach(c => c.classList.remove('active'));
+        colorPalette[colorIndex].classList.add('active');
+      }
+    }
+
+    // ====== GESTION ARRIERE-PLAN ======
+    bgOptions.bg1?.addEventListener('click', () => {
+      bgOptions.bg1.classList.add('active');
+      bgOptions.bg2.classList.remove('active');
+      bgOptions.bg3.classList.remove('active');
+      
+      body.style.backgroundColor = '#f8fafc';
+      root.style.setProperty('--bg-page', '#f1f5f9');
+      root.style.setProperty('--card-bg', '#ffffff');
+      localStorage.setItem('ag7-bg-theme', 'light');
+    });
+
+    bgOptions.bg2?.addEventListener('click', () => {
+      bgOptions.bg1.classList.remove('active');
+      bgOptions.bg2.classList.add('active');
+      bgOptions.bg3.classList.remove('active');
+      
+      body.style.backgroundColor = '#1e293b';
+      root.style.setProperty('--bg-page', '#334155');
+      root.style.setProperty('--card-bg', '#1e293b');
+      localStorage.setItem('ag7-bg-theme', 'dim');
+    });
+
+    bgOptions.bg3?.addEventListener('click', () => {
+      bgOptions.bg1.classList.remove('active');
+      bgOptions.bg2.classList.remove('active');
+      bgOptions.bg3.classList.add('active');
+      
+      body.style.backgroundColor = '#0f172a';
+      root.style.setProperty('--bg-page', '#0f172a');
+      root.style.setProperty('--card-bg', '#1e293b');
+      localStorage.setItem('ag7-bg-theme', 'dark');
+    });
+
+    // Appliquer le thème d'arrière-plan sauvegardé
+    const savedBgTheme = localStorage.getItem('ag7-bg-theme');
+    if (savedBgTheme === 'dim') {
+      bgOptions.bg2?.click();
+    } else if (savedBgTheme === 'dark') {
+      bgOptions.bg3?.click();
+    }
+
     // ---------- QUELQUES INTERACTIONS SUPPLÉMENTAIRES (simulation) ----------
     // Rendre fonctionnel l'envoi de message (simulation)
     const sendBtn = document.querySelector('.conversation-form-submit');
