@@ -101,16 +101,11 @@
     .login-logo {
       width: 64px;
       height: 64px;
-      background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
       border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       margin: 0 auto 20px;
-      color: white;
-      font-size: 32px;
-      font-weight: 700;
       box-shadow: var(--shadow-md);
+      object-fit: contain;
+      display: block;
     }
     .login-header h2 {
       font-size: 28px;
@@ -219,7 +214,7 @@
       height: 48px;
       background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
       border-radius: 16px;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       margin-bottom: 40px;
@@ -308,11 +303,14 @@
       background: var(--bg-container);
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
+    
 
     .view {
       width: 100%;
-      height: 100%;
+      flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
       padding: 28px 32px;
@@ -327,6 +325,35 @@
     .view.active {
       display: block;
       opacity: 1;
+    }
+
+    /* Header global de l'application */
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 32px;
+      background: var(--bg-container);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .app-header-logo {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+
+    .app-header-title {
+      color: var(--text-primary);
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.01em;
     }
 
     /* Scrollbar personnalisée */
@@ -883,6 +910,9 @@
       .app-wrapper { flex-direction: column; height: 100vh; margin: 0; border-radius: 0; }
       .nav-sidebar { width: 100%; height: 72px; flex-direction: row; padding: 0 16px; border-right: none; border-bottom: 1px solid var(--border-light); order: 2; }
       .main-view { order: 1; overflow: hidden; }
+      .app-header { padding: 12px 16px; }
+      .app-header-logo { width: 32px; height: 32px; }
+      .app-header-title { font-size: 18px; }
       .nav-logo { display: none; }
       .nav-menu { flex-direction: row; justify-content: space-around; }
       .nav-item a { flex-direction: row; gap: 6px; padding: 8px 10px; font-size: 11px; }
