@@ -1187,8 +1187,13 @@ function attachPostEvents() {
       const postId = parseInt(btn.dataset.id);
       const post = posts.find(p => p.id === postId);
       if (post && post.images && postImageIndices[postId] < post.images.length - 1) {
-        postImageIndices[postId]++;
-        renderFeed();
+        const imgElement = btn.parentElement.querySelector('.post-image');
+        // Exit animation for old image (slide out left), then update and slide in from right
+        imgElement.style.animation = 'slideOutLeft 0.5s ease-in-out forwards';
+        setTimeout(() => {
+          postImageIndices[postId]++;
+          renderFeed();
+        }, 500);
       }
     });
   });
@@ -1198,8 +1203,13 @@ function attachPostEvents() {
       e.stopPropagation();
       const postId = parseInt(btn.dataset.id);
       if (postImageIndices[postId] > 0) {
-        postImageIndices[postId]--;
-        renderFeed();
+        const imgElement = btn.parentElement.querySelector('.post-image');
+        // Exit animation for old image (slide out right), then update and slide in from left
+        imgElement.style.animation = 'slideOutRight 0.5s ease-in-out forwards';
+        setTimeout(() => {
+          postImageIndices[postId]--;
+          renderFeed();
+        }, 500);
       }
     });
   });
@@ -1270,6 +1280,7 @@ function handleOpenComments(e) {
 
 // Variables pour gérer les réponses expansées
 let expandedReplies = {};
+let focusedCommentId = null;  // Pour la vue focalisée des réponses (style Instagram)
 
 function renderCommentsModal() {
   const post = posts.find(p => p.id === currentPostId);
@@ -1277,6 +1288,89 @@ function renderCommentsModal() {
   
   allCommentsList.innerHTML = '';
   
+  // If viewing replies for a specific comment (focused view)
+  if (focusedCommentId !== null) {
+    const focusedComment = post.comments.find(c => c.id === focusedCommentId);
+    if (!focusedComment) {
+      focusedCommentId = null;
+      renderCommentsModal();
+      return;
+    }
+    
+    // Back button and focused comment
+    const backBtn = document.createElement('button');
+    backBtn.className = 'back-to-comments-btn';
+    backBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Retour aux commentaires';
+    backBtn.addEventListener('click', () => {
+      focusedCommentId = null;
+      renderCommentsModal();
+    });
+    allCommentsList.appendChild(backBtn);
+    
+    // Show focused (parent) comment
+    const focusedEl = document.createElement('div');
+    focusedEl.className = 'comment-item-full focused-comment';
+    focusedEl.innerHTML = `
+      <div>
+        <div>
+          ${focusedComment.isAnonymous ? '<i class="fas fa-mask"></i>' : '<strong>' + focusedComment.author + '</strong>'} 
+          ${focusedComment.text}
+          <span class="comment-likes-count" style="margin-left: 8px; color: var(--text-secondary); font-size: 12px;">${focusedComment.likes} ${focusedComment.likes > 1 ? 'likes' : 'like'}</span>
+        </div>
+        <div class="comment-actions">
+          <button class="comment-like-btn" data-comment-id="${focusedComment.id}">
+            <i class="fas fa-thumbs-up"></i> Like
+          </button>
+        </div>
+      </div>
+    `;
+    allCommentsList.appendChild(focusedEl);
+    
+    // Show replies
+    if (focusedComment.replies && focusedComment.replies.length > 0) {
+      const repliesHeader = document.createElement('div');
+      repliesHeader.style.padding = '12px 0';
+      repliesHeader.style.color = 'var(--text-secondary)';
+      repliesHeader.style.fontSize = '12px';
+      repliesHeader.style.fontWeight = '600';
+      repliesHeader.textContent = `${focusedComment.replies.length} réponse${focusedComment.replies.length > 1 ? 's' : ''}`;
+      allCommentsList.appendChild(repliesHeader);
+      
+      focusedComment.replies.forEach(reply => {
+        const replyEl = document.createElement('div');
+        replyEl.className = 'reply-item';
+        replyEl.innerHTML = `
+          <div>
+            <div>
+              ${reply.isAnonymous ? '<i class="fas fa-mask"></i>' : '<strong>' + reply.author + '</strong>'} 
+              ${reply.text}
+              <span class="reply-likes-count" style="margin-left: 8px; color: var(--text-secondary); font-size: 12px;">${reply.likes} ${reply.likes > 1 ? 'likes' : 'like'}</span>
+            </div>
+            <div class="reply-actions">
+              <button class="reply-like-btn">
+                <i class="fas fa-thumbs-up"></i> Like
+              </button>
+            </div>
+          </div>
+        `;
+        allCommentsList.appendChild(replyEl);
+      });
+    }
+    
+    // Attach events
+    document.querySelectorAll('.comment-like-btn').forEach(btn => {
+      btn.removeEventListener('click', handleCommentLike);
+      btn.addEventListener('click', handleCommentLike);
+    });
+    document.querySelectorAll('.reply-like-btn').forEach(btn => {
+      btn.removeEventListener('click', handleReplyLike);
+      btn.addEventListener('click', handleReplyLike);
+    });
+    
+    return;
+  }
+  
+  // Normal view: show all comments
   if (post.comments.length === 0) {
     allCommentsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Pas de commentaires pour le moment</p>';
   } else {
@@ -1334,47 +1428,10 @@ function renderCommentsModal() {
 
 function handleShowReplies(e) {
   e.preventDefault();
-  const commentId = e.currentTarget.dataset.commentId;
-  const repliesContainer = document.getElementById(`replies-${commentId}`);
-  const post = posts.find(p => p.id === currentPostId);
-  const comment = post.comments.find(c => c.id === commentId);
-  
-  if (expandedReplies[commentId]) {
-    repliesContainer.style.display = 'none';
-    expandedReplies[commentId] = false;
-  } else {
-    repliesContainer.innerHTML = '';
-    comment.replies.forEach(reply => {
-      const replyEl = document.createElement('div');
-      replyEl.className = 'reply-item';
-      replyEl.innerHTML = `
-        <div>
-          <div>
-            ${reply.isAnonymous ? '<i class="fas fa-mask"></i>' : '<strong>' + reply.author + '</strong>'} 
-            ${reply.text}
-            <span class="reply-likes-count" style="margin-left: 8px; color: var(--text-secondary); font-size: 12px;">${reply.likes} ${reply.likes > 1 ? 'likes' : 'like'}</span>
-          </div>
-          <div class="reply-actions">
-            <button class="reply-like-btn">
-              <i class="fas fa-thumbs-up"></i> Like
-            </button>
-            <button class="reply-reply-btn">
-              <i class="fas fa-reply"></i> Répondre
-            </button>
-          </div>
-        </div>
-      `;
-      repliesContainer.appendChild(replyEl);
-    });
-    repliesContainer.style.display = 'block';
-    expandedReplies[commentId] = true;
-    
-    // Attach events for reply likes
-    document.querySelectorAll('.reply-like-btn').forEach(btn => {
-      btn.removeEventListener('click', handleReplyLike);
-      btn.addEventListener('click', handleReplyLike);
-    });
-  }
+  const commentId = parseInt(e.currentTarget.dataset.commentId);
+  // Open focused view of this comment and its replies (Instagram-style)
+  focusedCommentId = commentId;
+  renderCommentsModal();
 }
 
 
