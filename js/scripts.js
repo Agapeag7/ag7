@@ -260,23 +260,29 @@ let posts = [
     id: 1,
     author: 'Design Team',
     avatar: 'DT',
-    content: 'Les nouvelles maquettes de l’application Ag7 sont disponibles !',
+    content: "Les nouvelles maquettes de l'application Ag7 sont disponibles !",
     image: 'https://picsum.photos/id/20/600/400',
     time: 'Il y a 2 heures',
     likes: 24,
     liked: false,
-    comments: ['Super boulot !', 'J’ai hâte de voir ça']
+    comments: [
+      { text: 'Super boulot !', isAnonymous: true, author: 'Anonyme' },
+      { text: "J'ai hâte de voir ça", isAnonymous: false, author: 'Vous' }
+    ]
   },
   {
     id: 2,
     author: 'Marie Lambert',
     avatar: 'ML',
-    content: 'Quelqu’un pour un café-débat sur l’UX ce midi ?',
+    content: "Quelqu'un pour un café-débat sur l'UX ce midi ?",
     image: null,
     time: 'Hier',
     likes: 12,
     liked: false,
-    comments: ['Je suis partante !', 'À la pause déjeuner']
+    comments: [
+      { text: 'Je suis partante !', isAnonymous: true, author: 'Anonyme' },
+      { text: 'À la pause déjeuner', isAnonymous: false, author: 'Vous' }
+    ]
   }
 ];
 
@@ -313,10 +319,14 @@ function renderFeed() {
       </div>
       <div class="comments-section">
         <div class="comments-list">
-          ${post.comments.map(c => `<div class="comment-item"><strong>Anonyme</strong> ${escapeHtml(c)}</div>`).join('')}
+          ${post.comments.map(c => `<div class="comment-item">${c.isAnonymous ? '<i class="fas fa-mask" style="margin-right: 8px; color: var(--text-secondary);"></i>' : '<strong style="margin-right: 8px;">' + c.author + '</strong>'} ${escapeHtml(c.text)}</div>`).join('')}
         </div>
         <div class="comment-input">
           <input type="text" placeholder="Ajouter un commentaire..." class="new-comment-input">
+          <label class="anonymous-toggle">
+            <input type="checkbox" class="anonymous-checkbox">
+            <i class="fas fa-mask"></i>
+          </label>
           <button class="submit-comment">Envoyer</button>
         </div>
       </div>
@@ -354,11 +364,17 @@ function handleComment(e) {
   const postCard = btn.closest('.post-card');
   const input = postCard.querySelector('.new-comment-input');
   const commentText = input.value.trim();
+  const anonymousCheckbox = postCard.querySelector('.anonymous-checkbox');
   if (!commentText) return;
   const postId = parseInt(postCard.dataset.id);
   const post = posts.find(p => p.id === postId);
   if (post) {
-    post.comments.push(commentText);
+    post.comments.push({
+      text: commentText,
+      isAnonymous: anonymousCheckbox.checked,
+      author: 'Vous'
+    });
+    input.value = '';
     renderFeed();
   }
 }

@@ -1144,6 +1144,40 @@
   padding: 8px 20px;
   cursor: pointer;
 }
+
+.anonymous-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--slate-50);
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+  position: relative;
+}
+
+.anonymous-toggle:hover {
+  background: var(--hover-bg);
+  border-color: var(--emerald-500);
+}
+
+.anonymous-toggle input {
+  display: none;
+}
+
+.anonymous-toggle i {
+  color: var(--text-secondary);
+  font-size: 18px;
+  transition: var(--transition);
+}
+
+.anonymous-toggle input:checked + i {
+  color: var(--emerald-500);
+}
+
 .story-modal {
   position: fixed;
   top: 0;
