@@ -799,40 +799,137 @@ const storyModal = document.getElementById('storyModal');
 const storyImage = document.getElementById('storyImage');
 const storyCaption = document.querySelector('.story-caption');
 const storyClose = document.querySelector('.story-close');
-const storyItems = document.querySelectorAll('.story-item:not([data-story="user"])');
+
+const createStoryModal = document.getElementById('createStoryModal');
+const addStoryBtn = document.getElementById('addStoryBtn');
+const createStoryClose = document.querySelector('.create-story-close');
+const storyTextInput = document.getElementById('storyText');
+const uploadStoryImageBtn = document.getElementById('uploadStoryImageBtn');
+const storyImageInput = document.getElementById('storyImageInput');
+const storyImagePreview = document.getElementById('storyImagePreview');
+const publishStoryBtn = document.getElementById('publishStoryBtn');
+const cancelStoryBtn = document.getElementById('cancelStoryBtn');
+const storiesContainer = document.getElementById('storiesContainer');
+
+// Données simulées des stories
+let userStories = [
+  { id: 'user-story-1', type: 'text-image', text: 'Ma journée était incroyable ! 🎉', image: 'https://picsum.photos/id/50/600/800', userName: 'Vous', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+];
+
+let otherStories = [
+  { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000) },
+  { id: 'thomas-1', type: 'text-image', text: 'Nouveau projet excitant !', image: 'https://randomuser.me/api/portraits/men/32.jpg', userName: 'Thomas', timestamp: new Date(Date.now() - 30 * 60 * 1000) },
+  { id: 'sophie-1', type: 'text-image', text: 'En pleine réflexion...', image: 'https://randomuser.me/api/portraits/women/45.jpg', userName: 'Sophie', timestamp: new Date(Date.now() - 15 * 60 * 1000) },
+];
+
+let selectedStoryImage = null;
+
+// Upload image pour story
+uploadStoryImageBtn.addEventListener('click', () => storyImageInput.click());
+
+storyImageInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      selectedStoryImage = event.target.result;
+      storyImagePreview.src = selectedStoryImage;
+      storyImagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Ouvrir modale création story
+addStoryBtn.addEventListener('click', () => {
+  createStoryModal.classList.remove('hidden');
+  storyTextInput.value = '';
+  selectedStoryImage = null;
+  storyImagePreview.style.display = 'none';
+});
+
+// Fermer modales
+createStoryClose.addEventListener('click', () => createStoryModal.classList.add('hidden'));
+cancelStoryBtn.addEventListener('click', () => createStoryModal.classList.add('hidden'));
+storyClose.addEventListener('click', () => storyModal.classList.add('hidden'));
+
+createStoryModal.addEventListener('click', (e) => {
+  if (e.target === createStoryModal) createStoryModal.classList.add('hidden');
+});
+
+storyModal.addEventListener('click', (e) => {
+  if (e.target === storyModal) storyModal.classList.add('hidden');
+});
+
+// Publier une story
+publishStoryBtn.addEventListener('click', () => {
+  const text = storyTextInput.value.trim();
+  const image = selectedStoryImage || 'https://picsum.photos/id/50/600/800';
+  
+  const newStory = {
+    id: 'user-story-' + Date.now(),
+    type: 'text-image',
+    text: text || 'Nouvelle story !',
+    image: image,
+    userName: 'Vous',
+    timestamp: new Date()
+  };
+  
+  userStories.push(newStory);
+  renderStories();
+  createStoryModal.classList.add('hidden');
+});
+
+// Afficher les stories
+function renderStories() {
+  storiesContainer.innerHTML = '';
+  
+  // Bouton ajouter story
+  const addBtn = document.createElement('div');
+  addBtn.className = 'story-item';
+  addBtn.id = 'addStoryBtn';
+  addBtn.innerHTML = `
+    <div class="story-avatar add-story">
+      <i class="fas fa-plus"></i>
+    </div>
+    <span class="story-name">Votre story</span>
+  `;
+  addBtn.addEventListener('click', () => createStoryModal.classList.remove('hidden'));
+  storiesContainer.appendChild(addBtn);
+  
+  // Stories de l'utilisateur
+  userStories.forEach(story => {
+    const storyEl = document.createElement('div');
+    storyEl.className = 'story-item';
+    storyEl.innerHTML = `
+      <div class="story-avatar" style="background-image: url('${story.image}');"></div>
+      <span class="story-name">${story.userName}</span>
+    `;
+    storyEl.addEventListener('click', () => openStory(story.image, story.text));
+    storiesContainer.appendChild(storyEl);
+  });
+  
+  // Stories des autres
+  otherStories.forEach(story => {
+    const storyEl = document.createElement('div');
+    storyEl.className = 'story-item';
+    storyEl.innerHTML = `
+      <div class="story-avatar" style="background-image: url('${story.image}');"></div>
+      <span class="story-name">${story.userName}</span>
+    `;
+    storyEl.addEventListener('click', () => openStory(story.image, story.text));
+    storiesContainer.appendChild(storyEl);
+  });
+}
 
 function openStory(imageUrl, caption) {
   storyImage.src = imageUrl;
   storyCaption.textContent = caption || '';
   storyModal.classList.remove('hidden');
 }
-storyClose.addEventListener('click', () => storyModal.classList.add('hidden'));
-storyModal.addEventListener('click', (e) => {
-  if (e.target === storyModal) storyModal.classList.add('hidden');
-});
 
-storyItems.forEach(item => {
-  item.addEventListener('click', () => {
-    const storyId = item.getAttribute('data-story');
-    let img = '';
-    let txt = '';
-    if (storyId === 'story1') { img = 'https://randomuser.me/api/portraits/women/68.jpg'; txt = 'Bonjour à tous ! ☀️'; }
-    else if (storyId === 'story2') { img = 'https://randomuser.me/api/portraits/men/32.jpg'; txt = 'Nouveau projet excitant !'; }
-    else { img = 'https://randomuser.me/api/portraits/women/45.jpg'; txt = 'En pleine réflexion...'; }
-    openStory(img, txt);
-  });
-});
-
-// Ajout d'une story par l'utilisateur
-const addStoryBtn = document.querySelector('.story-item[data-story="user"]');
-if (addStoryBtn) {
-  addStoryBtn.addEventListener('click', () => {
-    const fakeStoryUrl = 'https://picsum.photos/400/600?random=' + Date.now();
-    const caption = prompt('Légende de votre story :', 'Nouvelle story !');
-    openStory(fakeStoryUrl, caption || '');
-    // Optionnel : ajouter visuellement la story dans la liste (simulation)
-  });
-}
+// Initialisation
+renderStories();
 
 // ========== GESTION DÉCOUVRIR (UTILISATEURS) ==========
 let followingUsers = new Set();

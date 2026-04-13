@@ -387,25 +387,14 @@
     <!-- ========== VUE ACTUALITÉS (FEED + STORIES) ========== -->
     <div id="view-feed" class="view">
       <!-- Stories horizontales -->
-      <div class="stories-container">
-        <div class="story-item" data-story="user">
+      <div class="stories-container" id="storiesContainer">
+        <div class="story-item" id="addStoryBtn" data-story="user">
           <div class="story-avatar add-story">
             <i class="fas fa-plus"></i>
           </div>
-          <span class="story-name">Ajouter</span>
+          <span class="story-name">Votre story</span>
         </div>
-        <div class="story-item" data-story="story1">
-          <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/68.jpg');"></div>
-          <span class="story-name">Marie</span>
-        </div>
-        <div class="story-item" data-story="story2">
-          <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/men/32.jpg');"></div>
-          <span class="story-name">Thomas</span>
-        </div>
-        <div class="story-item" data-story="story3">
-          <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/45.jpg');"></div>
-          <span class="story-name">Sophie</span>
-        </div>
+        <!-- Stories seront générées dynamiquement ici -->
       </div>
 
       <!-- Création d'une publication -->
@@ -433,6 +422,28 @@
         <div class="story-viewer">
           <img id="storyImage" src="" alt="Story">
           <div class="story-caption"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modale création story -->
+    <div id="createStoryModal" class="create-story-modal hidden">
+      <div class="create-story-card">
+        <button class="create-story-close">&times;</button>
+        <h2>Créer une story</h2>
+        <div class="create-story-form">
+          <textarea id="storyText" rows="4" placeholder="Quoi de neuf ? (optionnel)"></textarea>
+          <div class="create-story-image-upload">
+            <input type="file" id="storyImageInput" accept="image/*" style="display: none;">
+            <button type="button" id="uploadStoryImageBtn" class="btn-secondary">
+              <i class="fas fa-image"></i> Ajouter une image
+            </button>
+            <img id="storyImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 12px; border-radius: 12px;">
+          </div>
+          <div class="create-story-actions">
+            <button type="button" id="cancelStoryBtn" class="btn-secondary">Annuler</button>
+            <button type="button" id="publishStoryBtn" class="btn-primary">Publier la story</button>
+          </div>
         </div>
       </div>
     </div>
