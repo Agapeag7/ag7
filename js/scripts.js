@@ -118,6 +118,126 @@
       });
     });
 
+    // ========== GESTION NOTIFICATIONS ==========
+    let notifications = [
+      {
+        id: 1,
+        type: 'message',
+        icon: 'fas fa-comment',
+        color: 'var(--emerald-600)',
+        bgColor: 'var(--emerald-100)',
+        title: 'Nouveau message',
+        text: 'Marie Lambert vous a envoyé un message.',
+        time: '2 min',
+        read: false
+      },
+      {
+        id: 2,
+        type: 'follow',
+        icon: 'fas fa-user-check',
+        color: '#2563eb',
+        bgColor: '#dbeafe',
+        title: 'Nouveau suivi',
+        text: 'Thomas Dubois suit votre profil.',
+        time: '1 h',
+        read: false
+      },
+      {
+        id: 3,
+        type: 'post',
+        icon: 'fas fa-heart',
+        color: '#dc2626',
+        bgColor: '#fee2e2',
+        title: 'Aime votre publication',
+        text: 'Sophie Caron a aimé votre post sur l\'UX design.',
+        time: '3 h',
+        read: true
+      },
+      {
+        id: 4,
+        type: 'update',
+        icon: 'fas fa-sync-alt',
+        color: '#d97706',
+        bgColor: '#fef3c7',
+        title: 'Mise à jour disponible',
+        text: 'Nouvelle version (v2.1.0) avec améliorations.',
+        time: 'Hier',
+        read: true
+      },
+      {
+        id: 5,
+        type: 'mention',
+        icon: 'fas fa-at',
+        color: '#9333ea',
+        bgColor: '#f3e8ff',
+        title: 'Vous avez été mentionné',
+        text: '@antoine.lf vous a mentionné dans un commentaire.',
+        time: 'Hier',
+        read: true
+      }
+    ];
+
+    function renderNotifications() {
+      const container = document.getElementById('notificationsContainer');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      notifications.forEach(notif => {
+        const notifDiv = document.createElement('div');
+        notifDiv.className = `notification-item ${notif.read ? 'read' : 'unread'}`;
+        notifDiv.innerHTML = `
+          <div style="margin-right: 18px; background: ${notif.bgColor}; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: ${notif.color}; flex-shrink: 0;"><i class="${notif.icon}"></i></div>
+          <div style="flex:1"><strong>${notif.title}</strong><br><span style="color:var(--text-secondary);">${notif.text}</span></div>
+          <div style="color:var(--text-secondary); font-size: 13px; flex-shrink: 0; white-space: nowrap;">${notif.time}</div>
+        `;
+        container.appendChild(notifDiv);
+      });
+    }
+
+    function addNotification(type, title, text) {
+      const newNotif = {
+        id: Math.max(...notifications.map(n => n.id), 0) + 1,
+        type: type,
+        title: title,
+        text: text,
+        time: 'À l\'instant',
+        read: false
+      };
+      
+      // Assigner icône et couleur selon le type
+      const typeConfig = {
+        message: { icon: 'fas fa-comment', color: 'var(--emerald-600)', bgColor: 'var(--emerald-100)' },
+        follow: { icon: 'fas fa-user-check', color: '#2563eb', bgColor: '#dbeafe' },
+        post: { icon: 'fas fa-heart', color: '#dc2626', bgColor: '#fee2e2' },
+        mention: { icon: 'fas fa-at', color: '#9333ea', bgColor: '#f3e8ff' },
+        update: { icon: 'fas fa-sync-alt', color: '#d97706', bgColor: '#fef3c7' }
+      };
+      
+      Object.assign(newNotif, typeConfig[type] || typeConfig.message);
+      notifications.unshift(newNotif);
+      renderNotifications();
+    }
+
+    // Bouton "Tout marquer lu"
+    const markReadBtn = document.querySelector('#view-notifications .btn-primary');
+    if (markReadBtn) {
+      markReadBtn.addEventListener('click', () => {
+        notifications.forEach(notif => notif.read = true);
+        renderNotifications();
+        markReadBtn.style.opacity = '0.5';
+        markReadBtn.style.pointerEvents = 'none';
+      });
+    }
+
+    // Rendu initial
+    renderNotifications();
+
+    // Simulation : ajouter une notification chaque 10s
+    setTimeout(() => {
+      addNotification('message', 'Nouveau message', 'Antoine a envoyé un message.');
+    }, 10000);
+
     // ---------- MODE SOMBRE (toggle + localStorage) ----------
     const darkToggle = document.getElementById('darkModeToggle');
     const body = document.body;

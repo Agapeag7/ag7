@@ -195,26 +195,9 @@
         <h2>Notifications</h2>
         <button class="btn-primary"><i class="fas fa-check-double"></i> Tout marquer lu</button>
       </div>
-      <div style="background: var(--card-bg); border-radius: 24px; border: 1px solid var(--border-light); padding: 8px 0;">
-        <div class="notification-item">
-          <div style="margin-right: 18px; background: var(--emerald-100); width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--emerald-600);"><i class="fas fa-comment"></i></div>
-          <div style="flex:1"><strong>Nouveau message</strong><br><span style="color:var(--text-secondary);">Marie Lambert vous a envoyé un message.</span></div>
-          <div style="color:var(--text-secondary); font-size: 13px;">2 min</div>
-        </div>
-        <div class="notification-item">
-          <div style="margin-right: 18px; background: #dbeafe; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #2563eb;"><i class="fas fa-users"></i></div>
-          <div style="flex:1"><strong>Invitation groupe</strong><br><span style="color:var(--text-secondary);">Vous avez été ajouté à "Projet Ag7".</span></div>
-          <div style="color:var(--text-secondary); font-size: 13px;">1 h</div>
-        </div>
-        <div class="notification-item">
-          <div style="margin-right: 18px; background: #fef3c7; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #d97706;"><i class="fas fa-sync-alt"></i></div>
-          <div style="flex:1"><strong>Mise à jour</strong><br><span style="color:var(--text-secondary);">Nouvelle version disponible (v2.1.0).</span></div>
-          <div style="color:var(--text-secondary); font-size: 13px;">Hier</div>
-        </div>
-        <div class="notification-item">
-          <div style="margin-right: 18px; background: #f1f5f9; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);"><i class="fas fa-calendar"></i></div>
-          <div style="flex:1"><strong>Rappel réunion</strong><br><span style="color:var(--text-secondary);">Design review à 14h aujourd'hui.</span></div>
-          <div style="color:var(--text-secondary); font-size: 13px;">Hier</div>
+      <div style="background: var(--card-bg); border-radius: 24px; border: 1px solid var(--border-light); padding: 8px;">
+        <div id="notificationsContainer">
+          <!-- Notifications injectées dynamiquement ici -->
         </div>
       </div>
     </div>
