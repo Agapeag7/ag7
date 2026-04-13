@@ -812,9 +812,7 @@ const cancelStoryBtn = document.getElementById('cancelStoryBtn');
 const storiesContainer = document.getElementById('storiesContainer');
 
 // Données simulées des stories
-let userStories = [
-  { id: 'user-story-1', type: 'text-image', text: 'Ma journée était incroyable ! 🎉', image: 'https://picsum.photos/id/50/600/800', userName: 'Vous', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) },
-];
+let userStories = [];
 
 let otherStories = [
   { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000) },
@@ -1040,6 +1038,10 @@ function renderFeed() {
     const postDiv = document.createElement('div');
     postDiv.className = 'post-card';
     postDiv.dataset.id = post.id;
+    
+    // Get only last comment
+    const lastComment = post.comments.length > 0 ? post.comments[post.comments.length - 1] : null;
+    
     postDiv.innerHTML = `
       <div class="post-header">
         <div class="post-avatar">${post.avatar}</div>
@@ -1062,7 +1064,7 @@ function renderFeed() {
       </div>
       <div class="comments-section">
         <div class="comments-list">
-          ${post.comments.map(c => `<div class="comment-item">${c.isAnonymous ? '<i class="fas fa-mask" style="margin-right: 8px; color: var(--text-secondary);"></i>' : '<strong style="margin-right: 8px;">' + c.author + '</strong>'} ${escapeHtml(c.text)}</div>`).join('')}
+          ${lastComment ? `<div class="comment-item">${lastComment.isAnonymous ? '<i class="fas fa-mask" style="margin-right: 8px; color: var(--text-secondary);"></i>' : '<strong style="margin-right: 8px;">' + lastComment.author + '</strong>'} ${escapeHtml(lastComment.text)}</div>` : ''}
         </div>
         <div class="comment-input">
           <input type="text" placeholder="Ajouter un commentaire..." class="new-comment-input">
@@ -1083,6 +1085,10 @@ function attachPostEvents() {
   document.querySelectorAll('.like-btn').forEach(btn => {
     btn.removeEventListener('click', handleLike);
     btn.addEventListener('click', handleLike);
+  });
+  document.querySelectorAll('.comment-btn').forEach(btn => {
+    btn.removeEventListener('click', handleOpenComments);
+    btn.addEventListener('click', handleOpenComments);
   });
   document.querySelectorAll('.submit-comment').forEach(btn => {
     btn.removeEventListener('click', handleComment);
@@ -1128,6 +1134,121 @@ function escapeHtml(str) {
     if (m === '<') return '&lt;';
     if (m === '>') return '&gt;';
     return m;
+  });
+}
+
+// Modale commentaires - variables
+const commentsModal = document.getElementById('commentsModal');
+const commentsModalClose = document.querySelector('.comments-modal-close');
+const allCommentsList = document.querySelector('.all-comments-list');
+const modalCommentInput = document.querySelector('.modal-comment-input');
+const modalAnonymousCheckbox = document.querySelector('.modal-anonymous-checkbox');
+const modalSubmitComment = document.querySelector('.modal-submit-comment');
+
+let currentPostId = null;
+
+function handleOpenComments(e) {
+  const btn = e.currentTarget;
+  const postCard = btn.closest('.post-card');
+  currentPostId = parseInt(postCard.dataset.id);
+  renderCommentsModal();
+  commentsModal.classList.remove('hidden');
+}
+
+function renderCommentsModal() {
+  const post = posts.find(p => p.id === currentPostId);
+  if (!post) return;
+  
+  allCommentsList.innerHTML = '';
+  
+  if (post.comments.length === 0) {
+    allCommentsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Pas de commentaires pour le moment</p>';
+  } else {
+    post.comments.forEach((comment, index) => {
+      const commentEl = document.createElement('div');
+      commentEl.className = 'comment-item-full';
+      commentEl.dataset.index = index;
+      commentEl.innerHTML = `
+        <div>
+          <div>
+            ${comment.isAnonymous ? '<i class="fas fa-mask"></i>' : '<strong>' + comment.author + '</strong>'} 
+            ${comment.text}
+          </div>
+          <div class="comment-actions">
+            <button class="comment-like-btn" data-index="${index}">
+              <i class="fas fa-thumbs-up"></i> Like
+            </button>
+            <button class="comment-reply-btn" data-index="${index}">
+              <i class="fas fa-reply"></i> Répondre
+            </button>
+          </div>
+        </div>
+      `;
+      allCommentsList.appendChild(commentEl);
+    });
+  }
+  
+  // Attach events for like/reply buttons
+  document.querySelectorAll('.comment-like-btn').forEach(btn => {
+    btn.removeEventListener('click', handleCommentLike);
+    btn.addEventListener('click', handleCommentLike);
+  });
+  
+  document.querySelectorAll('.comment-reply-btn').forEach(btn => {
+    btn.removeEventListener('click', handleCommentReply);
+    btn.addEventListener('click', handleCommentReply);
+  });
+}
+
+function handleCommentLike(e) {
+  e.preventDefault();
+  const btn = e.currentTarget;
+  btn.classList.toggle('liked');
+  btn.innerHTML = btn.classList.contains('liked') ? '<i class="fas fa-thumbs-up"></i> Aimé' : '<i class="fas fa-thumbs-up"></i> Like';
+}
+
+function handleCommentReply(e) {
+  e.preventDefault();
+  // Focus on input to reply
+  modalCommentInput.focus();
+  modalCommentInput.placeholder = 'Répondre au commentaire...';
+}
+
+function handleModalComment() {
+  const commentText = modalCommentInput.value.trim();
+  if (!commentText) return;
+  
+  const post = posts.find(p => p.id === currentPostId);
+  if (post) {
+    post.comments.push({
+      text: commentText,
+      isAnonymous: modalAnonymousCheckbox.checked,
+      author: 'Vous'
+    });
+    modalCommentInput.value = '';
+    modalCommentInput.placeholder = 'Ajouter un commentaire...';
+    modalAnonymousCheckbox.checked = false;
+    renderCommentsModal();
+    renderFeed();
+  }
+}
+
+// Modal events
+if (commentsModalClose) {
+  commentsModalClose.addEventListener('click', () => commentsModal.classList.add('hidden'));
+}
+
+commentsModal.addEventListener('click', (e) => {
+  if (e.target === commentsModal) commentsModal.classList.add('hidden');
+});
+
+if (modalSubmitComment) {
+  modalSubmitComment.addEventListener('click', handleModalComment);
+}
+
+if (modalCommentInput) {
+  modalCommentInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleModalComment();
   });
 }
 
