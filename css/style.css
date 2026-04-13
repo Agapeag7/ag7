@@ -33,6 +33,10 @@
     }
 
     body.dark {
+      /* Les variables sont appliquées dynamiquement par le JavaScript */
+    }
+
+    [data-theme="dark"] {
       --white: #0f172a;
       --emerald-100: #1a3a3a;
       --emerald-500: #047857;
