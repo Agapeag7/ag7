@@ -316,16 +316,19 @@
       const isDarkMode = body.classList.contains('dark');
       
       if (!isDarkMode) {
-        // ===== MODE CLAIR =====
+        // ===== MODE CLAIR (sans toggle sombre) =====
         if (theme === 'light') {
-          // Blanc pur
+          // === LIGHT: Blanc classique avec émeraude standard ===
+          root.style.setProperty('--emerald-500', '#10b981');
+          root.style.setProperty('--emerald-600', '#059669');
+          root.style.setProperty('--emerald-700', '#047857');
           root.style.setProperty('--bg-page', '#f1f5f9');
           root.style.setProperty('--bg-container', '#ffffff');
           root.style.setProperty('--card-bg', '#ffffff');
           root.style.setProperty('--sidebar-bg', '#ffffff');
           root.style.setProperty('--hover-bg', '#f8fafc');
           root.style.setProperty('--emerald-50', '#d1fae5');
-          root.style.setProperty('--emerald-100', '#d1fae5');
+          root.style.setProperty('--emerald-100', '#a7f3d0');
           root.style.setProperty('--slate-50', '#f8fafc');
           root.style.setProperty('--slate-100', '#f1f5f9');
           root.style.setProperty('--slate-200', '#e2e8f0');
@@ -334,30 +337,36 @@
           root.style.setProperty('--text-secondary', '#64748b');
           root.style.setProperty('--border-light', '#e2e8f0');
         } else if (theme === 'dim') {
-          // Gris moyen
+          // === DIM: Gris moyen avec cyan/turquoise ===
+          root.style.setProperty('--emerald-500', '#20c997');
+          root.style.setProperty('--emerald-600', '#12b981');
+          root.style.setProperty('--emerald-700', '#0d9488');
           root.style.setProperty('--bg-page', '#334155');
           root.style.setProperty('--bg-container', '#1e293b');
-          root.style.setProperty('--card-bg', '#334155');
+          root.style.setProperty('--card-bg', '#2d3748');
           root.style.setProperty('--sidebar-bg', '#1e293b');
           root.style.setProperty('--hover-bg', '#475569');
-          root.style.setProperty('--emerald-50', '#064e3b');
-          root.style.setProperty('--emerald-100', '#064e3b');
+          root.style.setProperty('--emerald-50', '#d0f9f2');
+          root.style.setProperty('--emerald-100', '#a9f3d8');
           root.style.setProperty('--slate-50', '#475569');
-          root.style.setProperty('--slate-100', '#334155');
-          root.style.setProperty('--slate-200', '#475569');
-          root.style.setProperty('--slate-800', '#20293a');
+          root.style.setProperty('--slate-100', '#475569');
+          root.style.setProperty('--slate-200', '#4b5563');
+          root.style.setProperty('--slate-800', '#1a202c');
           root.style.setProperty('--text-primary', '#f1f5f9');
           root.style.setProperty('--text-secondary', '#cbd5e1');
           root.style.setProperty('--border-light', '#475569');
         } else if (theme === 'dark') {
-          // Très sombre
+          // === DARK: Ultra sombre avec cyan brillant ===
+          root.style.setProperty('--emerald-500', '#2dd4bf');
+          root.style.setProperty('--emerald-600', '#14b8a6');
+          root.style.setProperty('--emerald-700', '#0d9488');
           root.style.setProperty('--bg-page', '#0f172a');
           root.style.setProperty('--bg-container', '#020617');
           root.style.setProperty('--card-bg', '#1e293b');
           root.style.setProperty('--sidebar-bg', '#020617');
           root.style.setProperty('--hover-bg', '#1e293b');
-          root.style.setProperty('--emerald-50', '#064e3b');
-          root.style.setProperty('--emerald-100', '#064e3b');
+          root.style.setProperty('--emerald-50', '#ccfbf1');
+          root.style.setProperty('--emerald-100', '#99f6e4');
           root.style.setProperty('--slate-50', '#1e293b');
           root.style.setProperty('--slate-100', '#1e293b');
           root.style.setProperty('--slate-200', '#334155');
@@ -367,32 +376,39 @@
           root.style.setProperty('--border-light', '#1e293b');
         }
       } else {
-        // ===== MODE SOMBRE (body.dark est actif) =====
+        // ===== MODE SOMBRE (body.dark actif - hérité, compatible) =====
+        // Même palette que mode clair pour cohérence
         if (theme === 'light') {
-          // En mode sombre, "light" = gris clair/medium
+          // === LIGHT (mode sombre): Gris léger avec cyan ===
+          root.style.setProperty('--emerald-500', '#2dd4bf');
+          root.style.setProperty('--emerald-600', '#14b8a6');
+          root.style.setProperty('--emerald-700', '#0d9488');
           root.style.setProperty('--bg-page', '#1e293b');
           root.style.setProperty('--bg-container', '#334155');
           root.style.setProperty('--card-bg', '#475569');
           root.style.setProperty('--sidebar-bg', '#334155');
           root.style.setProperty('--hover-bg', '#475569');
-          root.style.setProperty('--emerald-50', '#064e3b');
-          root.style.setProperty('--emerald-100', '#064e3b');
+          root.style.setProperty('--emerald-50', '#d0f9f2');
+          root.style.setProperty('--emerald-100', '#a9f3d8');
           root.style.setProperty('--slate-50', '#64748b');
-          root.style.setProperty('--slate-100', '#475569');
+          root.style.setProperty('--slate-100', '#64748b');
           root.style.setProperty('--slate-200', '#64748b');
           root.style.setProperty('--slate-800', '#1a2332');
           root.style.setProperty('--text-primary', '#f1f5f9');
           root.style.setProperty('--text-secondary', '#cbd5e1');
           root.style.setProperty('--border-light', '#475569');
         } else if (theme === 'dim') {
-          // En mode sombre, "dim" = plus sombre
+          // === DIM (mode sombre): Ultra sombre avec cyan ===
+          root.style.setProperty('--emerald-500', '#1ee0c6');
+          root.style.setProperty('--emerald-600', '#12b981');
+          root.style.setProperty('--emerald-700', '#0d9488');
           root.style.setProperty('--bg-page', '#0f172a');
           root.style.setProperty('--bg-container', '#020617');
           root.style.setProperty('--card-bg', '#1e293b');
           root.style.setProperty('--sidebar-bg', '#020617');
           root.style.setProperty('--hover-bg', '#1e293b');
-          root.style.setProperty('--emerald-50', '#064e3b');
-          root.style.setProperty('--emerald-100', '#064e3b');
+          root.style.setProperty('--emerald-50', '#d0f9f2');
+          root.style.setProperty('--emerald-100', '#a9f3d8');
           root.style.setProperty('--slate-50', '#1e293b');
           root.style.setProperty('--slate-100', '#1e293b');
           root.style.setProperty('--slate-200', '#334155');
@@ -401,14 +417,17 @@
           root.style.setProperty('--text-secondary', '#94a3b8');
           root.style.setProperty('--border-light', '#0f172a');
         } else if (theme === 'dark') {
-          // En mode sombre, "dark" = ultra sombre (AMOLED)
+          // === DARK (mode sombre): AMOLED ultra sombre avec cyan brillant ===
+          root.style.setProperty('--emerald-500', '#06d6a6');
+          root.style.setProperty('--emerald-600', '#14b8a6');
+          root.style.setProperty('--emerald-700', '#0d9488');
           root.style.setProperty('--bg-page', '#000000');
           root.style.setProperty('--bg-container', '#0a0f1f');
           root.style.setProperty('--card-bg', '#0f172a');
           root.style.setProperty('--sidebar-bg', '#000000');
           root.style.setProperty('--hover-bg', '#0f172a');
-          root.style.setProperty('--emerald-50', '#064e3b');
-          root.style.setProperty('--emerald-100', '#064e3b');
+          root.style.setProperty('--emerald-50', '#ccfbf1');
+          root.style.setProperty('--emerald-100', '#99f6e4');
           root.style.setProperty('--slate-50', '#1e293b');
           root.style.setProperty('--slate-100', '#0f172a');
           root.style.setProperty('--slate-200', '#1e293b');
@@ -417,6 +436,18 @@
           root.style.setProperty('--text-secondary', '#a1aec7');
           root.style.setProperty('--border-light', '#1e293b');
         }
+      }
+    }
+
+    // Fonction pour restaurer la couleur primaire personnalisée
+    function restorePrimaryColor() {
+      const savedColorHue = localStorage.getItem('ag7-primary-hue');
+      if (savedColorHue) {
+        const hue = parseInt(savedColorHue);
+        root.style.setProperty('--emerald-500', `hsl(${hue}, 84%, 60%)`);
+        root.style.setProperty('--emerald-100', `hsl(${hue}, 84%, 97%)`);
+        root.style.setProperty('--emerald-600', `hsl(${hue}, 84%, 50%)`);
+        root.style.setProperty('--emerald-700', `hsl(${hue}, 84%, 40%)`);
       }
     }
 
@@ -433,6 +464,7 @@
     // Appliquer le thème d'arrière-plan sauvegardé au chargement
     const savedBgThemeOnLoad = localStorage.getItem('ag7-bg-theme') || 'light';
     applyBackgroundTheme(savedBgThemeOnLoad);
+    restorePrimaryColor();
 
     // Écouter le toggle
     if (darkToggle) {
@@ -447,6 +479,7 @@
         // Réappliquer le thème d'arrière-plan choisi après le changement de mode dark
         const savedBgTheme = localStorage.getItem('ag7-bg-theme') || 'light';
         applyBackgroundTheme(savedBgTheme);
+        restorePrimaryColor();
       });
     }
 
@@ -549,21 +582,28 @@
       });
     });
 
-    // Appliquer la couleur sauvegardée
+    // Appliquer la couleur sauvegardée (ou initialiser à emerald par défaut)
     const savedColorHue = localStorage.getItem('ag7-primary-hue');
-    if (savedColorHue) {
-      const hue = parseInt(savedColorHue);
-      root.style.setProperty('--emerald-500', `hsl(${hue}, 84%, 60%)`);
-      root.style.setProperty('--emerald-100', `hsl(${hue}, 84%, 97%)`);
-      root.style.setProperty('--emerald-600', `hsl(${hue}, 84%, 50%)`);
-      root.style.setProperty('--emerald-700', `hsl(${hue}, 84%, 40%)`);
-      
-      const colorName = localStorage.getItem('ag7-primary-color');
-      const colorIndex = Object.values(primaryColors).findIndex(c => c.name === colorName);
-      if (colorIndex >= 0) {
-        colorPalette.forEach(c => c.classList.remove('active'));
-        colorPalette[colorIndex].classList.add('active');
-      }
+    const hueToApply = savedColorHue ? parseInt(savedColorHue) : 160; // 160 = émeraude par défaut
+    const colorNameToApply = localStorage.getItem('ag7-primary-color') || 'emerald';
+    
+    // Appliquer la teinte
+    root.style.setProperty('--emerald-500', `hsl(${hueToApply}, 84%, 60%)`);
+    root.style.setProperty('--emerald-100', `hsl(${hueToApply}, 84%, 97%)`);
+    root.style.setProperty('--emerald-600', `hsl(${hueToApply}, 84%, 50%)`);
+    root.style.setProperty('--emerald-700', `hsl(${hueToApply}, 84%, 40%)`);
+    
+    // Sauvegarder si ce n'était pas déjà fait
+    if (!savedColorHue) {
+      localStorage.setItem('ag7-primary-hue', hueToApply);
+      localStorage.setItem('ag7-primary-color', colorNameToApply);
+    }
+    
+    // Mettre en évidence la couleur active
+    const colorIndex = Object.values(primaryColors).findIndex(c => c.name === colorNameToApply);
+    if (colorIndex >= 0) {
+      colorPalette.forEach(c => c.classList.remove('active'));
+      colorPalette[colorIndex].classList.add('active');
     }
 
     // ====== GESTION ARRIERE-PLAN ======
@@ -573,6 +613,7 @@
       bgOptions.bg3.classList.remove('active');
       
       applyBackgroundTheme('light');
+      restorePrimaryColor();
       localStorage.setItem('ag7-bg-theme', 'light');
     });
 
@@ -582,6 +623,7 @@
       bgOptions.bg3.classList.remove('active');
       
       applyBackgroundTheme('dim');
+      restorePrimaryColor();
       localStorage.setItem('ag7-bg-theme', 'dim');
     });
 
@@ -591,6 +633,7 @@
       bgOptions.bg3.classList.add('active');
       
       applyBackgroundTheme('dark');
+      restorePrimaryColor();
       localStorage.setItem('ag7-bg-theme', 'dark');
     });
 
@@ -602,6 +645,7 @@
         bg.classList.toggle('active', i === bgIndex[savedBgTheme]);
       });
       applyBackgroundTheme(savedBgTheme);
+      restorePrimaryColor();
     }
 
     // ---------- QUELQUES INTERACTIONS SUPPLÉMENTAIRES (simulation) ----------

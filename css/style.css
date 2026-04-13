@@ -23,6 +23,7 @@
       --sidebar-bg: var(--white);
       --card-bg: var(--white);
       --hover-bg: var(--slate-50);
+      --toggle-thumb-bg: #ffffff;
       --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
       --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
       --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -53,6 +54,25 @@
       --sidebar-bg: #0f172a;
       --card-bg: #1e293b;
       --hover-bg: #1e293b;
+      --toggle-thumb-bg: #1e293b;
+    }
+
+    /* Sécurité: Interdire les arrière-plans blancs en mode sombre */
+    body.dark input,
+    body.dark textarea,
+    body.dark select {
+      background-color: var(--slate-50) !important;
+      color: var(--text-primary) !important;
+    }
+
+    body.dark button:not(.nav-item a) {
+      color: white;
+    }
+
+    body.dark [style*="background: white"],
+    body.dark [style*="background: #ffffff"],
+    body.dark [style*="background: #fff"] {
+      background: var(--card-bg) !important;
     }
 
     * {
@@ -230,14 +250,14 @@
     }
 
     .profile-pic-option:hover {
-      border-color: var(--emerald-500);
+      border-color: var(--emerald-700);
       transform: scale(1.05);
-      box-shadow: 0 0 0 2px white, 0 0 0 3px var(--emerald-500);
+      box-shadow: 0 0 0 2px var(--bg-container), 0 0 0 4px var(--emerald-700);
     }
 
     .profile-pic-option.selected {
-      border-color: var(--emerald-500);
-      box-shadow: 0 0 0 2px white, 0 0 0 4px var(--emerald-500);
+      border-color: var(--emerald-700);
+      box-shadow: 0 0 0 2px var(--bg-container), 0 0 0 4px var(--emerald-700);
     }
 
     #profile-pic-field label {
@@ -387,6 +407,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       padding: 28px 32px;
+      background: var(--bg-container);
       display: none;
       opacity: 0;
       transition: opacity 0.25s ease;
@@ -631,6 +652,11 @@
       position: relative;
     }
 
+    body.dark .message-bubble:not(.me) {
+      background: #334155;
+      color: #f1f5f9;
+    }
+
     .message-bubble.me {
       background: var(--emerald-500);
       color: white;
@@ -745,6 +771,11 @@
       border-radius: 24px;
       padding: 8px 12px;
       transition: var(--transition);
+    }
+
+    body.dark .conversation-form-group {
+      background: #334155;
+      border-color: #475569;
     }
 
     .conversation-form-group:focus-within {
@@ -1096,7 +1127,7 @@
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background: white;
+      background: var(--toggle-thumb-bg);
       top: 1px;
       left: 2px;
       transition: 0.2s;
@@ -1706,7 +1737,7 @@
 }
 
 .font-sizes-selector span.active {
-  background: var(--emerald-500);
+  background: var(--emerald-700);
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
 }
 
@@ -1744,8 +1775,8 @@
 }
 
 .colors-selector span.active {
-  border-color: var(--text-primary);
-  box-shadow: 0 0 12px currentColor;
+  border-color: var(--emerald-700);
+  box-shadow: 0 0 12px var(--emerald-500);
 }
 
 /* ARRIERE-PLAN */
@@ -1783,8 +1814,8 @@
 }
 
 .backgrounds-selector > div.active {
-  border-color: var(--emerald-500);
-  background: var(--emerald-50);
+  border-color: var(--emerald-700);
+  background: var(--emerald-100);
 }
 
 .bg-preview {
