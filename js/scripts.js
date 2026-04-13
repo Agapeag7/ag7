@@ -1028,10 +1028,15 @@ let posts = [
     id: 1,
     author: 'Design Team',
     avatar: 'DT',
-    content: "Les nouvelles maquettes de l'application Ag7 sont disponibles !",
-    images: ['https://picsum.photos/id/20/600/400'],
+    content: "Les nouvelles maquettes de l'application Ag7 sont disponibles ! Support multi-images comme Instagram 🎨",
+    images: [
+      'https://picsum.photos/id/20/600/600',
+      'https://picsum.photos/id/21/600/600',
+      'https://picsum.photos/id/22/600/600',
+      'https://picsum.photos/id/23/600/600'
+    ],
     time: 'Il y a 2 heures',
-    likes: 24,
+    likes: 156,
     liked: false,
     comments: [
       { id: 1, text: 'Super boulot !', isAnonymous: true, author: 'Anonyme', likes: 3, replies: [
@@ -1069,6 +1074,17 @@ const postImageInput = document.getElementById('postImageInput');
 const postImagesPreview = document.getElementById('postImagesPreview');
 const clearImagesBtn = document.getElementById('clearImagesBtn');
 let postImages = [];
+
+// Variables pour le carousel
+const imageCarouselModal = document.getElementById('imageCarouselModal');
+const carouselImage = document.getElementById('carouselImage');
+const imageCounter = document.getElementById('imageCounter');
+const carouselDots = document.getElementById('carouselDots');
+const carouselClose = document.querySelector('.carousel-close');
+const carouselPrev = document.querySelector('.carousel-prev');
+const carouselNext = document.querySelector('.carousel-next');
+let currentCarouselImages = [];
+let currentImageIndex = 0;
 
 function renderFeed() {
   if (!feedContainer) return;
@@ -1149,6 +1165,34 @@ function attachPostEvents() {
   document.querySelectorAll('.submit-comment').forEach(btn => {
     btn.removeEventListener('click', handleComment);
     btn.addEventListener('click', handleComment);
+  });
+  
+  // Add carousel handlers for grid images
+  document.querySelectorAll('.grid-image').forEach(img => {
+    img.style.cursor = 'pointer';
+    img.addEventListener('click', (e) => {
+      const postCard = e.target.closest('.post-card');
+      const postId = parseInt(postCard.dataset.id);
+      const post = posts.find(p => p.id === postId);
+      if (post && post.images.length > 1) {
+        const clickedImgSrc = e.target.src;
+        const startIndex = post.images.indexOf(clickedImgSrc);
+        openImageCarousel(post.images, startIndex >= 0 ? startIndex : 0);
+      }
+    });
+  });
+  
+  // Single image can also open carousel if part of multi-image post
+  document.querySelectorAll('.post-image').forEach(img => {
+    img.style.cursor = 'pointer';
+    img.addEventListener('click', (e) => {
+      const postCard = e.target.closest('.post-card');
+      const postId = parseInt(postCard.dataset.id);
+      const post = posts.find(p => p.id === postId);
+      if (post && post.images.length > 0) {
+        openImageCarousel(post.images, 0);
+      }
+    });
   });
 }
 
@@ -1481,6 +1525,86 @@ if (publishBtn) {
     renderPostImagesPreview();
   });
 }
+
+// ========== GESTION DU CAROUSEL D'IMAGES ==========
+
+function openImageCarousel(images, startIndex = 0) {
+  currentCarouselImages = images;
+  currentImageIndex = startIndex;
+  imageCarouselModal.classList.remove('hidden');
+  renderCarouselImage();
+  renderCarouselDots();
+}
+
+function closeImageCarousel() {
+  imageCarouselModal.classList.add('hidden');
+}
+
+function renderCarouselImage() {
+  const image = currentCarouselImages[currentImageIndex];
+  carouselImage.src = image;
+  imageCounter.textContent = `${currentImageIndex + 1} / ${currentCarouselImages.length}`;
+  
+  // Mettre à jour les dots
+  document.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+    if (index === currentImageIndex) {
+      dot.classList.add('active');
+    } else {
+      dot.classList.remove('active');
+    }
+  });
+}
+
+function renderCarouselDots() {
+  carouselDots.innerHTML = '';
+  currentCarouselImages.forEach((_, index) => {
+    const dot = document.createElement('button');
+    dot.className = `carousel-dot ${index === currentImageIndex ? 'active' : ''}`;
+    dot.addEventListener('click', () => {
+      currentImageIndex = index;
+      renderCarouselImage();
+    });
+    carouselDots.appendChild(dot);
+  });
+}
+
+function nextImage() {
+  currentImageIndex = (currentImageIndex + 1) % currentCarouselImages.length;
+  renderCarouselImage();
+}
+
+function prevImage() {
+  currentImageIndex = (currentImageIndex - 1 + currentCarouselImages.length) % currentCarouselImages.length;
+  renderCarouselImage();
+}
+
+// Event listeners pour le carousel
+if (carouselClose) {
+  carouselClose.addEventListener('click', closeImageCarousel);
+}
+
+if (carouselNext) {
+  carouselNext.addEventListener('click', nextImage);
+}
+
+if (carouselPrev) {
+  carouselPrev.addEventListener('click', prevImage);
+}
+
+// Fermer le modal en cliquant en dehors (backdrop)
+imageCarouselModal.addEventListener('click', (e) => {
+  if (e.target === imageCarouselModal) {
+    closeImageCarousel();
+  }
+});
+
+// Clavier - ESC pour fermer, flèches pour naviguer
+document.addEventListener('keydown', (e) => {
+  if (imageCarouselModal.classList.contains('hidden')) return;
+  if (e.key === 'Escape') closeImageCarousel();
+  if (e.key === 'ArrowRight') nextImage();
+  if (e.key === 'ArrowLeft') prevImage();
+});
 
 // Initialisation du feed
 renderFeed();
