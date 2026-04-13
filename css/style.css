@@ -90,7 +90,7 @@
     [data-theme="dim"] .nav-item.active a,
     [data-theme="dim"] .nav-item.active a i,
     [data-theme="dim"] .nav-item.active a span {
-      background: var(--active-bg) !important;
+      background: linear-gradient(90deg, var(--active-bg) 0%, transparent 100%) !important;
       color: var(--emerald-500) !important;
       box-shadow: inset 4px 0 0 var(--emerald-500) !important;
     }
