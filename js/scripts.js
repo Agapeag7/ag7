@@ -262,7 +262,7 @@ if (addStoryBtn) {
 // ========== GESTION DÉCOUVRIR (UTILISATEURS) ==========
 let followingUsers = new Set();
 let suggestedUsers = [
-  { id: 1, name: 'Marie Lambert', username: '@marie_lambert', bio: 'UX Designer, Coffee addict ☕' },
+  { id: 1, name: 'Marie Lambert', username: '@marie_lambert', bio: 'UX Designer, Coffee addict' },
   { id: 2, name: 'Thomas Dubois', username: '@thomas.dubois', bio: 'Frontend Dev | React | Node.js' },
   { id: 3, name: 'Sophie Caron', username: '@sophie_caron', bio: 'Product Manager | Innovation enthusiast' },
   { id: 4, name: 'Antoine Lefevre', username: '@antoine.lf', bio: 'Digital Strategist | Growth Hacker' },
