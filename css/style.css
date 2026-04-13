@@ -57,22 +57,81 @@
       --toggle-thumb-bg: #1e293b;
     }
 
-    /* Sécurité: Interdire les arrière-plans blancs en mode sombre */
+    /* ===== PROTECTION GLOBALE: ZéRO BLANC EN MODE SOMBRE ===== */
+    
+    /* Bloquer tous les éléments avec background blanc/clair */
+    body.dark * {
+      background-color: unset;
+    }
+    
+    /* Interdire explicitement les couleurs blanches */
+    body.dark [style*="background: white"],
+    body.dark [style*="background:#fff"],
+    body.dark [style*="background:#ffffff"],
+    body.dark [style*="background: #fff"],
+    body.dark [style*="background: #ffffff"],
+    body.dark [style*="background-color: white"],
+    body.dark [style*="background-color:#fff"],
+    body.dark [style*="background-color:#ffffff"],
+    body.dark [style*="background-color: #fff"],
+    body.dark [style*="background-color: #ffffff"] {
+      background-color: var(--card-bg) !important;
+      background: var(--card-bg) !important;
+    }
+
+    /* Inputs et textareas */
     body.dark input,
     body.dark textarea,
     body.dark select {
-      background-color: var(--slate-50) !important;
-      color: var(--text-primary) !important;
+      background-color: #334155 !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
     }
 
+    /* Boutons */
     body.dark button:not(.nav-item a) {
       color: white;
     }
 
-    body.dark [style*="background: white"],
-    body.dark [style*="background: #ffffff"],
-    body.dark [style*="background: #fff"] {
-      background: var(--card-bg) !important;
+    /* Cards et containers */
+    body.dark .card,
+    body.dark [class*="card"],
+    body.dark [class*="container"] {
+      background-color: var(--card-bg) !important;
+    }
+
+    /* Messages et bubbles */
+    body.dark .message-bubble:not(.me) {
+      background-color: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    /* Formulaires */
+    body.dark .conversation-form-group {
+      background-color: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Modales et overlays */
+    body.dark [class*="modal"] {
+      background-color: rgba(0, 0, 0, 0.9) !important;
+    }
+
+    body.dark .customize-theme-card,
+    body.dark .follow-modal-content {
+      background-color: #1e293b !important;
+    }
+
+    /* Tous les éléments par défaut en dark */
+    body.dark div,
+    body.dark span,
+    body.dark p,
+    body.dark a {
+      background-color: transparent !important;
+    }
+
+    body.dark .view {
+      background-color: #020617 !important;
     }
 
     * {

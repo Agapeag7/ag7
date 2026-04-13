@@ -202,7 +202,7 @@
         id: 2,
         type: 'follow',
         icon: 'fas fa-user-check',
-        color: '#2563eb',
+        color: '#2668f1',
         bgColor: '#dbeafe',
         title: 'Nouveau suivi',
         text: 'Thomas Dubois suit votre profil.',
