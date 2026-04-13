@@ -326,6 +326,8 @@
             root.style.setProperty('--card-bg', '#ffffff');
             root.style.setProperty('--sidebar-bg', '#ffffff');
             root.style.setProperty('--hover-bg', '#f8fafc');
+            root.style.setProperty('--active-bg', '#e0f2fe');
+            root.style.setProperty('--active-text-color', '#334155');
             root.style.setProperty('--emerald-50', '#d1fae5');
             root.style.setProperty('--emerald-100', '#a7f3d0');
             root.style.setProperty('--slate-50', '#f8fafc');
@@ -345,6 +347,8 @@
             root.style.setProperty('--card-bg', '#1e293b');
             root.style.setProperty('--sidebar-bg', '#0f172a');
             root.style.setProperty('--hover-bg', '#334155');
+            root.style.setProperty('--active-bg', '#475569');
+            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a3a3a');
             root.style.setProperty('--emerald-100', '#1a3a3a');
             root.style.setProperty('--slate-50', '#1e293b');
@@ -364,6 +368,8 @@
             root.style.setProperty('--card-bg', '#0f172a');
             root.style.setProperty('--sidebar-bg', '#000000');
             root.style.setProperty('--hover-bg', '#1e293b');
+            root.style.setProperty('--active-bg', '#1e293b');
+            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a2e2e');
             root.style.setProperty('--emerald-100', '#1a2e2e');
             root.style.setProperty('--slate-50', '#0f172a');
@@ -385,6 +391,8 @@
             root.style.setProperty('--card-bg', '#1e293b');
             root.style.setProperty('--sidebar-bg', '#0f172a');
             root.style.setProperty('--hover-bg', '#334155');
+            root.style.setProperty('--active-bg', '#475569');
+            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a3a3a');
             root.style.setProperty('--emerald-100', '#1a3a3a');
             root.style.setProperty('--slate-50', '#1e293b');
@@ -403,6 +411,8 @@
             root.style.setProperty('--card-bg', '#0f172a');
             root.style.setProperty('--sidebar-bg', '#000000');
             root.style.setProperty('--hover-bg', '#1e293b');
+            root.style.setProperty('--active-bg', '#2a2a3b');
+            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a2e2e');
             root.style.setProperty('--emerald-100', '#1a2e2e');
             root.style.setProperty('--slate-50', '#0f172a');
@@ -422,6 +432,8 @@
             root.style.setProperty('--card-bg', '#0a0a0a');
             root.style.setProperty('--sidebar-bg', '#000000');
             root.style.setProperty('--hover-bg', '#1a1a1a');
+            root.style.setProperty('--active-bg', '#1a1a2a');
+            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a2e2e');
             root.style.setProperty('--emerald-100', '#1a2e2e');
             root.style.setProperty('--slate-50', '#0a0a0a');
