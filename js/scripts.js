@@ -1086,6 +1086,9 @@ const carouselNext = document.querySelector('.carousel-next');
 let currentCarouselImages = [];
 let currentImageIndex = 0;
 
+// Track carousel state per post
+let postImageIndices = {};
+
 function renderFeed() {
   if (!feedContainer) return;
   feedContainer.innerHTML = '';
@@ -1101,17 +1104,27 @@ function renderFeed() {
     const images = post.images || (post.image ? [post.image] : []);
     let imagesHtml = '';
     
-    if (images.length === 1) {
-      imagesHtml = `<img src="${images[0]}" class="post-image" alt="image post">`;
-    } else if (images.length > 1) {
-      const gridClass = images.length === 2 ? 'post-images-grid-2' : 
-                       images.length === 3 ? 'post-images-grid-3' : 
-                       'post-images-grid-more';
-      imagesHtml = `
-        <div class="post-images-grid ${gridClass}">
-          ${images.map((img, idx) => `<img src="${img}" class="grid-image" alt="post image ${idx+1}" />`).join('')}
+    // Initialize carousel state for this post
+    if (!postImageIndices[post.id]) {
+      postImageIndices[post.id] = 0;
+    }
+    const currentImageIdx = postImageIndices[post.id];
+    
+    if (images.length > 0) {
+      const currentImage = images[currentImageIdx];
+      const imageNavigation = images.length > 1 ? `
+        <div class="post-image-container">
+          <button class="feed-image-prev" data-id="${post.id}" ${currentImageIdx === 0 ? 'style="opacity: 0.3; cursor: default;"' : ''}>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <img src="${currentImage}" class="post-image" alt="image post ${currentImageIdx + 1}">
+          <button class="feed-image-next" data-id="${post.id}" ${currentImageIdx === images.length - 1 ? 'style="opacity: 0.3; cursor: default;"' : ''}>
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <div class="feed-image-counter">${currentImageIdx + 1} / ${images.length}</div>
         </div>
-      `;
+      ` : `<img src="${currentImage}" class="post-image" alt="image post">`;
+      imagesHtml = imageNavigation;
     }
     
     postDiv.innerHTML = `
@@ -1167,30 +1180,26 @@ function attachPostEvents() {
     btn.addEventListener('click', handleComment);
   });
   
-  // Add carousel handlers for grid images
-  document.querySelectorAll('.grid-image').forEach(img => {
-    img.style.cursor = 'pointer';
-    img.addEventListener('click', (e) => {
-      const postCard = e.target.closest('.post-card');
-      const postId = parseInt(postCard.dataset.id);
+  // Add feed image navigation handlers
+  document.querySelectorAll('.feed-image-next').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const postId = parseInt(btn.dataset.id);
       const post = posts.find(p => p.id === postId);
-      if (post && post.images.length > 1) {
-        const clickedImgSrc = e.target.src;
-        const startIndex = post.images.indexOf(clickedImgSrc);
-        openImageCarousel(post.images, startIndex >= 0 ? startIndex : 0);
+      if (post && post.images && postImageIndices[postId] < post.images.length - 1) {
+        postImageIndices[postId]++;
+        renderFeed();
       }
     });
   });
   
-  // Single image can also open carousel if part of multi-image post
-  document.querySelectorAll('.post-image').forEach(img => {
-    img.style.cursor = 'pointer';
-    img.addEventListener('click', (e) => {
-      const postCard = e.target.closest('.post-card');
-      const postId = parseInt(postCard.dataset.id);
-      const post = posts.find(p => p.id === postId);
-      if (post && post.images.length > 0) {
-        openImageCarousel(post.images, 0);
+  document.querySelectorAll('.feed-image-prev').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const postId = parseInt(btn.dataset.id);
+      if (postImageIndices[postId] > 0) {
+        postImageIndices[postId]--;
+        renderFeed();
       }
     });
   });
