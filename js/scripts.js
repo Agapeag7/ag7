@@ -308,6 +308,81 @@
     // ---------- MODE SOMBRE (toggle + localStorage) ----------
     const darkToggle = document.getElementById('darkModeToggle');
     const body = document.body;
+    const root = document.documentElement;
+
+    // ========== PERSONNALISATION DU THEME ==========
+    // Fonction pour appliquer les changements d'arrière-plan
+    function applyBackgroundTheme(theme) {
+      const isDarkMode = body.classList.contains('dark');
+      
+      if (!isDarkMode) {
+        // ===== MODE CLAIR =====
+        if (theme === 'light') {
+          // Blanc pur
+          root.style.setProperty('--bg-page', '#f1f5f9');
+          root.style.setProperty('--bg-container', '#ffffff');
+          root.style.setProperty('--card-bg', '#ffffff');
+          root.style.setProperty('--slate-50', '#f8fafc');
+          root.style.setProperty('--slate-100', '#f1f5f9');
+          root.style.setProperty('--text-primary', '#334155');
+          root.style.setProperty('--text-secondary', '#64748b');
+          root.style.setProperty('--border-light', '#e2e8f0');
+        } else if (theme === 'dim') {
+          // Gris moyen
+          root.style.setProperty('--bg-page', '#334155');
+          root.style.setProperty('--bg-container', '#1e293b');
+          root.style.setProperty('--card-bg', '#334155');
+          root.style.setProperty('--slate-50', '#475569');
+          root.style.setProperty('--slate-100', '#334155');
+          root.style.setProperty('--text-primary', '#f1f5f9');
+          root.style.setProperty('--text-secondary', '#cbd5e1');
+          root.style.setProperty('--border-light', '#475569');
+        } else if (theme === 'dark') {
+          // Très sombre
+          root.style.setProperty('--bg-page', '#0f172a');
+          root.style.setProperty('--bg-container', '#020617');
+          root.style.setProperty('--card-bg', '#1e293b');
+          root.style.setProperty('--slate-50', '#1e293b');
+          root.style.setProperty('--slate-100', '#1e293b');
+          root.style.setProperty('--text-primary', '#f1f5f9');
+          root.style.setProperty('--text-secondary', '#94a3b8');
+          root.style.setProperty('--border-light', '#1e293b');
+        }
+      } else {
+        // ===== MODE SOMBRE (body.dark est actif) =====
+        if (theme === 'light') {
+          // En mode sombre, "light" = gris clair/medium
+          root.style.setProperty('--bg-page', '#1e293b');
+          root.style.setProperty('--bg-container', '#334155');
+          root.style.setProperty('--card-bg', '#475569');
+          root.style.setProperty('--slate-50', '#64748b');
+          root.style.setProperty('--slate-100', '#475569');
+          root.style.setProperty('--text-primary', '#f1f5f9');
+          root.style.setProperty('--text-secondary', '#cbd5e1');
+          root.style.setProperty('--border-light', '#475569');
+        } else if (theme === 'dim') {
+          // En mode sombre, "dim" = plus sombre
+          root.style.setProperty('--bg-page', '#0f172a');
+          root.style.setProperty('--bg-container', '#020617');
+          root.style.setProperty('--card-bg', '#1e293b');
+          root.style.setProperty('--slate-50', '#1e293b');
+          root.style.setProperty('--slate-100', '#1e293b');
+          root.style.setProperty('--text-primary', '#e2e8f0');
+          root.style.setProperty('--text-secondary', '#94a3b8');
+          root.style.setProperty('--border-light', '#0f172a');
+        } else if (theme === 'dark') {
+          // En mode sombre, "dark" = ultra sombre (AMOLED)
+          root.style.setProperty('--bg-page', '#000000');
+          root.style.setProperty('--bg-container', '#0a0f1f');
+          root.style.setProperty('--card-bg', '#0f172a');
+          root.style.setProperty('--slate-50', '#1e293b');
+          root.style.setProperty('--slate-100', '#0f172a');
+          root.style.setProperty('--text-primary', '#ffffff');
+          root.style.setProperty('--text-secondary', '#a1aec7');
+          root.style.setProperty('--border-light', '#1e293b');
+        }
+      }
+    }
 
     // Appliquer le thème sauvegardé
     const savedTheme = localStorage.getItem('ag7-theme');
@@ -319,6 +394,10 @@
       if (darkToggle) darkToggle.checked = false;
     }
 
+    // Appliquer le thème d'arrière-plan sauvegardé au chargement
+    const savedBgThemeOnLoad = localStorage.getItem('ag7-bg-theme') || 'light';
+    applyBackgroundTheme(savedBgThemeOnLoad);
+
     // Écouter le toggle
     if (darkToggle) {
       darkToggle.addEventListener('change', (e) => {
@@ -329,6 +408,9 @@
           body.classList.remove('dark');
           localStorage.setItem('ag7-theme', 'light');
         }
+        // Réappliquer le thème d'arrière-plan choisi après le changement de mode dark
+        const savedBgTheme = localStorage.getItem('ag7-bg-theme') || 'light';
+        applyBackgroundTheme(savedBgTheme);
       });
     }
 
@@ -336,7 +418,6 @@
     const themeModal = document.getElementById('themeModal');
     const customizeThemeBtn = document.getElementById('customizeThemeBtn');
     const customizeThemeClose = document.querySelector('.customize-theme-close');
-    const root = document.documentElement;
 
     // Sélecteurs de taille de police
     const fontSizes = document.querySelectorAll('.font-sizes-selector span');
@@ -455,9 +536,7 @@
       bgOptions.bg2.classList.remove('active');
       bgOptions.bg3.classList.remove('active');
       
-      body.style.backgroundColor = '#f8fafc';
-      root.style.setProperty('--bg-page', '#f1f5f9');
-      root.style.setProperty('--card-bg', '#ffffff');
+      applyBackgroundTheme('light');
       localStorage.setItem('ag7-bg-theme', 'light');
     });
 
@@ -466,9 +545,7 @@
       bgOptions.bg2.classList.add('active');
       bgOptions.bg3.classList.remove('active');
       
-      body.style.backgroundColor = '#1e293b';
-      root.style.setProperty('--bg-page', '#334155');
-      root.style.setProperty('--card-bg', '#1e293b');
+      applyBackgroundTheme('dim');
       localStorage.setItem('ag7-bg-theme', 'dim');
     });
 
@@ -477,18 +554,18 @@
       bgOptions.bg2.classList.remove('active');
       bgOptions.bg3.classList.add('active');
       
-      body.style.backgroundColor = '#0f172a';
-      root.style.setProperty('--bg-page', '#0f172a');
-      root.style.setProperty('--card-bg', '#1e293b');
+      applyBackgroundTheme('dark');
       localStorage.setItem('ag7-bg-theme', 'dark');
     });
 
-    // Appliquer le thème d'arrière-plan sauvegardé
-    const savedBgTheme = localStorage.getItem('ag7-bg-theme');
-    if (savedBgTheme === 'dim') {
-      bgOptions.bg2?.click();
-    } else if (savedBgTheme === 'dark') {
-      bgOptions.bg3?.click();
+    // Appliquer le thème d'arrière-plan sauvegardé au chargement
+    const savedBgTheme = localStorage.getItem('ag7-bg-theme') || 'light';
+    const bgIndex = { light: 0, dim: 1, dark: 2 };
+    if (bgIndex[savedBgTheme] >= 0) {
+      [bgOptions.bg1, bgOptions.bg2, bgOptions.bg3].forEach((bg, i) => {
+        bg.classList.toggle('active', i === bgIndex[savedBgTheme]);
+      });
+      applyBackgroundTheme(savedBgTheme);
     }
 
     // ---------- QUELQUES INTERACTIONS SUPPLÉMENTAIRES (simulation) ----------
