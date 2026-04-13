@@ -311,6 +311,30 @@
     const root = document.documentElement;
 
     // ========== PERSONNALISATION DU THEME ==========
+    // Fonction pour calculer les couleurs actives dynamiquement selon le thème
+    function updateActiveColors(theme) {
+      const savedColorHue = localStorage.getItem('ag7-primary-hue') || '160';
+      const hue = parseInt(savedColorHue);
+      
+      if (!theme) {
+        theme = localStorage.getItem('ag7-bg-theme') || 'light';
+      }
+      
+      if (theme === 'light') {
+        // Light theme: teinte claire de la couleur primaire
+        root.style.setProperty('--active-bg', `hsl(${hue}, 50%, 88%)`);
+        root.style.setProperty('--active-text-color', `hsl(${hue}, 50%, 25%)`);
+      } else if (theme === 'dim') {
+        // Dim theme: très sombre avec saturation élevée pour rester visible
+        root.style.setProperty('--active-bg', `hsl(${hue}, 50%, 22%)`);
+        root.style.setProperty('--active-text-color', '#ffffff');
+      } else if (theme === 'dark') {
+        // Dark theme: ultra sombre sur fond noir AMOLED
+        root.style.setProperty('--active-bg', `hsl(${hue}, 55%, 12%)`);
+        root.style.setProperty('--active-text-color', '#ffffff');
+      }
+    }
+
     // Fonction pour appliquer les changements d'arrière-plan
     function applyBackgroundTheme(theme) {
         const isDarkMode = body.classList.contains('dark');
@@ -326,8 +350,6 @@
             root.style.setProperty('--card-bg', '#ffffff');
             root.style.setProperty('--sidebar-bg', '#ffffff');
             root.style.setProperty('--hover-bg', '#f8fafc');
-            root.style.setProperty('--active-bg', '#e0f2fe');
-            root.style.setProperty('--active-text-color', '#334155');
             root.style.setProperty('--emerald-50', '#d1fae5');
             root.style.setProperty('--emerald-100', '#a7f3d0');
             root.style.setProperty('--slate-50', '#f8fafc');
@@ -347,8 +369,6 @@
             root.style.setProperty('--card-bg', '#1e293b');
             root.style.setProperty('--sidebar-bg', '#0f172a');
             root.style.setProperty('--hover-bg', '#334155');
-            root.style.setProperty('--active-bg', '#475569');
-            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a3a3a');
             root.style.setProperty('--emerald-100', '#1a3a3a');
             root.style.setProperty('--slate-50', '#1e293b');
@@ -368,8 +388,6 @@
             root.style.setProperty('--card-bg', '#0f172a');
             root.style.setProperty('--sidebar-bg', '#000000');
             root.style.setProperty('--hover-bg', '#1e293b');
-            root.style.setProperty('--active-bg', '#1e293b');
-            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a2e2e');
             root.style.setProperty('--emerald-100', '#1a2e2e');
             root.style.setProperty('--slate-50', '#0f172a');
@@ -391,8 +409,6 @@
             root.style.setProperty('--card-bg', '#1e293b');
             root.style.setProperty('--sidebar-bg', '#0f172a');
             root.style.setProperty('--hover-bg', '#334155');
-            root.style.setProperty('--active-bg', '#475569');
-            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a3a3a');
             root.style.setProperty('--emerald-100', '#1a3a3a');
             root.style.setProperty('--slate-50', '#1e293b');
@@ -411,8 +427,6 @@
             root.style.setProperty('--card-bg', '#0f172a');
             root.style.setProperty('--sidebar-bg', '#000000');
             root.style.setProperty('--hover-bg', '#1e293b');
-            root.style.setProperty('--active-bg', '#2a2a3b');
-            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a2e2e');
             root.style.setProperty('--emerald-100', '#1a2e2e');
             root.style.setProperty('--slate-50', '#0f172a');
@@ -432,8 +446,6 @@
             root.style.setProperty('--card-bg', '#0a0a0a');
             root.style.setProperty('--sidebar-bg', '#000000');
             root.style.setProperty('--hover-bg', '#1a1a1a');
-            root.style.setProperty('--active-bg', '#1a1a2a');
-            root.style.setProperty('--active-text-color', '#ffffff');
             root.style.setProperty('--emerald-50', '#1a2e2e');
             root.style.setProperty('--emerald-100', '#1a2e2e');
             root.style.setProperty('--slate-50', '#0a0a0a');
@@ -445,6 +457,9 @@
             root.style.setProperty('--border-light', '#1e293b');
             }
         }
+        
+        // Calculer et appliquer les couleurs actives dynamiquement
+        updateActiveColors(theme);
     }
 
     // Fonction pour restaurer la couleur primaire personnalisée
@@ -456,6 +471,9 @@
         root.style.setProperty('--emerald-100', `hsl(${hue}, 84%, 97%)`);
         root.style.setProperty('--emerald-600', `hsl(${hue}, 84%, 50%)`);
         root.style.setProperty('--emerald-700', `hsl(${hue}, 84%, 40%)`);
+        // Recalculer les couleurs actives avec la nouvelle teinte
+        const currentTheme = localStorage.getItem('ag7-bg-theme') || 'light';
+        updateActiveColors(currentTheme);
       }
     }
 
@@ -689,6 +707,52 @@
           addMessage(messageInput.value, true);
         }
       });
+    }
+
+    // ========== GESTION DES ACTIONS DE MESSAGE ==========
+    function initMessageActions() {
+      const messageActionBtns = document.querySelectorAll('.message-action-btn');
+      
+      messageActionBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const action = btn.getAttribute('data-action');
+          const messageBubble = btn.closest('.message-bubble');
+          const messageText = messageBubble.textContent.split('\n')[0].trim();
+          
+          if (action === 'reply') {
+            // Répondre : ajouter la réponse au input
+            const messageInput = document.querySelector('.conversation-form-input');
+            if (messageInput) {
+              messageInput.value = `> ${messageText}\n\n`;
+              messageInput.focus();
+            }
+          } else if (action === 'share') {
+            // Partager
+            alert(`Partager le message : "${messageText}"`);
+            // À implémenter : modale de partage ou copier le lien
+          } else if (action === 'transfer') {
+            // Transférer dans une autre conversation
+            const transferTo = prompt('Transférer vers quelle conversation ?');
+            if (transferTo) {
+              alert(`Message transféré à : ${transferTo}`);
+              // À implémenter : logique de transfert
+            }
+          }
+        });
+      });
+    }
+
+    // Initialiser les actions au chargement
+    initMessageActions();
+
+    // Réinit après chaque ajout de message
+    const originalAddMessage = window.addMessage;
+    if (window.addMessage) {
+      window.addMessage = function(text, isMe) {
+        originalAddMessage(text, isMe);
+        initMessageActions();
+      };
     }
 
     // Clic sur conversations (simulation)
