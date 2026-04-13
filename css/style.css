@@ -597,6 +597,109 @@
       transform: scale(1.02);
     }
 
+    /* ----- FORMULAIRE DE MESSAGE (NOUVEAU) ----- */
+    .conversation-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .conversation-form-button {
+      background: var(--emerald-500);
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 18px;
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+
+    .conversation-form-button:hover {
+      background: var(--emerald-600);
+      transform: scale(1.05);
+    }
+
+    .conversation-form-button img,
+    .conversation-form-button i {
+      width: 20px;
+      height: 20px;
+    }
+
+    .conversation-form-group {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      background: var(--slate-50);
+      border: 1px solid var(--border-light);
+      border-radius: 24px;
+      padding: 8px 12px;
+      transition: var(--transition);
+    }
+
+    .conversation-form-group:focus-within {
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .conversation-form-input {
+      background-color: transparent;
+      border: none;
+      outline: transparent;
+      padding: 8px 8px;
+      font: inherit;
+      font-size: 14px;
+      resize: none;
+      width: 100%;
+      display: block;
+      line-height: 1.5;
+      max-height: calc(20px + ((14px * 2) * 6));
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .conversation-form-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .conversation-form-record {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .conversation-form-record:hover {
+      color: var(--emerald-500);
+    }
+
+    .conversation-form-record img,
+    .conversation-form-record i {
+      width: 20px;
+      height: 20px;
+    }
+
+    .conversation-form-submit {
+      background: var(--emerald-500);
+    }
+
     /* ----- VUES GENERIQUES (Contacts, Notifications, Profil, Paramètres) ----- */
     .view-header {
       display: flex;
@@ -786,6 +889,7 @@
       .nav-item a i { font-size: 18px; }
       .nav-item a span { display: none; }
       .nav-item a::after { display: none; }
+      .nav-item.active a { box-shadow: inset 0 4px 0 var(--emerald-500), none; }
       .chat-layout { flex-direction: column; }
       .chat-sidebar-list { width: 100%; border-right: none; padding-right: 0; display: block; }
       .chat-sidebar-list.hidden { display: none; }

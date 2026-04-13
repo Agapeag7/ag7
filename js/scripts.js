@@ -141,9 +141,17 @@
 
     // ---------- QUELQUES INTERACTIONS SUPPLÉMENTAIRES (simulation) ----------
     // Rendre fonctionnel l'envoi de message (simulation)
-    const sendBtn = document.querySelector('.send-btn');
-    const messageInput = document.querySelector('.message-input-area textarea');
+    const sendBtn = document.querySelector('.conversation-form-submit');
+    const messageInput = document.querySelector('.conversation-form-input');
     const messagesContainer = document.querySelector('.messages-container');
+
+    // Auto-resize du textarea
+    if (messageInput) {
+      messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      });
+    }
 
     if (sendBtn && messageInput && messagesContainer) {
       function addMessage(text, isMe = true) {
@@ -154,6 +162,7 @@
         messagesContainer.appendChild(bubble);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         messageInput.value = '';
+        messageInput.style.height = 'auto';
       }
 
       sendBtn.addEventListener('click', () => addMessage(messageInput.value, true));
