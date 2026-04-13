@@ -86,9 +86,18 @@
       transition: all 0.2s ease;
     }
 
-    /* Thèmes dim/dark sans body.dark */
+    /* Thèmes dim/dark sans body.dark - BOTH Dim ET Dark avec assombrissement */
     [data-theme="dim"] .nav-item.active a,
-    [data-theme="dark"] .nav-item.active a {
+    [data-theme="dim"] .nav-item.active a i,
+    [data-theme="dim"] .nav-item.active a span {
+      background: var(--active-bg) !important;
+      color: var(--emerald-500) !important;
+      box-shadow: inset 4px 0 0 var(--emerald-500) !important;
+    }
+
+    [data-theme="dark"] .nav-item.active a,
+    [data-theme="dark"] .nav-item.active a i,
+    [data-theme="dark"] .nav-item.active a span {
       background: var(--active-bg) !important;
       color: var(--emerald-500) !important;
       box-shadow: inset 4px 0 0 var(--emerald-500) !important;
@@ -99,7 +108,7 @@
       border-left: 4px solid var(--emerald-500);
     }
 
-    /* Conversation sélectionnée avec accent discret - MODES SOMBRES UNIQUEMENT */
+    /* Conversation sélectionnée avec accent discret - MODES SOMBRES (Dim + Dark) */
     body.dark .conversation-item-chat.active,
     [data-theme="dim"] .conversation-item-chat.active,
     [data-theme="dark"] .conversation-item-chat.active {
