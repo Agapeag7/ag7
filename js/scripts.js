@@ -880,8 +880,8 @@ function renderFeed() {
         ${post.image ? `<img src="${post.image}" class="post-image" alt="image post">` : ''}
       </div>
       <div class="post-stats">
-        <span><i class="far fa-heart"></i> ${post.likes} likes</span>
-        <span><i class="far fa-comment"></i> ${post.comments.length} commentaires</span>
+        <span>${post.likes} likes</span>
+        <span>${post.comments.length} commentaires</span>
       </div>
       <div class="post-actions">
         <button class="post-action-btn like-btn ${post.liked ? 'liked' : ''}"><i class="far fa-heart"></i> Like</button>
