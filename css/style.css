@@ -94,7 +94,12 @@
       box-shadow: inset 4px 0 0 var(--emerald-500) !important;
     }
 
-    /* Conversation sélectionnée avec accent discret */
+    .conversation-item-chat.active {
+      background: var(--emerald-100);
+      border-left: 4px solid var(--emerald-500);
+    }
+
+    /* Conversation sélectionnée avec accent discret - MODES SOMBRES UNIQUEMENT */
     body.dark .conversation-item-chat.active,
     [data-theme="dim"] .conversation-item-chat.active,
     [data-theme="dark"] .conversation-item-chat.active {
