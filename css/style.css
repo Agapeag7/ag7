@@ -173,6 +173,58 @@
       color: var(--text-secondary);
       font-size: 14px;
     }
+
+    .toggle-mode a {
+      color: var(--emerald-500);
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .toggle-mode a:hover {
+      color: var(--emerald-600);
+    }
+
+    #profile-pic-selector {
+      margin: 12px 0;
+    }
+
+    .profile-pic-option {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 14px;
+      border: 3px solid var(--border-light);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      background-size: cover;
+      background-position: center;
+      background-color: var(--bg-page);
+    }
+
+    .profile-pic-option:hover {
+      border-color: var(--emerald-500);
+      transform: scale(1.05);
+      box-shadow: 0 0 0 2px white, 0 0 0 3px var(--emerald-500);
+    }
+
+    .profile-pic-option.selected {
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 0 2px white, 0 0 0 4px var(--emerald-500);
+    }
+
+    #profile-pic-field label {
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+    }
     .toggle-mode a {
       color: var(--emerald-500);
       font-weight: 600;
@@ -981,6 +1033,9 @@
       font-size: 56px;
       color: white;
       box-shadow: var(--shadow-lg);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
 
     .settings-group {
@@ -1099,6 +1154,9 @@
   color: white;
   font-weight: bold;
   flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .create-post-header textarea {
   flex: 1;

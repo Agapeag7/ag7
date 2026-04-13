@@ -11,15 +11,68 @@
     const loginSubtitle = document.getElementById('login-subtitle');
     const toggleMessage = document.getElementById('toggle-message');
     const nameField = document.getElementById('name-field');
-    const emailInput = document.getElementById('auth-email');
+    const profilePicField = document.getElementById('profile-pic-field');
+    const profilePhotoInput = document.getElementById('profile-photo-input');
+    const photoUploadArea = document.getElementById('photo-upload-area');
+    const photoPreview = document.getElementById('photo-preview');
+    const photoUploadText = document.getElementById('photo-upload-text');
+    const usernameInput = document.getElementById('auth-username');
     const passwordInput = document.getElementById('auth-password');
     const nameInput = document.getElementById('signup-name');
 
     let isLoginMode = true;
+    let selectedProfilePhoto = null; // Stocke la photo en Base64
+
+    // Gestion du click du file input
+    photoUploadArea.addEventListener('click', () => {
+      profilePhotoInput.click();
+    });
+
+    // Quand l'utilisateur sélectionne un fichier
+    profilePhotoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          selectedProfilePhoto = event.target.result;
+          photoPreview.src = selectedProfilePhoto;
+          photoPreview.style.display = 'block';
+          photoUploadText.textContent = '✓ Photo sélectionnée';
+          photoUploadText.style.color = 'var(--emerald-500)';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Drag & drop
+    photoUploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      photoUploadArea.style.background = 'var(--emerald-100)';
+    });
+
+    photoUploadArea.addEventListener('dragleave', () => {
+      photoUploadArea.style.background = 'var(--hover-bg)';
+    });
+
+    photoUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      photoUploadArea.style.background = 'var(--hover-bg)';
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        profilePhotoInput.files = files;
+        const event = new Event('change', { bubbles: true });
+        profilePhotoInput.dispatchEvent(event);
+      }
+    });
 
     // Bascule connexion / inscription
     function setAuthMode(mode) {
       isLoginMode = mode;
+      selectedProfilePhoto = null;
+      profilePhotoInput.value = '';
+      photoPreview.style.display = 'none';
+      photoUploadText.textContent = 'Cliquez pour uploader une photo';
+      photoUploadText.style.color = 'var(--text-secondary)';
       if (mode) {
         loginTitle.textContent = 'Se connecter';
         loginSubtitle.textContent = 'Accédez à votre espace de discussion';
@@ -27,6 +80,7 @@
         toggleMessage.textContent = 'Pas encore de compte ?';
         toggleAuthLink.textContent = 'Créer un compte';
         nameField.style.display = 'none';
+        profilePicField.style.display = 'none';
         if (nameInput) nameInput.required = false;
       } else {
         loginTitle.textContent = 'Créer un compte';
@@ -35,6 +89,7 @@
         toggleMessage.textContent = 'Déjà un compte ?';
         toggleAuthLink.textContent = 'Se connecter';
         nameField.style.display = 'block';
+        profilePicField.style.display = 'block';
         if (nameInput) nameInput.required = true;
       }
     }
@@ -47,19 +102,31 @@
     // Gestion connexion simulée
     authForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const email = emailInput.value.trim();
+      const username = usernameInput.value.trim();
       const password = passwordInput.value;
-      if (!email || !password) {
+      if (!username || !password) {
         alert('Veuillez remplir tous les champs');
         return;
       }
       if (!isLoginMode) {
         const name = nameInput.value.trim();
         if (!name) { alert('Le nom est requis'); return; }
+        // Mise à jour du profil lors de l'inscription
+        currentUserProfile.name = name;
+        currentUserProfile.username = '@' + username;
+        // Stocker la photo si elle existe, sinon générer les initiales
+        if (selectedProfilePhoto) {
+          currentUserProfile.profilePhoto = selectedProfilePhoto;
+        } else {
+          // Générer les initiales à partir du nom
+          const initials = name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
+          currentUserProfile.avatarInitials = initials;
+        }
       }
       // Connexion réussie
       loginSection.classList.add('hidden');
       appSection.classList.remove('hidden');
+      updateProfileUI();
       authForm.reset();
       setAuthMode(true);
     });
@@ -615,6 +682,7 @@ let currentUserProfile = {
   location: "Butembo, DRC",
   memberSince: "Janvier 2024",
   avatarInitials: "AG",
+  profilePhoto: null, // Peut contenir une photo en Base64
   postsCount: 12,
   followers: [
     { name: "Marie Lambert", username: "@marie_lam", avatar: "ML" },
@@ -644,10 +712,36 @@ function updateProfileUI() {
   document.querySelector(".profile-bio-text").innerText = currentUserProfile.bio;
   document.querySelector(".profile-location-date span:first-child").innerHTML = `<i class="fas fa-map-pin"></i> ${currentUserProfile.location}`;
   document.querySelector(".profile-location-date span:last-child").innerHTML = `<i class="fas fa-calendar-alt"></i> Membre depuis ${currentUserProfile.memberSince}`;
-  document.getElementById("profileAvatar").innerText = currentUserProfile.avatarInitials;
+  
+  // Afficher la photo ou les initiales
+  const profileAvatarEl = document.getElementById("profileAvatar");
+  if (currentUserProfile.profilePhoto) {
+    profileAvatarEl.style.backgroundImage = `url('${currentUserProfile.profilePhoto}')`;
+    profileAvatarEl.style.backgroundSize = 'cover';
+    profileAvatarEl.style.backgroundPosition = 'center';
+    profileAvatarEl.innerText = '';
+  } else {
+    profileAvatarEl.style.backgroundImage = 'none';
+    profileAvatarEl.innerText = currentUserProfile.avatarInitials;
+  }
+  
   document.getElementById("postsCount").innerText = currentUserProfile.postsCount;
   document.getElementById("followersCount").innerText = currentUserProfile.followers.length;
   document.getElementById("followingCount").innerText = currentUserProfile.following.length;
+
+  // Mettre à jour le mini-avatar du formulaire de création de post
+  const createPostAvatar = document.getElementById("createPostAvatar");
+  if (createPostAvatar) {
+    if (currentUserProfile.profilePhoto) {
+      createPostAvatar.style.backgroundImage = `url('${currentUserProfile.profilePhoto}')`;
+      createPostAvatar.style.backgroundSize = 'cover';
+      createPostAvatar.style.backgroundPosition = 'center';
+      createPostAvatar.innerText = '';
+    } else {
+      createPostAvatar.style.backgroundImage = 'none';
+      createPostAvatar.innerText = currentUserProfile.avatarInitials;
+    }
+  }
 
   // Générer grille des posts
   const grid = document.getElementById("profilePostsGrid");
