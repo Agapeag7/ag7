@@ -61,7 +61,7 @@
     <ul class="nav-menu">
       <li class="nav-item active" data-view="chat"><a href="#" data-title="Chat"><i class="fas fa-comment-dots"></i><span>Chat</span></a></li>
       <li class="nav-item" data-view="feed"><a href="#" data-title="Actualités"><i class="fas fa-newspaper"></i><span>Actus</span></a></li>
-      <li class="nav-item" data-view="contacts"><a href="#" data-title="Contacts"><i class="fas fa-address-book"></i><span>Contacts</span></a></li>
+      <li class="nav-item" data-view="contacts"><a href="#" data-title="Découvrir"><i class="fas fa-compass"></i><span>Découvrir</span></a></li>
       <li class="nav-item" data-view="notifications"><a href="#" data-title="Notifications"><i class="fas fa-bell"></i><span>Notifs</span></a></li>
       <li class="nav-item" data-view="profile"><a href="#" data-title="Profil"><i class="fas fa-user-circle"></i><span>Profil</span></a></li>
       <li class="nav-item" data-view="settings"><a href="#" data-title="Paramètres"><i class="fas fa-sliders-h"></i><span>Réglages</span></a></li>
@@ -178,39 +178,14 @@
       </div>
     </div>
 
-    <!-- ========== VUE CONTACTS ========== -->
+    <!-- ========== VUE DÉCOUVRIR (SUIVRE UTILISATEURS) ========== -->
     <div id="view-contacts" class="view">
       <div class="view-header">
-        <h2>Contacts</h2>
-        <button class="btn-primary"><i class="fas fa-user-plus"></i> Nouveau contact</button>
+        <h2>Découvrir</h2>
+        <input type="text" placeholder="Rechercher un utilisateur..." class="search-users-input" id="searchUsersInput" style="flex: 1; max-width: 300px;">
       </div>
-      <div class="list-card">
-        <div class="contact-avatar">ML</div>
-        <div style="flex:1"><strong style="font-size: 1.1rem;">Marie Lambert</strong><br><span style="color:var(--text-secondary);"><span class="status-dot online"></span>En ligne</span></div>
-        <div style="display: flex; gap: 16px;">
-          <i class="fas fa-comment-dots" style="color: var(--emerald-500); font-size: 20px; cursor: pointer;"></i>
-          <i class="fas fa-phone-alt" style="color: var(--text-secondary); font-size: 20px; cursor: pointer;"></i>
-        </div>
-      </div>
-      <div class="list-card">
-        <div class="contact-avatar">TD</div>
-        <div style="flex:1"><strong style="font-size: 1.1rem;">Thomas Dubois</strong><br><span style="color:var(--text-secondary);"><span class="status-dot offline"></span>Hors ligne</span></div>
-        <div style="display: flex; gap: 16px;">
-          <i class="fas fa-comment-dots" style="color: var(--emerald-500); font-size: 20px; cursor: pointer;"></i>
-        </div>
-      </div>
-      <div class="list-card">
-        <div class="contact-avatar">SC</div>
-        <div style="flex:1"><strong style="font-size: 1.1rem;">Sophie Caron</strong><br><span style="color:var(--text-secondary);"><span class="status-dot online"></span>En ligne</span></div>
-        <div style="display: flex; gap: 16px;">
-          <i class="fas fa-comment-dots" style="color: var(--emerald-500); font-size: 20px; cursor: pointer;"></i>
-          <i class="fas fa-video" style="color: var(--text-secondary); font-size: 20px; cursor: pointer;"></i>
-        </div>
-      </div>
-      <div class="list-card">
-        <div class="contact-avatar">AL</div>
-        <div style="flex:1"><strong style="font-size: 1.1rem;">Antoine Lefevre</strong><br><span style="color:var(--text-secondary);"><span class="status-dot offline"></span>Vue il y a 2h</span></div>
-        <i class="fas fa-ellipsis-h" style="color: var(--text-secondary); font-size: 20px; cursor: pointer;"></i>
+      <div class="discover-grid" id="discoverGrid">
+        <!-- Cartes utilisateurs générées dynamiquement -->
       </div>
     </div>
 

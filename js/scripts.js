@@ -102,6 +102,11 @@
           item.classList.remove('active');
         }
       });
+      
+      // Rendu spécifique par vue
+      if (viewId === 'contacts') {
+        renderDiscoverGrid();
+      }
     }
 
     // Écouteurs sur les liens de navigation
@@ -251,6 +256,72 @@ if (addStoryBtn) {
     const caption = prompt('Légende de votre story :', 'Nouvelle story !');
     openStory(fakeStoryUrl, caption || '');
     // Optionnel : ajouter visuellement la story dans la liste (simulation)
+  });
+}
+
+// ========== GESTION DÉCOUVRIR (UTILISATEURS) ==========
+let followingUsers = new Set();
+let suggestedUsers = [
+  { id: 1, name: 'Marie Lambert', username: '@marie_lambert', bio: 'UX Designer, Coffee addict ☕' },
+  { id: 2, name: 'Thomas Dubois', username: '@thomas.dubois', bio: 'Frontend Dev | React | Node.js' },
+  { id: 3, name: 'Sophie Caron', username: '@sophie_caron', bio: 'Product Manager | Innovation enthusiast' },
+  { id: 4, name: 'Antoine Lefevre', username: '@antoine.lf', bio: 'Digital Strategist | Growth Hacker' },
+  { id: 5, name: 'Claire Moreau', username: '@claire_moreau', bio: 'Graphic Designer | Brand identity' },
+  { id: 6, name: 'Julien Martin', username: '@julien.martin', bio: 'DevOps Engineer | Cloud Architecture' },
+  { id: 7, name: 'Lucie Bernard', username: '@lucie_bernard', bio: 'Marketing Lead | Data enthusiast' },
+  { id: 8, name: 'Marc Renault', username: '@marc_renault', bio: 'Business Analyst | Process Optimization' }
+];
+
+function renderDiscoverGrid() {
+  const discoverGrid = document.getElementById('discoverGrid');
+  if (!discoverGrid) return;
+  
+  discoverGrid.innerHTML = '';
+  suggestedUsers.forEach(user => {
+    const isFollowing = followingUsers.has(user.id);
+    const userCard = document.createElement('div');
+    userCard.className = 'discover-card';
+    userCard.innerHTML = `
+      <div class="discover-avatar">${user.name.split(' ').map(n => n[0]).join('')}</div>
+      <h3>${escapeHtml(user.name)}</h3>
+      <div class="discover-username">${escapeHtml(user.username)}</div>
+      <div class="discover-bio">${escapeHtml(user.bio)}</div>
+      <button class="discover-follow-btn ${isFollowing ? 'following' : ''}">
+        ${isFollowing ? '<i class="fas fa-check"></i> Suivi' : '<i class="fas fa-user-plus"></i> Suivre'}
+      </button>
+    `;
+    
+    const followBtn = userCard.querySelector('.discover-follow-btn');
+    followBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isFollowing) {
+        followingUsers.delete(user.id);
+      } else {
+        followingUsers.add(user.id);
+      }
+      renderDiscoverGrid();
+    });
+    
+    discoverGrid.appendChild(userCard);
+  });
+}
+
+// Gestion de la recherche d'utilisateurs
+const searchUsersInput = document.getElementById('searchUsersInput');
+if (searchUsersInput) {
+  searchUsersInput.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const discoverGrid = document.getElementById('discoverGrid');
+    const cards = discoverGrid.querySelectorAll('.discover-card');
+    
+    cards.forEach(card => {
+      const name = card.querySelector('h3').textContent.toLowerCase();
+      const username = card.querySelector('.discover-username').textContent.toLowerCase();
+      const bio = card.querySelector('.discover-bio').textContent.toLowerCase();
+      
+      const matches = name.includes(query) || username.includes(query) || bio.includes(query);
+      card.style.display = matches ? '' : 'none';
+    });
   });
 }
 
@@ -412,6 +483,9 @@ if (publishBtn) {
 
 // Initialisation du feed
 renderFeed();
+
+// Initialisation de la grille découvrir
+renderDiscoverGrid();
 
 // ========== PROFIL AVEC FOLLOWERS (DONNÉES SIMULÉES) ==========
 let currentUserProfile = {
