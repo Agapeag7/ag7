@@ -93,6 +93,27 @@
       padding: 48px 40px;
       box-shadow: var(--shadow-lg);
       border: 1px solid var(--border-light);
+      max-height: 90vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    /* Scrollbar personnalisée pour Chrome/Edge */
+    .login-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .login-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .login-container::-webkit-scrollbar-thumb {
+      background: var(--slate-300);
+      border-radius: 8px;
+    }
+
+    .login-container::-webkit-scrollbar-thumb:hover {
+      background: var(--slate-400);
     }
     .login-header {
       text-align: center;
