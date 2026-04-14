@@ -18,7 +18,10 @@ CREATE TABLE IF NOT EXISTS utilisateurs (
     user_password VARCHAR(255) NOT NULL,
     user_bio VARCHAR(500) NULL,
     user_location VARCHAR(100) NULL,
-    user_photo_url LONGTEXT NULL COMMENT 'Base64 ou URL',
+    user_photo_url LONGTEXT NULL COMMENT 'Photo de profil - Base64 ou URL',
+    user_cover_photo_url LONGTEXT NULL COMMENT 'Photo de couverture - Base64 ou URL',
+    user_photo_updated_at DATETIME NULL COMMENT 'Dernière mise à jour de la photo de profil',
+    user_cover_updated_at DATETIME NULL COMMENT 'Dernière mise à jour de la photo de couverture',
     user_member_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_posts_count INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -26,6 +29,27 @@ CREATE TABLE IF NOT EXISTS utilisateurs (
     
     INDEX idx_user_username (user_username),
     INDEX idx_user_created (created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ==============================================================================
+-- TABLE 1.5: PHOTO_UTILISATEUR (USER_PHOTO_HISTORY) - OPTIONAL
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS user_photos (
+    photo_id INT AUTO_INCREMENT PRIMARY KEY,
+    photo_user_id INT NOT NULL,
+    photo_type ENUM('profile', 'cover') NOT NULL COMMENT 'Type de photo: profil ou couverture',
+    photo_url LONGTEXT NOT NULL COMMENT 'Photo - Base64 ou URL',
+    photo_mime_type VARCHAR(50) NULL COMMENT 'Type MIME de l\'image',
+    photo_size INT NULL COMMENT 'Taille en bytes',
+    is_current BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Photo actuellement utilisée',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (photo_user_id) REFERENCES utilisateurs(user_id) ON DELETE CASCADE,
+    INDEX idx_photo_user (photo_user_id),
+    INDEX idx_photo_type (photo_type),
+    INDEX idx_photo_created (created_at DESC),
+    INDEX idx_photo_current (is_current)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -269,6 +293,49 @@ CREATE TABLE IF NOT EXISTS vues_stories (
 
 
 -- ==============================================================================
+-- PROCÉDURE STOCKÉE - Gestion des photos utilisateur
+-- ==============================================================================
+
+-- PROCÉDURE: Ajouter une photo utilisateur (profil ou couverture)
+DELIMITER $$
+CREATE PROCEDURE sp_add_user_photo(
+    IN p_user_id INT,
+    IN p_photo_type ENUM('profile', 'cover'),
+    IN p_photo_url LONGTEXT,
+    IN p_photo_mime_type VARCHAR(50),
+    IN p_photo_size INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Marquer les anciennes photos du même type comme non-courantes
+    UPDATE user_photos 
+    SET is_current = FALSE 
+    WHERE photo_user_id = p_user_id 
+    AND photo_type = p_photo_type;
+    
+    -- Insérer la nouvelle photo
+    INSERT INTO user_photos (photo_user_id, photo_type, photo_url, photo_mime_type, photo_size, is_current)
+    VALUES (p_user_id, p_photo_type, p_photo_url, p_photo_mime_type, p_photo_size, TRUE);
+    
+    -- Mettre à jour le timestamp dans la table utilisateurs
+    IF p_photo_type = 'profile' THEN
+        UPDATE utilisateurs SET user_photo_updated_at = CURRENT_TIMESTAMP WHERE user_id = p_user_id;
+    ELSE
+        UPDATE utilisateurs SET user_cover_updated_at = CURRENT_TIMESTAMP WHERE user_id = p_user_id;
+    END IF;
+    
+    COMMIT;
+END$$
+DELIMITER ;
+
+-- ==============================================================================
 -- TRIGGERS - Gestion des compteurs dénormalisés
 -- ==============================================================================
 
@@ -453,6 +520,12 @@ INSERT INTO utilisateurs (user_name, user_username, user_password, user_bio, use
 ('Thomas Dubois', 'thomas_dubois', '$2y$10$example_hash_password', 'Frontend Dev | React | Node.js', 'Lyon, France', NOW()),
 ('Sophie Caron', 'sophie_caron', '$2y$10$example_hash_password', 'Product Manager | Innovation enthusiast', 'Marseille, France', NOW()),
 ('Antoine Lefevre', 'antoine_lf', '$2y$10$example_hash_password', 'Digital Strategist | Growth Hacker', 'London, UK', NOW());
+
+-- Insérer les photos de profil et couverture via la procédure stockée
+CALL sp_add_user_photo(1, 'profile', 'data:image/png;base64,...', 'image/png', 25600);
+CALL sp_add_user_photo(1, 'cover', 'data:image/png;base64,...', 'image/png', 51200);
+CALL sp_add_user_photo(2, 'profile', 'data:image/jpeg;base64,...', 'image/jpeg', 30720);
+CALL sp_add_user_photo(2, 'cover', 'data:image/jpeg;base64,...', 'image/jpeg', 61440);
 
 -- Insérer les paramètres de thème par défaut pour chaque utilisateur
 INSERT INTO parametres_theme (settings_user_id, settings_hue, settings_bg_theme, settings_fontSize, settings_dark_mode)
