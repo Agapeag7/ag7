@@ -1088,8 +1088,9 @@ let currentImageIndex = 0;
 
 // Track carousel state per post
 let postImageIndices = {};
+let lastSlideDirection = 'next';  // 'next' or 'prev' to track slide direction
 
-function renderFeed() {
+function renderFeed(postIdToAnimate = null) {
   if (!feedContainer) return;
   feedContainer.innerHTML = '';
   posts.forEach(post => {
@@ -1112,12 +1113,13 @@ function renderFeed() {
     
     if (images.length > 0) {
       const currentImage = images[currentImageIdx];
+      const slideDirection = postIdToAnimate === post.id ? lastSlideDirection : 'next';
       const imageNavigation = images.length > 1 ? `
         <div class="post-image-container">
           <button class="feed-image-prev" data-id="${post.id}" ${currentImageIdx === 0 ? 'style="opacity: 0.3; cursor: default;"' : ''}>
             <i class="fas fa-chevron-left"></i>
           </button>
-          <img src="${currentImage}" class="post-image" alt="image post ${currentImageIdx + 1}">
+          <img src="${currentImage}" class="post-image" data-slide-direction="${slideDirection}" alt="image post ${currentImageIdx + 1}">
           <button class="feed-image-next" data-id="${post.id}" ${currentImageIdx === images.length - 1 ? 'style="opacity: 0.3; cursor: default;"' : ''}>
             <i class="fas fa-chevron-right"></i>
           </button>
@@ -1188,11 +1190,11 @@ function attachPostEvents() {
       const post = posts.find(p => p.id === postId);
       if (post && post.images && postImageIndices[postId] < post.images.length - 1) {
         const imgElement = btn.parentElement.querySelector('.post-image');
-        // Exit animation for old image (slide out left), then update and slide in from right
+        lastSlideDirection = 'next';
         imgElement.style.animation = 'slideOutLeft 0.5s ease-in-out forwards';
         setTimeout(() => {
           postImageIndices[postId]++;
-          renderFeed();
+          renderFeed(postId);
         }, 500);
       }
     });
@@ -1204,11 +1206,12 @@ function attachPostEvents() {
       const postId = parseInt(btn.dataset.id);
       if (postImageIndices[postId] > 0) {
         const imgElement = btn.parentElement.querySelector('.post-image');
-        // Exit animation for old image (slide out right), then update and slide in from left
+        lastSlideDirection = 'prev';
+        lastSlideDirection = 'prev';
         imgElement.style.animation = 'slideOutRight 0.5s ease-in-out forwards';
         setTimeout(() => {
           postImageIndices[postId]--;
-          renderFeed();
+          renderFeed(postId);
         }, 500);
       }
     });

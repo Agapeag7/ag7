@@ -2938,6 +2938,10 @@ body.dark .comment-input input::placeholder {
   animation: slideInRight 0.5s ease-in-out;
 }
 
+.post-image-container .post-image[data-slide-direction="prev"] {
+  animation: slideInLeft 0.5s ease-in-out;
+}
+
  /* Responsive */
 @media (max-width: 768px) {
     .app-wrapper { flex-direction: column; height: 100vh; margin: 0; border-radius: 0; }
