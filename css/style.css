@@ -1762,8 +1762,18 @@ body.dark .post-action-btn.liked {
 }
 
 body.dark .comment-input input {
-  color: #ffffff;
-  background: var(--card-bg);
+  color: #ffffff !important;
+  background: var(--card-bg) !important;
+}
+
+[data-theme="dim"] .comment-input input {
+  color: #ffffff !important;
+  background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .comment-input input {
+  color: #ffffff !important;
+  background: var(--card-bg) !important;
 }
 
 .comment-input input::placeholder {
@@ -1771,7 +1781,12 @@ body.dark .comment-input input {
 }
 
 body.dark .comment-input input::placeholder {
-  color: #94a3b8;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dim"] .comment-input input::placeholder,
+[data-theme="dark"] .comment-input input::placeholder {
+  color: #cbd5e1 !important;
 }
 
 .comment-input button {
@@ -1781,6 +1796,39 @@ body.dark .comment-input input::placeholder {
   border-radius: 30px;
   padding: 8px 20px;
   cursor: pointer;
+}
+
+.new-comment-input {
+  flex: 1;
+  background: var(--slate-50);
+  border: 1px solid var(--border-light);
+  border-radius: 30px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+body.dark .new-comment-input {
+  color: #ffffff !important;
+  background: var(--card-bg) !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dim"] .new-comment-input,
+[data-theme="dark"] .new-comment-input {
+  color: #ffffff !important;
+  background: var(--card-bg) !important;
+  border-color: #334155 !important;
+}
+
+.new-comment-input::placeholder {
+  color: var(--text-secondary);
+}
+
+body.dark .new-comment-input::placeholder,
+[data-theme="dim"] .new-comment-input::placeholder,
+[data-theme="dark"] .new-comment-input::placeholder {
+  color: #cbd5e1 !important;
 }
 
 .anonymous-toggle {
@@ -2188,10 +2236,27 @@ body.dark .comment-input input::placeholder {
   color: var(--text-primary);
 }
 
+body.dark .modal-comment-input {
+  color: #ffffff !important;
+  background: var(--card-bg) !important;
+}
+
+[data-theme="dim"] .modal-comment-input,
+[data-theme="dark"] .modal-comment-input {
+  color: #ffffff !important;
+  background: var(--card-bg) !important;
+}
+
 .modal-comment-input:focus {
   outline: none;
   border-color: var(--emerald-500);
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+body.dark .modal-comment-input::placeholder,
+[data-theme="dim"] .modal-comment-input::placeholder,
+[data-theme="dark"] .modal-comment-input::placeholder {
+  color: #cbd5e1 !important;
 }
 
 .modal-anonymous-toggle {
