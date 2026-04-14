@@ -1784,10 +1784,19 @@ function openFollowModal(type) {
         <div class="follow-name">${user.name}</div>
         <div class="follow-username">${user.username}</div>
       </div>
-      <button class="btn-follow-sm">Suivre</button>
+      <button class="btn-follow-sm" data-username="${user.username}">Suivre</button>
     </div>
   `).join('');
   followModal.classList.remove("hidden");
+  
+  // Add event listeners for follow buttons
+  document.querySelectorAll('.btn-follow-sm').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      btn.classList.toggle('following');
+      btn.textContent = btn.classList.contains('following') ? 'Abonné' : 'Suivre';
+    });
+  });
 }
 
 document.querySelectorAll(".stat-item").forEach(stat => {

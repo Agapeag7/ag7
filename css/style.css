@@ -2676,6 +2676,41 @@ body.dark .comment-input input::placeholder {
   color: var(--text-secondary);
 }
 
+.btn-follow-sm {
+  background: var(--emerald-500);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-follow-sm:hover {
+  background: var(--emerald-600);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(4, 120, 87, 0.3);
+}
+
+.btn-follow-sm:active {
+  transform: translateY(0);
+}
+
+.btn-follow-sm.following {
+  background: var(--border-light);
+  color: var(--text-primary);
+  border: 1px solid var(--slate-300);
+}
+
+.btn-follow-sm.following:hover {
+  background: var(--slate-200);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 /* ========== PERSONNALISATION DU THEME ========== */
 .customize-theme {
   background: rgba(0, 0, 0, 0.6);
