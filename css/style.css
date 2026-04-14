@@ -2469,18 +2469,25 @@ body.dark .comment-input input::placeholder {
 }
 
 /* ========== PROFIL AVEC FOLLOWERS ========== */
+.profile-cover-wrapper {
+  position: relative;
+  background: var(--bg-container);
+  margin: 0 -32px;
+}
+
 .profile-cover {
   position: relative;
-  height: 180px;
-  border-radius: 28px;
+  height: 280px;
   overflow: hidden;
-  margin: 0 -32px 70px;
+  background: linear-gradient(135deg, var(--slate-200), var(--slate-300));
 }
+
 .cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .change-cover-btn {
   position: absolute;
   bottom: 12px;
@@ -2498,9 +2505,11 @@ body.dark .comment-input input::placeholder {
   display: flex;
   justify-content: flex-start;
   align-items: flex-end;
-  margin: -60px -32px 0;
+  margin: -80px -32px 0;
   padding: 0 32px;
   gap: 20px;
+  position: relative;
+  z-index: 10;
 }
 .profile-avatar-large {
   width: 120px;
