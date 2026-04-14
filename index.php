@@ -243,7 +243,10 @@
       </div>
       
       <div class="profile-info-wrapper">
-        <div class="profile-avatar-large" id="profileAvatar">AG</div>
+        <div class="profile-avatar-wrapper">
+          <div class="profile-avatar-large" id="profileAvatar">AG</div>
+          <button class="change-profile-btn"><i class="fas fa-camera"></i></button>
+        </div>
         <div class="profile-actions">
           <button class="btn-primary edit-profile-btn"><i class="fas fa-pen"></i> Modifier le profil</button>
         </div>
