@@ -1028,7 +1028,7 @@ let posts = [
     id: 1,
     author: 'Design Team',
     avatar: 'DT',
-    content: "Les nouvelles maquettes de l'application Ag7 sont disponibles ! Support multi-images comme Instagram 🎨",
+    content: "Les nouvelles maquettes de l'application Ag7 sont disponibles ! Support multi-images comme Instagram",
     images: [
       'https://picsum.photos/id/20/600/600',
       'https://picsum.photos/id/21/600/600',
