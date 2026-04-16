@@ -3133,7 +3133,7 @@ body.dark .modal-comment-input::placeholder,
     .view-header { flex-wrap: wrap; }
     .view-header h2 { font-size: 24px; }
     .btn-primary { font-size: 12px; padding: 8px 16px; }
-
+    .profile-posts-grid { grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 24px; }
     .discover-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 
     .nav-item.active a {
