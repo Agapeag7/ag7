@@ -1875,11 +1875,24 @@ function getPhotoURL(filename) {
 // Charger le profil réel de l'utilisateur connecté depuis le serveur
 async function loadCurrentProfile() {
   try {
-    const response = await fetch(window.location.href + '?action=getCurrentProfile');
-    if (!response.ok) return false;
+    const formData = new FormData();
+    formData.append('action', 'getCurrentProfile');
+    
+    const response = await fetch(window.location.href, {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      console.error('Erreur HTTP:', response.status);
+      return false;
+    }
     
     const result = await response.json();
-    if (!result.success) return false;
+    if (!result.success) {
+      console.error('Erreur serveur:', result.message);
+      return false;
+    }
     
     const profile = result.profile;
     
@@ -1888,6 +1901,7 @@ async function loadCurrentProfile() {
     currentUserProfile.username = '@' + (profile.user_username || "user");
     currentUserProfile.bio = profile.user_bio || "Pas de bio";
     currentUserProfile.location = profile.user_location || "Localisation inconnue";
+    currentUserProfile.memberSince = profile.user_created_at ? new Date(profile.user_created_at).toLocaleDateString('fr-FR', {year: 'numeric', month: 'long'}) : "Janvier 2024";
     currentUserProfile.avatarInitials = profile.user_name
       ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
       : 'U';
@@ -1895,17 +1909,16 @@ async function loadCurrentProfile() {
     // Définir la photo de profil
     if (profile.user_photo_url) {
       currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
+    } else {
+      currentUserProfile.profilePhoto = null;
     }
     
-    // Mettre à jour les stats
+    // Mettre à jour les stats RÉELLES de la base de données
     currentUserProfile.postsCount = profile.posts_count || 0;
-    currentUserProfile.followers = []; // Sera pour les noms des followers
-    currentUserProfile.following = []; // Sera pour les noms du following
-    
-    // Utilisé pour les counts
     currentUserProfile.followers_count = profile.followers_count || 0;
     currentUserProfile.following_count = profile.following_count || 0;
     
+    console.log('Profil chargé:', currentUserProfile);
     return true;
   } catch (e) {
     console.error('Erreur au chargement du profil:', e);
@@ -1914,28 +1927,18 @@ async function loadCurrentProfile() {
 }
 
 let currentUserProfile = {
-  name: "Alexandre Gauthier",
-  username: "@alex_gauthier",
-  bio: "Lead Designer & Front-end Dev. Passionné par les interfaces modernes et l'UX.",
-  location: "Butembo, DRC",
+  name: "Utilisateur",
+  username: "@user",
+  bio: "Pas de bio",
+  location: "Localisation inconnue",
   memberSince: "Janvier 2024",
-  avatarInitials: "AG",
-  profilePhoto: null, // URL complète de la photo (imgApp/filename.jpg)
-  postsCount: 12,
-  followers_count: 0, // Stats réelles du serveur
-  following_count: 0, // Stats réelles du serveur
-  followers: [
-    { name: "Marie Lambert", username: "@marie_lam", avatar: "ML" },
-    { name: "Thomas Dubois", username: "@thomas_d", avatar: "TD" },
-    { name: "Sophie Caron", username: "@sophie_c", avatar: "SC" },
-    { name: "Antoine Lefevre", username: "@antoine_l", avatar: "AL" }
-  ],
-  following: [
-    { name: "Design System", username: "@designsys", avatar: "DS" },
-    { name: "UI Daily", username: "@ui_daily", avatar: "UI" },
-    { name: "Paul Martin", username: "@paul_m", avatar: "PM" },
-    { name: "Claire Dupont", username: "@claire_d", avatar: "CD" }
-  ],
+  avatarInitials: "U",
+  profilePhoto: null,
+  postsCount: 0,
+  followers_count: 0,
+  following_count: 0,
+  followers: [],
+  following: [],
   posts: [
     { id: 1, image: "https://picsum.photos/id/10/400/300", likes: 34, comments: 5 },
     { id: 2, image: "https://picsum.photos/id/20/400/300", likes: 78, comments: 12 },
@@ -1965,12 +1968,13 @@ function updateProfileUI() {
     profileAvatarEl.innerText = currentUserProfile.avatarInitials;
   }
   
-  document.getElementById("postsCount").innerText = currentUserProfile.postsCount;
-  document.getElementById("followersCount").innerText = currentUserProfile.followers_count || currentUserProfile.followers.length;
-  document.getElementById("followingCount").innerText = currentUserProfile.following_count || currentUserProfile.following.length;
+  // AFFICHER LES VRAIES STATS DE LA BASE DE DONNÉES (pas fallback)
+  document.getElementById("postsCount").innerText = currentUserProfile.postsCount || 0;
+  document.getElementById("followersCount").innerText = currentUserProfile.followers_count || 0;
+  document.getElementById("followingCount").innerText = currentUserProfile.following_count || 0;
 
   // Mettre à jour le mini-avatar du formulaire de création de post
-  const createPostAvatar = document.getElementById("createPostAvatar");
+  const createPostAvatar = document.querySelector(".mini-avatar");
   if (createPostAvatar) {
     if (currentUserProfile.profilePhoto) {
       createPostAvatar.style.backgroundImage = `url('${currentUserProfile.profilePhoto}')`;
@@ -1983,20 +1987,10 @@ function updateProfileUI() {
     }
   }
 
-  // Générer grille des posts
+  // Grille des posts - À REMPLIR DYNAMIQUEMENT (pas de données statiques hardcodées)
   const grid = document.getElementById("profilePostsGrid");
   if (grid) {
-    grid.innerHTML = currentUserProfile.posts.map(post => `
-      <div class="grid-post-card">
-        <img src="${post.image}" class="grid-post-image" alt="post">
-        <div class="grid-post-info">
-          <div class="grid-post-stats">
-            <span><i class="far fa-heart"></i> ${post.likes}</span>
-            <span><i class="far fa-comment"></i> ${post.comments}</span>
-          </div>
-        </div>
-      </div>
-    `).join('');
+    grid.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">Aucune publication pour le moment</p>';
   }
 }
 
