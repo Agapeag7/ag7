@@ -1321,10 +1321,8 @@ class Router {
         $profile['followers_count'] = $follow->getFollowersCount($_SESSION['user_id']);
         $profile['following_count'] = $follow->getFollowingCount($_SESSION['user_id']);
         
-        // Construire l'URL complète de la photo
-        if (!empty($profile['user_photo_url'])) {
-            $profile['user_photo_url'] = 'imgApp/' . $profile['user_photo_url'];
-        }
+        // Retourner le filename uniquement (le frontend ajoute le chemin via getPhotoURL())
+        // Ne pas ajouter de préfixe imgApp/ ici pour éviter la duplication
         
         Utils::jsonResponse(['success' => true, 'profile' => $profile]);
     }

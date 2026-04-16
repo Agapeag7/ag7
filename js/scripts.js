@@ -249,7 +249,7 @@
         }
       })
       .catch(err => {
-        console.error('Erreur:', err);
+        // Les erreurs sont déjà affichées en notification, pas besoin de log console
         
         // Gérer les erreurs levées dans le .then(response => ...)
         if (err.message === 'Identifiants incorrects') {
@@ -1866,6 +1866,10 @@ function getPhotoURL(filename) {
   if (!filename) return null;
   // Si c'est déjà une URL complète, la retourner
   if (filename.startsWith('http://') || filename.startsWith('https://') || filename.startsWith('data:')) {
+    return filename;
+  }
+  // Si c'est déjà préfixé par imgApp/, ne pas dupliquer
+  if (filename.startsWith('imgApp/')) {
     return filename;
   }
   // Sinon, préfixer avec le chemin du dossier
