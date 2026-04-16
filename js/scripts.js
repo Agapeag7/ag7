@@ -223,10 +223,14 @@
           }
           
           // Connexion réussie
-          setTimeout(() => {
+          setTimeout(async () => {
             loginSection.classList.add('hidden');
             appSection.classList.remove('hidden');
+            
+            // Charger les données réelles du profil depuis le serveur
+            await loadCurrentProfile();
             updateProfileUI();
+            
             authForm.reset();
             setAuthMode(true);
             selectedProfilePhoto = null; // Réinitialiser
@@ -340,6 +344,13 @@
       // Rendu spécifique par vue
       if (viewId === 'contacts') {
         renderDiscoverGrid();
+      }
+      
+      // Charger le profil réel quand on accède à la section profil
+      if (viewId === 'profile') {
+        loadCurrentProfile().then(() => {
+          updateProfileUI();
+        });
       }
     }
 
@@ -1861,6 +1872,47 @@ function getPhotoURL(filename) {
   return 'imgApp/' + filename;
 }
 
+// Charger le profil réel de l'utilisateur connecté depuis le serveur
+async function loadCurrentProfile() {
+  try {
+    const response = await fetch(window.location.href + '?action=getCurrentProfile');
+    if (!response.ok) return false;
+    
+    const result = await response.json();
+    if (!result.success) return false;
+    
+    const profile = result.profile;
+    
+    // Mettre à jour currentUserProfile avec les vraies données
+    currentUserProfile.name = profile.user_name || "User";
+    currentUserProfile.username = '@' + (profile.user_username || "user");
+    currentUserProfile.bio = profile.user_bio || "Pas de bio";
+    currentUserProfile.location = profile.user_location || "Localisation inconnue";
+    currentUserProfile.avatarInitials = profile.user_name
+      ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      : 'U';
+    
+    // Définir la photo de profil
+    if (profile.user_photo_url) {
+      currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
+    }
+    
+    // Mettre à jour les stats
+    currentUserProfile.postsCount = profile.posts_count || 0;
+    currentUserProfile.followers = []; // Sera pour les noms des followers
+    currentUserProfile.following = []; // Sera pour les noms du following
+    
+    // Utilisé pour les counts
+    currentUserProfile.followers_count = profile.followers_count || 0;
+    currentUserProfile.following_count = profile.following_count || 0;
+    
+    return true;
+  } catch (e) {
+    console.error('Erreur au chargement du profil:', e);
+    return false;
+  }
+}
+
 let currentUserProfile = {
   name: "Alexandre Gauthier",
   username: "@alex_gauthier",
@@ -1870,6 +1922,8 @@ let currentUserProfile = {
   avatarInitials: "AG",
   profilePhoto: null, // URL complète de la photo (imgApp/filename.jpg)
   postsCount: 12,
+  followers_count: 0, // Stats réelles du serveur
+  following_count: 0, // Stats réelles du serveur
   followers: [
     { name: "Marie Lambert", username: "@marie_lam", avatar: "ML" },
     { name: "Thomas Dubois", username: "@thomas_d", avatar: "TD" },
@@ -1912,8 +1966,8 @@ function updateProfileUI() {
   }
   
   document.getElementById("postsCount").innerText = currentUserProfile.postsCount;
-  document.getElementById("followersCount").innerText = currentUserProfile.followers.length;
-  document.getElementById("followingCount").innerText = currentUserProfile.following.length;
+  document.getElementById("followersCount").innerText = currentUserProfile.followers_count || currentUserProfile.followers.length;
+  document.getElementById("followingCount").innerText = currentUserProfile.following_count || currentUserProfile.following.length;
 
   // Mettre à jour le mini-avatar du formulaire de création de post
   const createPostAvatar = document.getElementById("createPostAvatar");

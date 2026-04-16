@@ -278,6 +278,13 @@ class PublicationModel extends BaseModel {
         return $stmt->fetchAll();
     }
     
+    public function getCountByUser($user_id) {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) as count FROM publications WHERE post_user_id = ? AND post_visibility = "public"');
+        $stmt->execute([$user_id]);
+        $result = $stmt->fetch();
+        return $result['count'] ?? 0;
+    }
+    
     public function getFeed($user_id = null, $limit = 50, $offset = 0) {
         $sql = 'SELECT p.*, u.user_name, u.user_username, u.user_photo_url 
                 FROM publications p 
@@ -1288,6 +1295,35 @@ class Router {
         $current_user_id = $_SESSION['user_id'] ?? null;
         if ($current_user_id) {
             $profile['is_following'] = $follow->isFollowing($current_user_id, $user_id);
+        }
+        
+        Utils::jsonResponse(['success' => true, 'profile' => $profile]);
+    }
+    
+    private function actionGetCurrentProfile() {
+        // Récupérer les données de l'utilisateur connecté
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        
+        $user = new Utilisateur($this->db);
+        $profile = $user->findById($_SESSION['user_id']);
+        
+        if (!$profile) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Utilisateur non trouvé'], 404);
+        }
+        
+        // Récupérer les stats
+        $follow = new AbonnementModel($this->db);
+        $pub = new PublicationModel($this->db);
+        
+        $profile['posts_count'] = $pub->getCountByUser($_SESSION['user_id']);
+        $profile['followers_count'] = $follow->getFollowersCount($_SESSION['user_id']);
+        $profile['following_count'] = $follow->getFollowingCount($_SESSION['user_id']);
+        
+        // Construire l'URL complète de la photo
+        if (!empty($profile['user_photo_url'])) {
+            $profile['user_photo_url'] = 'imgApp/' . $profile['user_photo_url'];
         }
         
         Utils::jsonResponse(['success' => true, 'profile' => $profile]);
