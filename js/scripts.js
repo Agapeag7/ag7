@@ -21,7 +21,7 @@
     const nameInput = document.getElementById('signup-name');
 
     let isLoginMode = true;
-    let selectedProfilePhoto = null; // Stocke la photo en Base64
+    let selectedProfilePhoto = null; // Stocke le fichier File
 
     // Gestion du click du file input
     photoUploadArea.addEventListener('click', () => {
@@ -32,10 +32,10 @@
     profilePhotoInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
+        selectedProfilePhoto = file; // Stocker le fichier File
         const reader = new FileReader();
         reader.onload = (event) => {
-          selectedProfilePhoto = event.target.result;
-          photoPreview.src = selectedProfilePhoto;
+          photoPreview.src = event.target.result;
           photoPreview.style.display = 'block';
           photoUploadText.textContent = '✓ Photo sélectionnée';
           photoUploadText.style.color = 'var(--emerald-500)';
@@ -99,45 +99,100 @@
       setAuthMode(!isLoginMode);
     });
 
-    // Gestion connexion simulée
+    // Gestion connexion - Backend
     authForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
+      
       if (!username || !password) {
         alert('Veuillez remplir tous les champs');
         return;
       }
+      
+      authSubmitBtn.disabled = true;
+      authSubmitBtn.textContent = isLoginMode ? 'Connexion...' : 'Inscription...';
+      
+      // Préparer les données
+      const formData = new FormData();
+      formData.append('action', isLoginMode ? 'login' : 'register');
+      formData.append('user_username', username);
+      formData.append('user_password', password);
+      
       if (!isLoginMode) {
         const name = nameInput.value.trim();
-        if (!name) { alert('Le nom est requis'); return; }
-        // Mise à jour du profil lors de l'inscription
-        currentUserProfile.name = name;
-        currentUserProfile.username = '@' + username;
-        // Stocker la photo si elle existe, sinon générer les initiales
+        if (!name) {
+          alert('Le nom est requis');
+          authSubmitBtn.disabled = false;
+          authSubmitBtn.textContent = isLoginMode ? 'Se connecter' : "S'inscrire";
+          return;
+        }
+        formData.append('user_name', name);
+        
+        // Ajouter la photo de profil si elle existe (en tant que fichier)
         if (selectedProfilePhoto) {
-          currentUserProfile.profilePhoto = selectedProfilePhoto;
-        } else {
-          // Générer les initiales à partir du nom
-          const initials = name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
-          currentUserProfile.avatarInitials = initials;
+          formData.append('user_photo', selectedProfilePhoto);
         }
       }
-      // Connexion réussie
-      loginSection.classList.add('hidden');
-      appSection.classList.remove('hidden');
-      updateProfileUI();
-      authForm.reset();
-      setAuthMode(true);
+      
+      // Envoyer au backend
+      fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Mise à jour du profil si inscription
+          if (!isLoginMode && data.user) {
+            currentUserProfile.name = data.user.user_name;
+            currentUserProfile.username = '@' + data.user.user_username;
+            currentUserProfile.avatarInitials = data.user.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            if (data.user.user_photo_url) {
+              currentUserProfile.profilePhoto = data.user.user_photo_url;
+            }
+          }
+          // Connexion réussie
+          loginSection.classList.add('hidden');
+          appSection.classList.remove('hidden');
+          updateProfileUI();
+          authForm.reset();
+          setAuthMode(true);
+          selectedProfilePhoto = null; // Réinitialiser
+        } else {
+          alert(data.message || 'Erreur lors de la connexion');
+        }
+      })
+      .catch(err => {
+        console.error('Erreur:', err);
+        alert('Erreur de communication avec le serveur');
+      })
+      .finally(() => {
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.textContent = isLoginMode ? 'Se connecter' : "S'inscrire";
+      });
     });
 
-    // Déconnexion
+    // Déconnexion - Backend
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        appSection.classList.add('hidden');
-        loginSection.classList.remove('hidden');
+        const formData = new FormData();
+        formData.append('action', 'logout');
+        
+        fetch(window.location.href, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Déconnexion réussie ou pas, on redirige vers le login
+          appSection.classList.add('hidden');
+          loginSection.classList.remove('hidden');
+          setAuthMode(true);
+        })
+        .catch(err => console.error('Erreur logout:', err));
       });
     }
 

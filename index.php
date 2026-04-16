@@ -1,3 +1,17 @@
+<?php
+// ===== BACKEND - AJAX Handler =====
+// Inclure la classe au démarrage pour les appels AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['action'])) {
+    include 'ag.class.php';
+    exit; // Le auto-router d'ag.class.php va s'exécuter et appeler exit
+}
+
+// Vérifier si utilisateur déjà connecté
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $user_username = $_SESSION['user_username'] ?? '';
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

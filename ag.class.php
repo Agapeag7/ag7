@@ -61,6 +61,37 @@ class Utils {
     public static function verifyPassword($password, $hash) {
         return password_verify($password, $hash);
     }
+    
+    public static function uploadProfilePhoto($file) {
+        // Validations
+        $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowed)) {
+            return false;
+        }
+        
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        if ($file['size'] > $maxSize) {
+            return false;
+        }
+        
+        // Créer le dossier s'il n'existe pas
+        $uploadDir = __DIR__ . '/images';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        // Générer un nom unique
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'profile_' . time() . '_' . uniqid() . '.' . $ext;
+        $uploadPath = $uploadDir . '/' . $filename;
+        
+        // Sauvegarder le fichier
+        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            return 'images/' . $filename;
+        }
+        
+        return false;
+    }
 }
 
 abstract class BaseModel {
@@ -998,8 +1029,17 @@ class Router {
             Utils::jsonResponse(['success' => false, 'message' => 'Pseudo déjà utilisé'], 409);
         }
         
+        // Gérer l'upload de la photo de profil
+        if (isset($_FILES['user_photo']) && $_FILES['user_photo']['error'] === UPLOAD_ERR_OK) {
+            $photoPath = Utils::uploadProfilePhoto($_FILES['user_photo']);
+            if ($photoPath) {
+                $data['user_photo_url'] = $photoPath;
+            }
+        }
+        
         $id = $user->create($data);
-        Utils::jsonResponse(['success' => true, 'message' => 'Utilisateur créé', 'user_id' => $id], 201);
+        $newUser = $user->findById($id);
+        Utils::jsonResponse(['success' => true, 'message' => 'Utilisateur créé', 'user' => $newUser], 201);
     }
     
     private function actionLogin() {
