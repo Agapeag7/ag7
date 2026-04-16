@@ -62,7 +62,7 @@ if (isset($_SESSION['user_id'])) {
       
       <div class="input-group">
         <i class="fas fa-user-tag"></i>
-        <input type="text" placeholder="Pseudo" id="auth-username" required>
+        <input type="text" placeholder="Pseudo ou Nom" id="auth-username" required>
       </div>
       <div class="input-group">
         <i class="fas fa-lock"></i>

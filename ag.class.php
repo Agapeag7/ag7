@@ -162,8 +162,16 @@ class UtilisateurModel extends BaseModel {
         return $stmt->fetch();
     }
     
+    public function findByUsernameOrName($input) {
+        // Chercher par pseudo OU par nom
+        $stmt = $this->pdo->prepare('SELECT * FROM utilisateurs WHERE user_username = ? OR user_name = ? LIMIT 1');
+        $stmt->execute([$input, $input]);
+        return $stmt->fetch();
+    }
+    
     public function verifyCredentials($username, $password) {
-        $user = $this->findByUsername($username);
+        // Chercher l'utilisateur par pseudo OU par nom
+        $user = $this->findByUsernameOrName($username);
         if (!$user) return false;
         if (Utils::verifyPassword($password, $user['user_password'])) return $user;
         return false;
