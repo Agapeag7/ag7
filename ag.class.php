@@ -63,33 +63,63 @@ class Utils {
     }
     
     public static function uploadProfilePhoto($file) {
-        // Validations
-        $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($file['type'], $allowed)) {
+        // Accepter l'extension comme fallback si MIME échoue (pattern KelFoncia)
+        $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        if (!in_array($ext, $allowedExt)) {
+            error_log("Upload échoué: Extension .{$ext} non autorisée");
             return false;
         }
         
-        $maxSize = 5 * 1024 * 1024; // 5MB
-        if ($file['size'] > $maxSize) {
+        // Vérifier le type MIME mais être flexible
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+        $fileMime = $file['type'] ?? '';
+        if (!empty($fileMime) && !in_array($fileMime, $allowedMimes)) {
+            error_log("Warning: MIME type {$fileMime} non standard, mais extension .{$ext} acceptée");
+        }
+        
+        // Vérifier les erreurs d'upload
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            error_log("Upload erreur code: {$file['error']}");
+            return false;
+        }
+        
+        // Vérifier que c'est un fichier uploadé
+        if (!is_uploaded_file($file['tmp_name'])) {
+            error_log("Fichier n'est pas un fichier uploadé valide");
             return false;
         }
         
         // Créer le dossier s'il n'existe pas
-        $uploadDir = __DIR__ . '/images';
+        $uploadDir = __DIR__ . '/imgApp';
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+            if (!@mkdir($uploadDir, 0777, true)) {
+                error_log("Impossible de créer dossier imgApp");
+                return false;
+            }
         }
         
-        // Générer un nom unique
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = 'profile_' . time() . '_' . uniqid() . '.' . $ext;
-        $uploadPath = $uploadDir . '/' . $filename;
+        // Vérifier permissions d'écriture
+        if (!is_writable($uploadDir)) {
+            chmod($uploadDir, 0777);
+            if (!is_writable($uploadDir)) {
+                error_log("Dossier imgApp n'est pas writable. Perms: " . decoct(fileperms($uploadDir)));
+                return false;
+            }
+        }
+        
+        // Générer nom unique TEMPORAIRE
+        $tempName = 'profile_' . time() . '_' . uniqid() . '.' . $ext;
+        $uploadPath = $uploadDir . '/' . $tempName;
         
         // Sauvegarder le fichier
-        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            return 'images/' . $filename;
+        if (@move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            error_log("Photo uploadée: $tempName");
+            return $tempName; // Retourner juste le nom du fichier
         }
         
+        error_log("move_uploaded_file échoué: tmp=" . $file['tmp_name'] . ", dest=" . $uploadPath);
         return false;
     }
 }
@@ -1029,17 +1059,34 @@ class Router {
             Utils::jsonResponse(['success' => false, 'message' => 'Pseudo déjà utilisé'], 409);
         }
         
-        // Gérer l'upload de la photo de profil
+        // Gérer l'upload de la photo de profil AVANT création
+        $photoPath = null;
         if (isset($_FILES['user_photo']) && $_FILES['user_photo']['error'] === UPLOAD_ERR_OK) {
             $photoPath = Utils::uploadProfilePhoto($_FILES['user_photo']);
-            if ($photoPath) {
-                $data['user_photo_url'] = $photoPath;
+            if (!$photoPath) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'upload de la photo'], 400);
             }
+            $data['user_photo_url'] = $photoPath;
+        } else if (isset($_FILES['user_photo'])) {
+            // Si photo soumise mais erreur d'upload
+            error_log("Upload error code: " . $_FILES['user_photo']['error']);
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur d\'upload photo'], 400);
         }
         
-        $id = $user->create($data);
-        $newUser = $user->findById($id);
-        Utils::jsonResponse(['success' => true, 'message' => 'Utilisateur créé', 'user' => $newUser], 201);
+        try {
+            // Créer l'utilisateur
+            $id = $user->create($data);
+            if (!$id) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de la création de l\'utilisateur'], 500);
+            }
+            
+            // Récupérer l'utilisateur créé
+            $newUser = $user->findById($id);
+            Utils::jsonResponse(['success' => true, 'message' => 'Utilisateur créé', 'user' => $newUser], 201);
+            
+        } catch (Exception $e) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()], 500);
+        }
     }
     
     private function actionLogin() {
@@ -1066,6 +1113,39 @@ class Router {
     private function actionLogout() {
         session_destroy();
         Utils::jsonResponse(['success' => true, 'message' => 'Déconnexion réussie']);
+    }
+
+    private function actionDebug() {
+        // Endpoint de debug - à supprimer en production
+        $db = (new Database())->pdo();
+        
+        // Vérifier la connexion à la base de données
+        try {
+            $stmt = $db->query("SELECT VERSION()");
+            $version = $stmt->fetch()['VERSION()'];
+            
+            // Vérifier la table utilisateurs
+            $stmt = $db->query("SHOW TABLES LIKE 'utilisateurs'");
+            $tableExists = $stmt->fetch() ? true : false;
+            
+            // Compter les utilisateurs
+            $stmt = $db->query("SELECT COUNT(*) as count FROM utilisateurs");
+            $userCount = $stmt->fetch()['count'] ?? 0;
+            
+            Utils::jsonResponse([
+                'success' => true,
+                'db_version' => $version,
+                'table_exists' => $tableExists,
+                'user_count' => $userCount,
+                'images_dir' => is_dir(__DIR__ . '/images')
+            ]);
+        } catch (Exception $e) {
+            Utils::jsonResponse([
+                'success' => false,
+                'message' => 'Erreur base de données',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
     
     private function actionCreatePost() {

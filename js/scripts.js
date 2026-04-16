@@ -179,8 +179,34 @@
         method: 'POST',
         body: formData
       })
-      .then(response => response.json())
-      .then(data => {
+      .then(response => {
+        // Gérer les différents codes HTTP
+        if (!response.ok) {
+          // Essayer de parser le JSON d'erreur
+          return response.text().then(text => {
+            try {
+              const data = JSON.parse(text);
+              return Promise.reject(new Error(data.message || `Erreur ${response.status}`));
+            } catch (e) {
+              // Si ce n'est pas du JSON, c'est du HTML d'erreur
+              if (response.status === 401) {
+                return Promise.reject(new Error('Identifiants incorrects'));
+              } else if (response.status === 409) {
+                return Promise.reject(new Error('Pseudo déjà utilisé'));
+              } else if (response.status === 400) {
+                return Promise.reject(new Error('Données manquantes'));
+              } else if (response.status >= 500) {
+                return Promise.reject(new Error('Erreur serveur'));
+              } else {
+                return Promise.reject(new Error(`Erreur HTTP ${response.status}`));
+              }
+            }
+          });
+        }
+        return response.json().then(data => ({ status: response.status, data }));
+      })
+      .then(result => {
+        const data = result.data;
         if (data.success) {
           // Message de succès
           const action = isLoginMode ? 'Connecté' : 'Compte créé';
@@ -192,7 +218,7 @@
             currentUserProfile.username = '@' + data.user.user_username;
             currentUserProfile.avatarInitials = data.user.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
             if (data.user.user_photo_url) {
-              currentUserProfile.profilePhoto = data.user.user_photo_url;
+              currentUserProfile.profilePhoto = getPhotoURL(data.user.user_photo_url);
             }
           }
           
@@ -206,10 +232,7 @@
             selectedProfilePhoto = null; // Réinitialiser
           }, 1500);
         } else {
-          // Gestion des différents types d'erreurs
-          const errorTitle = data.message ? 'Erreur' : 'Erreur d\'authentification';
-          let errorMsg = data.message || 'Une erreur est survenue';
-          
+          // Gestion des erreurs dans la réponse JSON
           if (data.message === 'Identifiants incorrects') {
             showNotification('error', 'Connexion échouée', 'Le pseudo ou mot de passe est incorrect');
           } else if (data.message === 'Pseudo déjà utilisé') {
@@ -217,13 +240,27 @@
           } else if (data.message === 'Données manquantes') {
             showNotification('warning', 'Données incomplètes', 'Veuillez remplir tous les champs');
           } else {
-            showNotification('error', errorTitle, errorMsg);
+            showNotification('error', 'Erreur', data.message || 'Une erreur est survenue');
           }
         }
       })
       .catch(err => {
         console.error('Erreur:', err);
-        showNotification('error', 'Erreur serveur', 'Impossible de communiquer avec le serveur');
+        
+        // Gérer les erreurs levées dans le .then(response => ...)
+        if (err.message === 'Identifiants incorrects') {
+          showNotification('error', 'Connexion échouée', 'Le pseudo ou mot de passe est incorrect');
+        } else if (err.message === 'Pseudo déjà utilisé') {
+          showNotification('error', 'Inscription impossible', 'Ce pseudo est déjà utilisé');
+        } else if (err.message === 'Données manquantes') {
+          showNotification('warning', 'Données incomplètes', 'Veuillez remplir tous les champs');
+        } else if (err.message === 'Erreur serveur') {
+          showNotification('error', 'Erreur serveur', 'Une erreur s\'est produite sur le serveur');
+        } else if (err.message.includes('Failed to fetch')) {
+          showNotification('error', 'Erreur réseau', 'Vérifiez votre connexion internet');
+        } else {
+          showNotification('error', 'Erreur', err.message || 'Impossible de communiquer avec le serveur');
+        }
       })
       .finally(() => {
         authSubmitBtn.disabled = false;
@@ -243,14 +280,31 @@
           method: 'POST',
           body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-          // Déconnexion réussie ou pas, on redirige vers le login
-          appSection.classList.add('hidden');
-          loginSection.classList.remove('hidden');
-          setAuthMode(true);
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erreur de déconnexion');
+          }
+          return response.json();
         })
-        .catch(err => console.error('Erreur logout:', err));
+        .then(data => {
+          // Déconnexion réussie
+          showNotification('success', 'Déconnecté', 'À bientôt !');
+          setTimeout(() => {
+            appSection.classList.add('hidden');
+            loginSection.classList.remove('hidden');
+            setAuthMode(true);
+          }, 1000);
+        })
+        .catch(err => {
+          console.error('Erreur logout:', err);
+          showNotification('error', 'Erreur', 'Une erreur s\'est produite lors de la déconnexion');
+          // Quand même rediriger vers le login
+          setTimeout(() => {
+            appSection.classList.add('hidden');
+            loginSection.classList.remove('hidden');
+            setAuthMode(true);
+          }, 1500);
+        });
       });
     }
 
@@ -1795,6 +1849,18 @@ renderFeed();
 renderDiscoverGrid();
 
 // ========== PROFIL AVEC FOLLOWERS (DONNÉES SIMULÉES) ==========
+
+// Fonction helper pour construire l'URL complète d'une photo
+function getPhotoURL(filename) {
+  if (!filename) return null;
+  // Si c'est déjà une URL complète, la retourner
+  if (filename.startsWith('http://') || filename.startsWith('https://') || filename.startsWith('data:')) {
+    return filename;
+  }
+  // Sinon, préfixer avec le chemin du dossier
+  return 'imgApp/' + filename;
+}
+
 let currentUserProfile = {
   name: "Alexandre Gauthier",
   username: "@alex_gauthier",
@@ -1802,7 +1868,7 @@ let currentUserProfile = {
   location: "Butembo, DRC",
   memberSince: "Janvier 2024",
   avatarInitials: "AG",
-  profilePhoto: null, // Peut contenir une photo en Base64
+  profilePhoto: null, // URL complète de la photo (imgApp/filename.jpg)
   postsCount: 12,
   followers: [
     { name: "Marie Lambert", username: "@marie_lam", avatar: "ML" },
