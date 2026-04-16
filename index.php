@@ -29,6 +29,9 @@ if (isset($_SESSION['user_id'])) {
 </head>
 <body>
 
+<!-- CONTENEUR DE NOTIFICATIONS TOAST -->
+<div id="notificationContainer" class="notification-container"></div>
+
 <!-- SECTION LOGIN (affichée par défaut) -->
 <div id="login-section" class="section">
   <div class="login-container">

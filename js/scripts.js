@@ -1,6 +1,45 @@
  (function(){
     "use strict";
 
+    // ===== SYSTÈME DE NOTIFICATIONS TOAST =====
+    function showNotification(type = 'info', title = '', message = '', duration = 4000) {
+      const container = document.getElementById('notificationContainer');
+      
+      const icons = {
+        success: 'fas fa-check-circle',
+        error: 'fas fa-exclamation-circle',
+        warning: 'fas fa-exclamation-triangle',
+        info: 'fas fa-info-circle'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${type}`;
+      toast.innerHTML = `
+        <i class="toast-icon ${icons[type]}"></i>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close">&times;</button>
+      `;
+
+      container.appendChild(toast);
+
+      const closeBtn = toast.querySelector('.toast-close');
+      const closeToast = () => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+      };
+
+      closeBtn.addEventListener('click', closeToast);
+      
+      if (duration > 0) {
+        setTimeout(closeToast, duration);
+      }
+
+      return toast;
+    }
+
     // ===== GESTION LOGIN/SIGNUP =====
     const loginSection = document.getElementById('login-section');
     const appSection = document.getElementById('app-section');
@@ -106,7 +145,7 @@
       const password = passwordInput.value;
       
       if (!username || !password) {
-        alert('Veuillez remplir tous les champs');
+        showNotification('warning', 'Champs manquants', 'Veuillez remplir tous les champs');
         return;
       }
       
@@ -122,7 +161,7 @@
       if (!isLoginMode) {
         const name = nameInput.value.trim();
         if (!name) {
-          alert('Le nom est requis');
+          showNotification('warning', 'Nom requis', 'Veuillez entrer votre nom');
           authSubmitBtn.disabled = false;
           authSubmitBtn.textContent = isLoginMode ? 'Se connecter' : "S'inscrire";
           return;
@@ -143,6 +182,10 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
+          // Message de succès
+          const action = isLoginMode ? 'Connecté' : 'Compte créé';
+          showNotification('success', action, isLoginMode ? 'Bienvenue !' : 'Votre compte a été créé avec succès');
+          
           // Mise à jour du profil si inscription
           if (!isLoginMode && data.user) {
             currentUserProfile.name = data.user.user_name;
@@ -152,20 +195,35 @@
               currentUserProfile.profilePhoto = data.user.user_photo_url;
             }
           }
+          
           // Connexion réussie
-          loginSection.classList.add('hidden');
-          appSection.classList.remove('hidden');
-          updateProfileUI();
-          authForm.reset();
-          setAuthMode(true);
-          selectedProfilePhoto = null; // Réinitialiser
+          setTimeout(() => {
+            loginSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+            updateProfileUI();
+            authForm.reset();
+            setAuthMode(true);
+            selectedProfilePhoto = null; // Réinitialiser
+          }, 1500);
         } else {
-          alert(data.message || 'Erreur lors de la connexion');
+          // Gestion des différents types d'erreurs
+          const errorTitle = data.message ? 'Erreur' : 'Erreur d\'authentification';
+          let errorMsg = data.message || 'Une erreur est survenue';
+          
+          if (data.message === 'Identifiants incorrects') {
+            showNotification('error', 'Connexion échouée', 'Le pseudo ou mot de passe est incorrect');
+          } else if (data.message === 'Pseudo déjà utilisé') {
+            showNotification('error', 'Inscription impossible', 'Ce pseudo est déjà utilisé');
+          } else if (data.message === 'Données manquantes') {
+            showNotification('warning', 'Données incomplètes', 'Veuillez remplir tous les champs');
+          } else {
+            showNotification('error', errorTitle, errorMsg);
+          }
         }
       })
       .catch(err => {
         console.error('Erreur:', err);
-        alert('Erreur de communication avec le serveur');
+        showNotification('error', 'Erreur serveur', 'Impossible de communiquer avec le serveur');
       })
       .finally(() => {
         authSubmitBtn.disabled = false;
