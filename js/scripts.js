@@ -1,44 +1,44 @@
- (function(){
+// ===== SYSTÈME DE NOTIFICATIONS TOAST (GLOBAL) =====
+function showNotification(type = 'info', title = '', message = '', duration = 4000) {
+  const container = document.getElementById('notificationContainer');
+  
+  const icons = {
+    success: 'fas fa-check-circle',
+    error: 'fas fa-exclamation-circle',
+    warning: 'fas fa-exclamation-triangle',
+    info: 'fas fa-info-circle'
+  };
+
+  const toast = document.createElement('div');
+  toast.className = `toast-notification ${type}`;
+  toast.innerHTML = `
+    <i class="toast-icon ${icons[type]}"></i>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close">&times;</button>
+  `;
+
+  container.appendChild(toast);
+
+  const closeBtn = toast.querySelector('.toast-close');
+  const closeToast = () => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  };
+
+  closeBtn.addEventListener('click', closeToast);
+  
+  if (duration > 0) {
+    setTimeout(closeToast, duration);
+  }
+
+  return toast;
+}
+
+(function(){
     "use strict";
-
-    // ===== SYSTÈME DE NOTIFICATIONS TOAST =====
-    function showNotification(type = 'info', title = '', message = '', duration = 4000) {
-      const container = document.getElementById('notificationContainer');
-      
-      const icons = {
-        success: 'fas fa-check-circle',
-        error: 'fas fa-exclamation-circle',
-        warning: 'fas fa-exclamation-triangle',
-        info: 'fas fa-info-circle'
-      };
-
-      const toast = document.createElement('div');
-      toast.className = `toast-notification ${type}`;
-      toast.innerHTML = `
-        <i class="toast-icon ${icons[type]}"></i>
-        <div class="toast-content">
-          <div class="toast-title">${title}</div>
-          <div class="toast-message">${message}</div>
-        </div>
-        <button class="toast-close">&times;</button>
-      `;
-
-      container.appendChild(toast);
-
-      const closeBtn = toast.querySelector('.toast-close');
-      const closeToast = () => {
-        toast.classList.add('removing');
-        setTimeout(() => toast.remove(), 300);
-      };
-
-      closeBtn.addEventListener('click', closeToast);
-      
-      if (duration > 0) {
-        setTimeout(closeToast, duration);
-      }
-
-      return toast;
-    }
 
     // ===== GESTION LOGIN/SIGNUP =====
     const loginSection = document.getElementById('login-section');
@@ -2046,12 +2046,162 @@ followModal?.addEventListener("click", (e) => {
 });
 
 // Bouton modifier profil (simulation)
+// ========== MODALE MODIFICATION PROFIL ==========
+const editProfileModal = document.getElementById('editProfileModal');
+const editProfileForm = document.getElementById('editProfileForm');
+const editProfileClose = document.querySelector('.edit-profile-close');
+const editProfileCancel = document.querySelector('.edit-profile-cancel');
+const profilePhotoInput = document.getElementById('profilePhotoInput');
+const coverPhotoInput = document.getElementById('coverPhotoInput');
+const profilePhotoUpload = document.getElementById('profilePhotoUpload');
+const coverPhotoUpload = document.getElementById('coverPhotoUpload');
+const editBio = document.getElementById('editBio');
+const bioCharCount = document.getElementById('bioCharCount');
+
+let selectedProfilePhoto = null;
+let selectedCoverPhoto = null;
+
+// Ouvrir la modale d'édition
 document.querySelector(".edit-profile-btn")?.addEventListener("click", () => {
-  const newName = prompt("Nouveau nom :", currentUserProfile.name);
-  const newBio = prompt("Nouvelle bio :", currentUserProfile.bio);
-  if (newName) currentUserProfile.name = newName;
-  if (newBio) currentUserProfile.bio = newBio;
-  updateProfileUI();
+  // Remplir les champs avec les données actuelles
+  document.getElementById('editName').value = currentUserProfile.name;
+  document.getElementById('editUsername').value = currentUserProfile.username.substring(1); // Enlever le @
+  document.getElementById('editBio').value = currentUserProfile.bio || '';
+  bioCharCount.textContent = (currentUserProfile.bio || '').length + '/500';
+  
+  // Afficher la photo de profil dans le preview
+  const profilePhotoPreview = document.getElementById('profilePhotoPreview');
+  const profilePhotoInitials = document.getElementById('profilePhotoInitials');
+  if (currentUserProfile.profilePhoto) {
+    profilePhotoPreview.src = currentUserProfile.profilePhoto;
+    profilePhotoPreview.style.display = 'block';
+    profilePhotoInitials.style.display = 'none';
+  } else {
+    profilePhotoPreview.style.display = 'none';
+    profilePhotoInitials.textContent = currentUserProfile.avatarInitials;
+    profilePhotoInitials.style.display = 'block';
+  }
+  
+  // Réinitialiser les fichiers sélectionnés
+  selectedProfilePhoto = null;
+  selectedCoverPhoto = null;
+  
+  // Afficher la modale
+  editProfileModal.classList.remove('hidden');
+});
+
+// Fermer la modale
+editProfileClose.addEventListener('click', () => editProfileModal.classList.add('hidden'));
+editProfileCancel.addEventListener('click', () => editProfileModal.classList.add('hidden'));
+
+// Fermer en cliquant en dehors
+editProfileModal.addEventListener('click', (e) => {
+  if (e.target === editProfileModal) {
+    editProfileModal.classList.add('hidden');
+  }
+});
+
+// Compteur de caractères pour la bio
+editBio.addEventListener('input', () => {
+  bioCharCount.textContent = editBio.value.length + '/500';
+});
+
+// Gestion upload photo de profil
+profilePhotoUpload.querySelector('.btn-secondary').addEventListener('click', (e) => {
+  e.preventDefault();
+  profilePhotoInput.click();
+});
+
+profilePhotoInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    selectedProfilePhoto = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const preview = document.getElementById('profilePhotoPreview');
+      const initials = document.getElementById('profilePhotoInitials');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      initials.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Gestion upload photo de couverture
+coverPhotoUpload.querySelector('.btn-secondary').addEventListener('click', (e) => {
+  e.preventDefault();
+  coverPhotoInput.click();
+});
+
+coverPhotoInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    selectedCoverPhoto = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('coverPhotoPreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Soumettre le formulaire d'édition
+editProfileForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const submitBtn = editProfileForm.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Enregistrement...';
+  
+  try {
+    const formData = new FormData();
+    formData.append('action', 'updateProfile');
+    formData.append('user_name', document.getElementById('editName').value.trim());
+    formData.append('user_username', document.getElementById('editUsername').value.trim());
+    formData.append('user_bio', document.getElementById('editBio').value.trim());
+    
+    if (selectedProfilePhoto) {
+      formData.append('user_photo', selectedProfilePhoto);
+    }
+    if (selectedCoverPhoto) {
+      formData.append('user_cover_photo', selectedCoverPhoto);
+    }
+    
+    const response = await fetch(window.location.href, {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success && result.profile) {
+      // Mettre à jour le profil local
+      currentUserProfile.name = result.profile.user_name;
+      currentUserProfile.username = '@' + result.profile.user_username;
+      currentUserProfile.bio = result.profile.user_bio || 'Pas de bio';
+      if (result.profile.user_photo_url) {
+        currentUserProfile.profilePhoto = getPhotoURL(result.profile.user_photo_url);
+      }
+      currentUserProfile.avatarInitials = result.profile.user_name
+        ? result.profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        : 'U';
+      
+      // Fermer la modale et mettre à jour l'UI
+      editProfileModal.classList.add('hidden');
+      updateProfileUI();
+      showNotification('success', 'Succès', 'Profil mis à jour avec succès');
+    } else {
+      showNotification('error', 'Erreur', result.message || 'Impossible de mettre à jour le profil');
+    }
+  } catch (err) {
+    console.error('Erreur:', err);
+    showNotification('error', 'Erreur', 'Une erreur s\'est produite lors de la mise à jour');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
 });
 
 // Initialisation

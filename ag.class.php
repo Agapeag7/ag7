@@ -1349,6 +1349,96 @@ class Router {
         Utils::jsonResponse(['success' => true, 'profile' => $profile]);
     }
     
+    private function actionUpdateProfile() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        
+        $user = new Utilisateur($this->db);
+        $data = [];
+        
+        // Mettre à jour le nom (optionnel)
+        if (isset($_POST['user_name']) && !empty($_POST['user_name'])) {
+            $data['user_name'] = trim($_POST['user_name']);
+        }
+        
+        // Mettre à jour le pseudo (optionnel + vérifier unicité)
+        if (isset($_POST['user_username']) && !empty($_POST['user_username'])) {
+            $newUsername = trim($_POST['user_username']);
+            // Vérifier que le pseudo n'existe pas ailleurs
+            $existing = $user->findByUsername($newUsername);
+            if ($existing && $existing['user_id'] != $_SESSION['user_id']) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Pseudo déjà utilisé'], 409);
+            }
+            $data['user_username'] = $newUsername;
+        }
+        
+        // Mettre à jour la bio (optionnel)
+        if (isset($_POST['user_bio'])) {
+            $data['user_bio'] = trim($_POST['user_bio']);
+        }
+        
+        // Upload photo de profil si fournie
+        if (isset($_FILES['user_photo']) && $_FILES['user_photo']['error'] === UPLOAD_ERR_OK) {
+            $photoPath = Utils::uploadProfilePhoto($_FILES['user_photo']);
+            if (!$photoPath) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'upload de la photo de profil'], 400);
+            }
+            $data['user_photo_url'] = $photoPath;
+        }
+        
+        // Upload photo de couverture si fournie
+        if (isset($_FILES['user_cover_photo']) && $_FILES['user_cover_photo']['error'] === UPLOAD_ERR_OK) {
+            $coverPath = Utils::uploadProfilePhoto($_FILES['user_cover_photo']);
+            if (!$coverPath) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'upload de la photo de couverture'], 400);
+            }
+            $data['user_cover_photo_url'] = $coverPath;
+        }
+        
+        // Ne rien faire s'il n'y a aucune donnée à mettre à jour
+        if (empty($data)) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Aucune donnée à mettre à jour'], 400);
+        }
+        
+        // Mettre à jour l'utilisateur
+        try {
+            $user->update($_SESSION['user_id'], $data);
+            
+            // Récupérer le profil mis à jour
+            $profile = $user->findById($_SESSION['user_id']);
+            
+            if (!$profile) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Utilisateur non trouvé'], 404);
+            }
+            
+            // Récupérer les stats
+            $follow = new AbonnementModel($this->db);
+            $pub = new PublicationModel($this->db);
+            
+            $profile['posts_count'] = $pub->getCountByUser($_SESSION['user_id']);
+            $profile['followers_count'] = $follow->getFollowersCount($_SESSION['user_id']);
+            $profile['following_count'] = $follow->getFollowingCount($_SESSION['user_id']);
+            
+            // Formater la date
+            if (!empty($profile['created_at'])) {
+                $dateObj = new DateTime($profile['created_at']);
+                $profile['member_since'] = $dateObj->format('F Y');
+                $enToFr = [
+                    'January' => 'Janvier', 'February' => 'Février', 'March' => 'Mars',
+                    'April' => 'Avril', 'May' => 'Mai', 'June' => 'Juin',
+                    'July' => 'Juillet', 'August' => 'Août', 'September' => 'Septembre',
+                    'October' => 'Octobre', 'November' => 'Novembre', 'December' => 'Décembre'
+                ];
+                $profile['member_since'] = strtr($profile['member_since'], $enToFr);
+            }
+            
+            Utils::jsonResponse(['success' => true, 'message' => 'Profil mis à jour', 'profile' => $profile], 200);
+        } catch (Exception $e) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()], 500);
+        }
+    }
+    
     private function actionSendMessage() {
         if (!isset($_SESSION['user_id'])) {
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);

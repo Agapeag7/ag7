@@ -313,6 +313,65 @@ if (isset($_SESSION['user_id'])) {
       </div>
     </div>
 
+    <!-- MODALE MODIFICATION PROFIL -->
+    <div id="editProfileModal" class="edit-profile-modal hidden">
+      <div class="edit-profile-card">
+        <button class="edit-profile-close">&times;</button>
+        <h2>Modifier mon profil</h2>
+        <form id="editProfileForm" class="edit-profile-form">
+          
+          <!-- Photo de profil -->
+          <div class="edit-section">
+            <label><i class="fas fa-user-circle"></i> Photo de profil</label>
+            <div class="photo-upload-container" id="profilePhotoUpload">
+              <div class="photo-preview">
+                <img id="profilePhotoPreview" src="" alt="Photo profil" style="display: none;">
+                <span id="profilePhotoInitials">AG</span>
+              </div>
+              <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
+              <button type="button" class="btn-secondary">Changer</button>
+            </div>
+          </div>
+          
+          <!-- Photo de couverture -->
+          <div class="edit-section">
+            <label><i class="fas fa-image"></i> Photo de couverture</label>
+            <div class="photo-upload-container" id="coverPhotoUpload">
+              <div class="photo-preview">
+                <img id="coverPhotoPreview" src="https://picsum.photos/id/104/1200/400" alt="Photo couverture">
+              </div>
+              <input type="file" id="coverPhotoInput" accept="image/*" style="display: none;">
+              <button type="button" class="btn-secondary">Changer</button>
+            </div>
+          </div>
+          
+          <!-- Nom -->
+          <div class="edit-section">
+            <label for="editName"><i class="fas fa-font"></i> Nom</label>
+            <input type="text" id="editName" name="user_name" placeholder="Votre nom complet" maxlength="100">
+          </div>
+          
+          <!-- Pseudo -->
+          <div class="edit-section">
+            <label for="editUsername"><i class="fas fa-user-tag"></i> Pseudo</label>
+            <input type="text" id="editUsername" name="user_username" placeholder="Votre pseudo" maxlength="50">
+          </div>
+          
+          <!-- Bio -->
+          <div class="edit-section">
+            <label for="editBio"><i class="fas fa-pen-fancy"></i> Biographie</label>
+            <textarea id="editBio" name="user_bio" placeholder="Parlez-nous de vous..." maxlength="500" rows="4"></textarea>
+            <small id="bioCharCount">0/500</small>
+          </div>
+          
+          <div class="edit-actions">
+            <button type="button" class="btn-secondary edit-profile-cancel">Annuler</button>
+            <button type="submit" class="btn-primary">Enregistrer les modifications</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- ========== VUE PARAMETRES ========== -->
     <div id="view-settings" class="view">
       <div class="view-header">
