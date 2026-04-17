@@ -338,7 +338,7 @@ if (isset($_SESSION['user_id'])) {
             <label><i class="fas fa-image"></i> Photo de couverture</label>
             <div class="photo-upload-container" id="coverPhotoUpload">
               <div class="photo-preview">
-                <img id="coverPhotoPreview" src="https://picsum.photos/id/104/1200/400" alt="Photo couverture">
+                <img id="coverPhotoPreview" src="" alt="Photo couverture" style="width:100%; height: 150px; object-fit: cover;">
               </div>
               <input type="file" id="coverPhotoInput" accept="image/*" style="display: none;">
               <button type="button" class="btn-secondary">Changer</button>

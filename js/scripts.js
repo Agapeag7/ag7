@@ -1917,6 +1917,13 @@ async function loadCurrentProfile() {
       currentUserProfile.profilePhoto = null;
     }
     
+    // Définir la photo de couverture
+    if (profile.user_cover_photo_url) {
+      currentUserProfile.coverPhoto = getPhotoURL(profile.user_cover_photo_url);
+    } else {
+      currentUserProfile.coverPhoto = null;
+    }
+    
     // Mettre à jour les stats RÉELLES de la base de données
     currentUserProfile.postsCount = profile.posts_count || 0;
     currentUserProfile.followers_count = profile.followers_count || 0;
@@ -1937,6 +1944,7 @@ let currentUserProfile = {
   memberSince: "Janvier 2024",
   avatarInitials: "U",
   profilePhoto: null,
+  coverPhoto: null,
   postsCount: 0,
   followers_count: 0,
   following_count: 0,
@@ -1953,6 +1961,12 @@ let currentUserProfile = {
 };
 
 function updateProfileUI() {
+  // Mettre à jour la photo de couverture
+  const coverImg = document.querySelector('.cover-img');
+  if (coverImg && currentUserProfile.coverPhoto) {
+    coverImg.src = currentUserProfile.coverPhoto;
+  }
+  
   document.getElementById("profileName").innerText = currentUserProfile.name;
   document.querySelector(".profile-username").innerText = currentUserProfile.username;
   document.querySelector(".profile-bio-text").innerText = currentUserProfile.bio;
@@ -2029,6 +2043,17 @@ function openFollowModal(type) {
   });
 }
 
+// Boutons d'icône pour changer les photos sur la page profil
+document.querySelector('.change-profile-btn')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.querySelector('.edit-profile-btn').click(); // Ouvre la modale
+});
+
+document.querySelector('.change-cover-btn')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.querySelector('.edit-profile-btn').click(); // Ouvre la modale
+});
+
 document.querySelectorAll(".stat-item").forEach(stat => {
   stat.addEventListener("click", (e) => {
     const type = stat.getAttribute("data-type");
@@ -2080,6 +2105,14 @@ document.querySelector(".edit-profile-btn")?.addEventListener("click", () => {
     profilePhotoPreview.style.display = 'none';
     profilePhotoInitials.textContent = currentUserProfile.avatarInitials;
     profilePhotoInitials.style.display = 'block';
+  }
+  
+  // Afficher la photo de couverture dans le preview
+  const coverPhotoPreview = document.getElementById('coverPhotoPreview');
+  if (currentUserProfile.coverPhoto) {
+    coverPhotoPreview.src = currentUserProfile.coverPhoto;
+  } else {
+    coverPhotoPreview.src = 'https://picsum.photos/id/104/1200/400';
   }
   
   // Réinitialiser les fichiers sélectionnés
@@ -2177,16 +2210,19 @@ editProfileForm.addEventListener('submit', async (e) => {
     const result = await response.json();
     
     if (result.success && result.profile) {
-      // Mettre à jour le profil local
-      currentUserProfile.name = result.profile.user_name;
-      currentUserProfile.username = '@' + result.profile.user_username;
-      currentUserProfile.bio = result.profile.user_bio || 'Pas de bio';
-      if (result.profile.user_photo_url) {
-        currentUserProfile.profilePhoto = getPhotoURL(result.profile.user_photo_url);
-      }
-      currentUserProfile.avatarInitials = result.profile.user_name
-        ? result.profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-        : 'U';
+    // Mettre à jour le profil local AVEC la photo de couverture
+    currentUserProfile.name = result.profile.user_name;
+    currentUserProfile.username = '@' + result.profile.user_username;
+    currentUserProfile.bio = result.profile.user_bio || 'Pas de bio';
+    if (result.profile.user_photo_url) {
+      currentUserProfile.profilePhoto = getPhotoURL(result.profile.user_photo_url);
+    }
+    if (result.profile.user_cover_photo_url) {
+      currentUserProfile.coverPhoto = getPhotoURL(result.profile.user_cover_photo_url);
+    }
+    currentUserProfile.avatarInitials = result.profile.user_name
+      ? result.profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      : 'U';
       
       // Fermer la modale et mettre à jour l'UI
       editProfileModal.classList.add('hidden');
