@@ -404,6 +404,11 @@ function showNotification(type = 'info', title = '', message = '', duration = 40
           updateProfileUI();
         });
       }
+      
+      // Charger le feed quand on accède à la section feed
+      if (viewId === 'feed') {
+        loadFeed();
+      }
     }
 
     // Écouteurs sur les liens de navigation
@@ -1253,46 +1258,85 @@ if (searchUsersInput) {
 }
 
 // ========== GESTION DU FEED (PUBLICATIONS) ==========
-let posts = [
-  {
-    id: 1,
-    author: 'Design Team',
-    avatar: 'DT',
-    content: "Les nouvelles maquettes de l'application Ag7 sont disponibles ! Support multi-images comme Instagram",
-    images: [
-      'https://picsum.photos/id/20/600/600',
-      'https://picsum.photos/id/21/600/600',
-      'https://picsum.photos/id/22/600/600',
-      'https://picsum.photos/id/23/600/600'
-    ],
-    time: 'Il y a 2 heures',
-    likes: 156,
-    liked: false,
-    comments: [
-      { id: 1, text: 'Super boulot !', isAnonymous: true, author: 'Anonyme', likes: 3, replies: [
-        { text: 'Merci !', isAnonymous: false, author: 'Vous', likes: 1 }
-      ]},
-      { id: 2, text: "J'ai hâte de voir ça", isAnonymous: false, author: 'Vous', likes: 5, replies: [] }
-    ]
-  },
-  {
-    id: 2,
-    author: 'Marie Lambert',
-    avatar: 'ML',
-    content: "Quelqu'un pour un café-débat sur l'UX ce midi ?",
-    images: [],
-    time: 'Hier',
-    likes: 12,
-    liked: false,
-    comments: [
-      { id: 3, text: 'Je suis partante !', isAnonymous: true, author: 'Anonyme', likes: 2, replies: [] },
-      { id: 4, text: 'À la pause déjeuner', isAnonymous: false, author: 'Vous', likes: 4, replies: [
-        { text: 'Top !', isAnonymous: false, author: 'Marie', likes: 0 },
-        { text: 'Génial', isAnonymous: true, author: 'Anonyme', likes: 1 }
-      ]}
-    ]
+let posts = [];
+
+// Charger le feed depuis le backend
+async function loadFeed() {
+  try {
+    const response = await fetch(window.location.href + '?action=getFeed&limit=50&offset=0', {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      console.error('Erreur HTTP lors du chargement du feed:', response.status);
+      showNotification('error', 'Erreur', 'Impossible de charger le feed');
+      return false;
+    }
+
+    const text = await response.text();
+    
+    // Vérifier si la réponse est du HTML d'erreur
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+      console.error('Le serveur a retourné du HTML au lieu de JSON:');
+      console.error(text.substring(0, 500)); // Afficher les 500 premiers caractères
+      showNotification('error', 'Erreur serveur', 'Le serveur a retourné une erreur PHP');
+      return false;
+    }
+
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('Erreur JSON parsing:', parseErr);
+      console.error('Réponse reçue:', text.substring(0, 200));
+      showNotification('error', 'Erreur', 'Réponse invalide du serveur');
+      return false;
+    }
+    
+    if (!result.success) {
+      console.error('Erreur serveur:', result.message);
+      showNotification('error', 'Erreur', result.message || 'Impossible de charger le feed');
+      return false;
+    }
+
+    // Transformer les données du backend au format attendu par le frontend
+    posts = result.posts.map(post => ({
+      id: post.id,
+      author: post.author || 'Utilisateur',
+      username: post.username,
+      avatar: post.avatar,
+      content: post.content,
+      images: post.images || [],
+      time: new Date(post.timestamp).toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      likes: post.likes || 0,
+      liked: post.userHasLiked || false,
+      comments: post.commentsList || [],
+      user_id: post.user_id,
+      visibility: post.visibility
+    }));
+
+    renderFeed();
+    return true;
+  } catch (e) {
+    console.error('Erreur au chargement du feed:', e);
+    showNotification('error', 'Erreur', 'Une erreur est survenue');
+    return false;
   }
-];
+}
+
+// Charger le feed quand on arrive sur la page
+document.addEventListener('DOMContentLoaded', () => {
+  // S'assurer que le profil est chargé avant de charger le feed
+  if (document.getElementById('view-feed')?.style.display !== 'none') {
+    loadFeed();
+  }
+});
 
 const feedContainer = document.getElementById('feedContainer');
 const publishBtn = document.getElementById('publishPostBtn');
@@ -1359,11 +1403,22 @@ function renderFeed(postIdToAnimate = null) {
       imagesHtml = imageNavigation;
     }
     
+    // Construire l'HTML de l'avatar
+    let avatarHtml = '';
+    if (post.avatar) {
+      // Si avatar est une URL, l'afficher comme image
+      avatarHtml = `style="background-image: url('${post.avatar}'); background-size: cover; background-position: center; color: transparent;"`;
+    } else {
+      // Sinon, afficher les initiales
+      avatarHtml = `style="display: flex; align-items: center; justify-content: center;"`;
+    }
+    
     postDiv.innerHTML = `
       <div class="post-header">
-        <div class="post-avatar">${post.avatar}</div>
+        <div class="post-avatar" ${avatarHtml}>${post.avatar ? '' : (post.author?.split(' ').map(w => w[0]).join('') || 'U')}</div>
         <div>
           <div class="post-author">${post.author}</div>
+          <div class="post-username" style="font-size: 0.85em; color: var(--text-secondary);">${post.username || ''}</div>
           <div class="post-time">${post.time}</div>
         </div>
       </div>
@@ -1376,7 +1431,7 @@ function renderFeed(postIdToAnimate = null) {
         <span>${post.comments.length} commentaires</span>
       </div>
       <div class="post-actions">
-        <button class="post-action-btn like-btn ${post.liked ? 'liked' : ''}"><i class="far fa-heart"></i> Like</button>
+        <button class="post-action-btn like-btn ${post.liked ? 'liked' : ''}"><i class="${post.liked ? 'fas' : 'far'} fa-heart"></i> Like <span class="like-count">${post.likes}</span></button>
         <button class="post-action-btn comment-btn"><i class="far fa-comment"></i> Commenter</button>
       </div>
       <div class="comments-section">
@@ -1453,11 +1508,50 @@ function handleLike(e) {
   const postCard = btn.closest('.post-card');
   const postId = parseInt(postCard.dataset.id);
   const post = posts.find(p => p.id === postId);
-  if (post) {
-    post.liked = !post.liked;
-    post.likes += post.liked ? 1 : -1;
-    renderFeed();
-  }
+  
+  if (!post) return;
+
+  // Désactiver le bouton pendant le traitement
+  btn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('action', 'toggleLike');
+  formData.append('post_id', postId);
+
+  fetch(window.location.href, {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Erreur lors du like');
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      // Mettre à jour le post localement
+      post.liked = data.isLiked;
+      post.likes = data.likes_count;
+      btn.classList.toggle('liked', data.isLiked);
+      btn.querySelector('i').className = data.isLiked ? 'fas fa-heart' : 'far fa-heart';
+      
+      // Mettre à jour le count affiché
+      const likeCount = btn.parentElement.querySelector('.like-count');
+      if (likeCount) {
+        likeCount.textContent = data.likes_count;
+      }
+    } else {
+      showNotification('error', 'Erreur', data.message || 'Impossible de liker');
+    }
+  })
+  .catch(err => {
+    console.error('Erreur:', err);
+    showNotification('error', 'Erreur', 'Une erreur est survenue');
+  })
+  .finally(() => {
+    btn.disabled = false;
+  });
 }
 
 function handleComment(e) {
@@ -1803,25 +1897,71 @@ function renderPostImagesPreview() {
 if (publishBtn) {
   publishBtn.addEventListener('click', () => {
     const content = postContentInput.value.trim();
-    if (!content && postImages.length === 0) return;
     
-    const newPost = {
-      id: Date.now(),
-      author: 'Alexandre Gauthier',
-      avatar: 'AG',
-      content: content,
-      images: postImages.map(img => img.src), // Array d'images au lieu d'une seule
-      time: 'À l\'instant',
-      likes: 0,
-      liked: false,
-      comments: []
-    };
-    posts.unshift(newPost);
-    renderFeed();
-    postContentInput.value = '';
-    postImages = [];
-    postImageInput.value = '';
-    renderPostImagesPreview();
+    // Permettre: texte seul, images seules, ou texte + images
+    if (!content && postImages.length === 0) {
+      showNotification('warning', 'Champs vides', 'Écrivez quelque chose ou ajoutez une image');
+      return;
+    }
+
+    publishBtn.disabled = true;
+    publishBtn.textContent = 'Création en cours...';
+
+    const formData = new FormData();
+    formData.append('action', 'createPost');
+    formData.append('post_content', content); // Peut être vide si images présentes
+    formData.append('post_visibility', 'public');
+    
+
+    // Ajouter les images (postImages contient {src, file})
+    postImages.forEach((img) => {
+      if (img.file) {
+        formData.append('post_images[]', img.file);
+      }
+    });
+
+    fetch(window.location.href, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        // Si erreur, essayer de parser le JSON d'erreur
+        return response.text().then(text => {
+          try {
+            const errorData = JSON.parse(text);
+            throw new Error(errorData.message || `Erreur ${response.status}`);
+          } catch (e) {
+            throw new Error(`Erreur ${response.status}: ${text.substring(0, 100)}`);
+          }
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        showNotification('success', 'Succès', 'Publication créée !');
+        postContentInput.value = '';
+        postImages = [];
+        postImageInput.value = '';
+        renderPostImagesPreview();
+        
+        // Recharger le feed
+        setTimeout(() => {
+          loadFeed();
+        }, 500);
+      } else {
+        showNotification('error', 'Erreur', data.message || 'Impossible de créer la publication');
+      }
+    })
+    .catch(err => {
+      console.error('Erreur:', err);
+      showNotification('error', 'Erreur', err.message || 'Une erreur est survenue lors de la création du post');
+    })
+    .finally(() => {
+      publishBtn.disabled = false;
+      publishBtn.textContent = 'Publier';
+    });
   });
 }
 
@@ -1955,6 +2095,7 @@ async function loadCurrentProfile() {
     // IMPORTANT : Réinitialiser TOUS les champs pour éviter les données fantômes lors d'un changement de compte
     currentUserProfile.profilePhoto = null;
     currentUserProfile.coverPhoto = null;
+    currentUserProfile.posts = []; // Réinitialiser les posts
     
     // Mettre à jour currentUserProfile avec les vraies données
     currentUserProfile.name = profile.user_name || "User";
@@ -1962,6 +2103,7 @@ async function loadCurrentProfile() {
     currentUserProfile.bio = profile.user_bio || "Pas de bio";
     currentUserProfile.location = profile.user_location || "Localisation inconnue";
     currentUserProfile.memberSince = profile.member_since || "Janvier 2024";
+    currentUserProfile.userid = profile.user_id; // Stocker l'ID utilisateur
     currentUserProfile.avatarInitials = profile.user_name
       ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
       : 'U';
@@ -1981,10 +2123,53 @@ async function loadCurrentProfile() {
     currentUserProfile.followers_count = profile.followers_count || 0;
     currentUserProfile.following_count = profile.following_count || 0;
     
+    // Charger les publications de l'utilisateur
+    await loadUserPosts(profile.user_id);
+    
     return true;
   } catch (e) {
     console.error('Erreur au chargement du profil:', e);
     return false;
+  }
+}
+
+async function loadUserPosts(userId) {
+  try {
+    const response = await fetch(`?action=getUserPosts&user_id=${userId}&limit=50`);
+    
+    if (!response.ok) {
+      console.error('Erreur HTTP lors du chargement des posts:', response.status);
+      currentUserProfile.posts = [];
+      return;
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      console.error('Erreur serveur:', result.message);
+      currentUserProfile.posts = [];
+      return;
+    }
+    
+    // Convertir les posts au format utilisé par la grille
+    currentUserProfile.posts = result.posts.map(post => ({
+      id: post.id,
+      author: post.author,
+      username: post.username,
+      avatar: post.avatar,
+      content: post.content,
+      image: post.images && post.images.length > 0 ? post.images[0] : null,
+      images: post.images || [],
+      likes: post.likes,
+      comments: post.comments,
+      userHasLiked: post.userHasLiked,
+      timestamp: post.timestamp,
+      user_id: post.user_id,
+      visibility: post.visibility
+    })) || [];
+    
+  } catch (e) {
+    console.error('Erreur au chargement des posts du profil:', e);
+    currentUserProfile.posts = [];
   }
 }
 
@@ -2042,6 +2227,12 @@ function updateProfileUI() {
   document.getElementById("followersCount").innerText = currentUserProfile.followers_count || 0;
   document.getElementById("followingCount").innerText = currentUserProfile.following_count || 0;
 
+  // Mettre à jour le placeholder du textarea de création de post
+  const postContent = document.getElementById("postContent");
+  if (postContent) {
+    postContent.placeholder = `Quoi de neuf, ${currentUserProfile.name.split(' ')[0]} ?`;
+  }
+
   // Mettre à jour le mini-avatar du formulaire de création de post
   const createPostAvatar = document.querySelector(".mini-avatar");
   if (createPostAvatar) {
@@ -2056,10 +2247,61 @@ function updateProfileUI() {
     }
   }
 
-  // Grille des posts - À REMPLIR DYNAMIQUEMENT (pas de données statiques hardcodées)
+  // Grille des posts - Remplir avec les vraies publications
   const grid = document.getElementById("profilePostsGrid");
   if (grid) {
-    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 20px; font-size: 16px;">Aucune publication pour le moment</div>';
+    if (!currentUserProfile.posts || currentUserProfile.posts.length === 0) {
+      grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 20px; font-size: 16px;">Aucune publication pour le moment</div>';
+    } else {
+      grid.innerHTML = ''; // Vider la grille
+      
+      currentUserProfile.posts.forEach(post => {
+        const postImageUrl = post.image || post.images?.[0] || null;
+        
+        // Créer la structure attendue par le CSS
+        const postCard = document.createElement('div');
+        postCard.className = 'grid-post-card';
+        
+        if (postImageUrl) {
+          // Image
+          const img = document.createElement('img');
+          img.className = 'grid-post-image';
+          img.src = postImageUrl;
+          img.alt = 'post';
+          postCard.appendChild(img);
+        } else {
+          // Placeholder pour post sans image
+          const placeholder = document.createElement('div');
+          placeholder.className = 'grid-post-image';
+          placeholder.style.background = 'var(--hover-bg)';
+          placeholder.style.display = 'flex';
+          placeholder.style.alignItems = 'center';
+          placeholder.style.justifyContent = 'center';
+          placeholder.innerHTML = '<i class="fas fa-image" style="font-size: 40px; color: var(--text-secondary);"></i>';
+          postCard.appendChild(placeholder);
+        }
+        
+        // Info section
+        const info = document.createElement('div');
+        info.className = 'grid-post-info';
+        info.innerHTML = `
+          <div class="grid-post-stats">
+            <span><i class="far fa-heart"></i> ${post.likes}</span>
+            <span><i class="far fa-comment"></i> ${post.comments}</span>
+          </div>
+        `;
+        postCard.appendChild(info);
+        
+        // Click handler
+        postCard.style.cursor = 'pointer';
+        postCard.addEventListener('click', () => {
+          console.log('Publication cliquée:', post.id);
+          // TODO: Ouvrir la publication en modal
+        });
+        
+        grid.appendChild(postCard);
+      });
+    }
   }
 }
 
@@ -2298,5 +2540,15 @@ editProfileForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Initialisation
-updateProfileUI();
+// Initialisation - Charger le profil réel d'abord
+if (typeof loadCurrentProfile === 'function') {
+  loadCurrentProfile().then(() => {
+    updateProfileUI();
+  }).catch(err => {
+    console.error('Impossible de charger le profil:', err);
+    // Mettre à jour quand même avec les données par défaut
+    updateProfileUI();
+  });
+} else {
+  updateProfileUI();
+}

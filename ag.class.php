@@ -122,6 +122,48 @@ class Utils {
         error_log("move_uploaded_file échoué: tmp=" . $file['tmp_name'] . ", dest=" . $uploadPath);
         return false;
     }
+    
+    public static function uploadPostImage($tmpName, $fileName) {
+        // Accepter l'extension comme fallback si MIME échoue
+        $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        
+        if (!in_array($ext, $allowedExt)) {
+            error_log("Upload image échouée: Extension .{$ext} non autorisée");
+            return false;
+        }
+        
+        // Créer le dossier pub/ s'il n'existe pas
+        $uploadDir = __DIR__ . '/pub';
+        if (!is_dir($uploadDir)) {
+            if (!@mkdir($uploadDir, 0777, true)) {
+                error_log("Impossible de créer dossier pub");
+                return false;
+            }
+        }
+        
+        // Vérifier permissions d'écriture
+        if (!is_writable($uploadDir)) {
+            chmod($uploadDir, 0777);
+            if (!is_writable($uploadDir)) {
+                error_log("Dossier pub n'est pas writable");
+                return false;
+            }
+        }
+        
+        // Générer nom unique - prefix "post_" pour les images de publications
+        $imageName = 'post_' . time() . '_' . uniqid() . '.' . $ext;
+        $uploadPath = $uploadDir . '/' . $imageName;
+        
+        // Sauvegarder le fichier
+        if (@move_uploaded_file($tmpName, $uploadPath)) {
+            error_log("Image de post uploadée: $imageName");
+            return $imageName; // Retourner juste le nom du fichier
+        }
+        
+        error_log("move_uploaded_file échoué pour image de post: tmp=" . $tmpName . ", dest=" . $uploadPath);
+        return false;
+    }
 }
 
 abstract class BaseModel {
@@ -1039,19 +1081,28 @@ class Router {
     public function handle() {
         $action = $_REQUEST['action'] ?? null;
         
+        error_log('Router::handle() - Action: ' . ($action ?? 'NULL'));
+        error_log('REQUEST method: ' . $_SERVER['REQUEST_METHOD']);
+        
         if (!$action) {
+            error_log('ERROR: Action non spécifiée');
             Utils::jsonResponse(['success' => false, 'message' => 'Action non spécifiée'], 400);
         }
         
         $method = 'action' . ucfirst($action);
         
+        error_log('Looking for method: ' . $method);
+        
         if (!method_exists($this, $method)) {
+            error_log('ERROR: Method not found: ' . $method);
             Utils::jsonResponse(['success' => false, 'message' => 'Action non trouvée'], 404);
         }
         
         try {
+            error_log('Calling method: ' . $method);
             $this->$method();
         } catch (Exception $e) {
+            error_log('Exception in ' . $method . ': ' . $e->getMessage());
             Utils::jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -1164,15 +1215,24 @@ class Router {
     }
     
     private function actionCreatePost() {
+        // Log pour debug
+        error_log('actionCreatePost() - USER_ID: ' . ($_SESSION['user_id'] ?? 'NONE'));
+        
         if (!isset($_SESSION['user_id'])) {
+            error_log('ERROR: Pas de user_id en session');
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
         }
         
         $content = $_POST['post_content'] ?? '';
         $visibility = $_POST['post_visibility'] ?? 'public';
+        $hasImages = !empty($_FILES['post_images']) && is_array($_FILES['post_images']['tmp_name']);
         
-        if (empty($content)) {
-            Utils::jsonResponse(['success' => false, 'message' => 'Contenu vide'], 400);
+        error_log('Contenu: ' . strlen($content) . ' chars | Images: ' . ($hasImages ? 'OUI' : 'NON'));
+        
+        // Permettre de publier si contenu OU images (ou les deux)
+        if (empty($content) && !$hasImages) {
+            error_log('ERROR: Ni contenu ni images présents');
+            Utils::jsonResponse(['success' => false, 'message' => 'Veuillez ajouter du texte ou des images'], 400);
         }
         
         $pub = new PublicationModel($this->db);
@@ -1182,18 +1242,95 @@ class Router {
             'post_visibility' => $visibility
         ]);
         
+        // Gérer les images uploadées
+        if (!empty($_FILES['post_images'])) {
+            $imgModel = new ImagePublicationModel($this->db);
+            $order = 0;
+            
+            foreach ($_FILES['post_images']['tmp_name'] as $idx => $tmpName) {
+                if ($_FILES['post_images']['error'][$idx] === UPLOAD_ERR_OK) {
+                    $filename = Utils::uploadPostImage($tmpName, $_FILES['post_images']['name'][$idx]);
+                    
+                    if ($filename) {
+                        $imgModel->create([
+                            'image_post_id' => $post_id,
+                            'image_url' => $filename,
+                            'image_mime_type' => $_FILES['post_images']['type'][$idx],
+                            'image_order' => $order++,
+                            'image_size' => $_FILES['post_images']['size'][$idx]
+                        ]);
+                    }
+                }
+            }
+        }
+        
         Utils::jsonResponse(['success' => true, 'message' => 'Publication créée', 'post_id' => $post_id], 201);
     }
     
     private function actionGetFeed() {
-        $user_id = $_SESSION['user_id'] ?? null;
-        $limit = (int)($_GET['limit'] ?? 50);
-        $offset = (int)($_GET['offset'] ?? 0);
-        
-        $pub = new PublicationModel($this->db);
-        $publications = $pub->getFeed($user_id, $limit, $offset);
-        
-        Utils::jsonResponse(['success' => true, 'publications' => $publications]);
+        try {
+            $user_id = $_SESSION['user_id'] ?? null;
+            $limit = (int)($_GET['limit'] ?? 50);
+            $offset = (int)($_GET['offset'] ?? 0);
+            
+            $pub = new PublicationModel($this->db);
+            $publications = $pub->getFeed($user_id, $limit, $offset);
+            
+            // Enrichir chaque publication avec les images et les likes de l'utilisateur
+            $imgModel = new ImagePublicationModel($this->db);
+            $likeModel = new LikePublicationModel($this->db);
+            $comModel = new CommentaireModel($this->db);
+            
+            $enriched = [];
+            foreach ($publications as $post) {
+                // Récupérer les images
+                $images = $imgModel->getByPostId($post['post_id']);
+                $imageUrls = [];
+                foreach ($images as $img) {
+                    $imageUrls[] = 'pub/' . $img['image_url'];
+                }
+                
+                // Vérifier si l'utilisateur actuel a liké ce post
+                $userHasLiked = false;
+                if ($user_id) {
+                    $userHasLiked = $likeModel->hasLiked($user_id, $post['post_id']);
+                }
+                
+                // Récupérer les derniers commentaires
+                $comments = $comModel->getByPostId($post['post_id'], 3); // 3 derniers commentaires
+                $commentsList = [];
+                foreach ($comments as $comment) {
+                    $commentsList[] = [
+                        'id' => $comment['comment_id'],
+                        'text' => $comment['comment_text'],
+                        'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
+                        'isAnonymous' => (bool)($comment['comment_anonym'] ?? false),
+                        'likes' => (int)($comment['comment_likes'] ?? 0)
+                    ];
+                }
+                
+                $enriched[] = [
+                    'id' => $post['post_id'],
+                    'author' => $post['user_name'],
+                    'username' => '@' . $post['user_username'],
+                    'avatar' => $post['user_photo_url'] ? 'imgApp/' . $post['user_photo_url'] : null,
+                    'content' => $post['post_content'],
+                    'images' => $imageUrls,
+                    'likes' => (int)$post['post_likes_count'],
+                    'comments' => (int)($post['post_comments'] ?? 0),
+                    'userHasLiked' => $userHasLiked,
+                    'commentsList' => $commentsList,
+                    'timestamp' => $post['post_created_at'],
+                    'visibility' => $post['post_visibility'],
+                    'user_id' => $post['post_user_id']
+                ];
+            }
+            
+            Utils::jsonResponse(['success' => true, 'posts' => $enriched]);
+        } catch (Exception $e) {
+            error_log('Erreur actionGetFeed: ' . $e->getMessage());
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
+        }
     }
     
     private function actionToggleLike() {
@@ -1208,18 +1345,29 @@ class Router {
         }
         
         $likeModel = new LikePublicationModel($this->db);
+        $pubModel = new PublicationModel($this->db);
         $user_id = $_SESSION['user_id'];
         
         if ($likeModel->hasLiked($user_id, $post_id)) {
             $likeModel->unlike($user_id, $post_id);
+            $pubModel->decrementLikes($post_id);
             $message = 'Like retiré';
+            $isLiked = false;
         } else {
             $likeModel->like($user_id, $post_id);
+            $pubModel->incrementLikes($post_id);
             $message = 'Publication liée';
+            $isLiked = true;
         }
         
         $count = $likeModel->getLikesCount($post_id);
-        Utils::jsonResponse(['success' => true, 'message' => $message, 'likes_count' => $count]);
+        
+        Utils::jsonResponse([
+            'success' => true, 
+            'message' => $message, 
+            'likes_count' => $count,
+            'isLiked' => $isLiked
+        ]);
     }
     
     private function actionAddComment() {
@@ -1230,22 +1378,161 @@ class Router {
         $post_id = $_POST['post_id'] ?? null;
         $text = $_POST['comment_text'] ?? '';
         $parent_id = $_POST['comment_parent_id'] ?? null;
+        $is_anonym = $_POST['comment_anonym'] ?? false;
         
         if (!$post_id || empty($text)) {
             Utils::jsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
         }
+        
+        $text = substr($text, 0, 500); // Limiter à 500 caractères
         
         $com = new CommentaireModel($this->db);
         $comment_id = $com->create([
             'comment_post_id' => $post_id,
             'comment_user_id' => $_SESSION['user_id'],
             'comment_text' => $text,
+            'comment_anonym' => $is_anonym ? 1 : 0,
             'comment_parent_id' => $parent_id
         ]);
         
-        (new PublicationModel($this->db))->incrementComments($post_id);
+        // Incrémenter le compteur seulement si c'est un commentaire principal (pas une réponse)
+        if (!$parent_id) {
+            (new PublicationModel($this->db))->incrementComments($post_id);
+        }
         
-        Utils::jsonResponse(['success' => true, 'message' => 'Commentaire ajouté', 'comment_id' => $comment_id], 201);
+        // Récupérer le commentaire créé avec infos utilisateur
+        $comment = $com->getById($comment_id);
+        
+        $response = [
+            'success' => true,
+            'message' => 'Commentaire ajouté',
+            'comment' => [
+                'id' => $comment['comment_id'],
+                'text' => $comment['comment_text'],
+                'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
+                'isAnonymous' => (bool)($comment['comment_anonym'] ?? false),
+                'likes' => 0,
+                'parent_id' => $comment['comment_parent_id']
+            ]
+        ];
+        
+        Utils::jsonResponse($response, 201);
+    }
+    
+    private function actionGetComments() {
+        $post_id = $_GET['post_id'] ?? null;
+        
+        if (!$post_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Post ID manquant'], 400);
+        }
+        
+        $com = new CommentaireModel($this->db);
+        $allComments = $com->getByPostId($post_id, 1000); // Récupérer tous
+        
+        // Organiser en commentaires principaux avec réponses
+        $mainComments = [];
+        $replies = [];
+        
+        foreach ($allComments as $comment) {
+            $commentData = [
+                'id' => $comment['comment_id'],
+                'text' => $comment['comment_text'],
+                'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
+                'username' => $comment['user_username'] ?? 'unknown',
+                'avatar' => $comment['user_photo_url'] ? 'imgApp/' . $comment['user_photo_url'] : null,
+                'isAnonymous' => (bool)($comment['comment_anonym'] ?? false),
+                'likes' => (int)($comment['comment_likes'] ?? 0),
+                'timestamp' => $comment['created_at'],
+                'user_id' => $comment['comment_user_id'],
+                'parent_id' => $comment['comment_parent_id']
+            ];
+            
+            if ($comment['comment_parent_id']) {
+                // C'est une réponse
+                $replies[$comment['comment_parent_id']][] = $commentData;
+            } else {
+                // C'est un commentaire principal
+                $commentData['replies'] = [];
+                $mainComments[$comment['comment_id']] = $commentData;
+            }
+        }
+        
+        // Ajouter les réponses aux commentaires principaux
+        foreach ($mainComments as &$mainComment) {
+            if (isset($replies[$mainComment['id']])) {
+                $mainComment['replies'] = $replies[$mainComment['id']];
+            }
+        }
+        
+        Utils::jsonResponse([
+            'success' => true,
+            'comments' => array_values($mainComments),
+            'total' => count($allComments)
+        ]);
+    }
+    
+    private function actionToggleCommentLike() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        
+        $comment_id = $_POST['comment_id'] ?? null;
+        
+        if (!$comment_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Comment ID manquant'], 400);
+        }
+        
+        $likeModel = new LikeCommentaireModel($this->db);
+        $comModel = new CommentaireModel($this->db);
+        $user_id = $_SESSION['user_id'];
+        
+        if ($likeModel->hasLiked($user_id, $comment_id)) {
+            $likeModel->unlike($user_id, $comment_id);
+            $comModel->decrementLikes($comment_id);
+            $message = 'Like retiré';
+            $isLiked = false;
+        } else {
+            $likeModel->like($user_id, $comment_id);
+            $comModel->incrementLikes($comment_id);
+            $message = 'Commentaire aimé';
+            $isLiked = true;
+        }
+        
+        $count = $likeModel->getLikesCount($comment_id);
+        
+        Utils::jsonResponse([
+            'success' => true,
+            'message' => $message,
+            'likes_count' => $count,
+            'isLiked' => $isLiked
+        ]);
+    }
+    
+    private function actionGetPostStats() {
+        $post_id = $_GET['post_id'] ?? null;
+        
+        if (!$post_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Post ID manquant'], 400);
+        }
+        
+        $pub = new PublicationModel($this->db);
+        $post = $pub->getById($post_id);
+        
+        if (!$post) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Publication non trouvée'], 404);
+        }
+        
+        $stats = [
+            'post_id' => $post['post_id'],
+            'likes' => (int)$post['post_likes_count'],
+            'comments' => (int)($post['post_comments'] ?? 0),
+            'views' => (int)($post['post_views'] ?? 0),
+            'created_at' => $post['post_created_at'],
+            'author' => $post['user_name'],
+            'author_id' => $post['post_user_id']
+        ];
+        
+        Utils::jsonResponse(['success' => true, 'stats' => $stats]);
     }
     
     private function actionFollowUser() {
@@ -1347,6 +1634,83 @@ class Router {
         // Ne pas ajouter de préfixe imgApp/ ici pour éviter la duplication
         
         Utils::jsonResponse(['success' => true, 'profile' => $profile]);
+    }
+    
+    private function actionGetUserPosts() {
+        $user_id = $_GET['user_id'] ?? (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null);
+        $limit = (int)($_GET['limit'] ?? 50);
+        $offset = (int)($_GET['offset'] ?? 0);
+        
+        if (!$user_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
+        }
+        
+        try {
+            $pub = new PublicationModel($this->db);
+            // Récupérer toutes les publications de l'utilisateur
+            $publications = $pub->getByUserId($user_id, $limit, $offset);
+            
+            if (!$publications) {
+                $publications = [];
+            }
+            
+            // Enrichir les publications comme actionGetFeed
+            $imgModel = new ImagePublicationModel($this->db);
+            $likeModel = new LikePublicationModel($this->db);
+            $comModel = new CommentaireModel($this->db);
+            
+            $enriched = [];
+            $current_user_id = $_SESSION['user_id'] ?? null;
+            
+            foreach ($publications as $post) {
+                // Récupérer les images
+                $images = $imgModel->getByPostId($post['post_id']);
+                $imageUrls = [];
+                foreach ($images as $img) {
+                    $imageUrls[] = 'pub/' . $img['image_url'];
+                }
+                
+                // Vérifier si l'utilisateur actuel a liké ce post
+                $userHasLiked = false;
+                if ($current_user_id) {
+                    $userHasLiked = $likeModel->hasLiked($current_user_id, $post['post_id']);
+                }
+                
+                // Récupérer les derniers commentaires
+                $comments = $comModel->getByPostId($post['post_id'], 3);
+                $commentsList = [];
+                foreach ($comments as $comment) {
+                    $commentsList[] = [
+                        'id' => $comment['comment_id'],
+                        'text' => $comment['comment_text'],
+                        'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
+                        'isAnonymous' => (bool)($comment['comment_anonym'] ?? false),
+                        'likes' => (int)($comment['comment_likes'] ?? 0)
+                    ];
+                }
+                
+                $enriched[] = [
+                    'id' => $post['post_id'],
+                    'author' => $post['user_name'],
+                    'username' => '@' . $post['user_username'],
+                    'avatar' => $post['user_photo_url'] ? 'imgApp/' . $post['user_photo_url'] : null,
+                    'content' => $post['post_content'],
+                    'images' => $imageUrls,
+                    'likes' => (int)$post['post_likes_count'],
+                    'comments' => (int)($post['post_comments'] ?? 0),
+                    'userHasLiked' => $userHasLiked,
+                    'commentsList' => $commentsList,
+                    'timestamp' => $post['post_created_at'],
+                    'visibility' => $post['post_visibility'],
+                    'user_id' => $post['post_user_id']
+                ];
+            }
+            
+            Utils::jsonResponse(['success' => true, 'posts' => $enriched]);
+        } catch (Exception $e) {
+            error_log('Erreur actionGetUserPosts: ' . $e->getMessage());
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
+        }
     }
     
     private function actionUpdateProfile() {
@@ -1612,9 +1976,38 @@ class Router {
             Utils::jsonResponse(['success' => false, 'message' => 'Vous ne pouvez pas supprimer cette publication'], 403);
         }
         
+        // Cascade delete: images, likes, commentaires
+        $imgModel = new ImagePublicationModel($this->db);
+        $images = $imgModel->getByPostId($post_id);
+        foreach ($images as $img) {
+            $imgModel->delete($img['image_id']);
+            // Supprimer le fichier physique
+            $filePath = __DIR__ . '/pub/' . $img['image_url'];
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        }
+        
+        // Supprimer les likes
+        $stmtLikes = $this->db->prepare('DELETE FROM likes_publications WHERE like_post_id = ?');
+        $stmtLikes->execute([$post_id]);
+        
+        // Supprimer les commentaires et leurs likes/réponses
+        $comModel = new CommentaireModel($this->db);
+        $comments = $comModel->getByPostId($post_id, 1000); // Récupérer tous
+        foreach ($comments as $comment) {
+            // Supprimer les likes sur ce commentaire
+            $stmtComLikes = $this->db->prepare('DELETE FROM likes_commentaires WHERE like_comment_id = ?');
+            $stmtComLikes->execute([$comment['comment_id']]);
+            
+            // Supprimer le commentaire
+            $comModel->delete($comment['comment_id']);
+        }
+        
+        // Finalement supprimer la publication
         $pub->delete($post_id);
         
-        Utils::jsonResponse(['success' => true, 'message' => 'Publication supprimée']);
+        Utils::jsonResponse(['success' => true, 'message' => 'Publication et tous ses contenus supprimés']);
     }
     
     private function actionDeleteComment() {

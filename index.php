@@ -1,7 +1,12 @@
 <?php
 // ===== BACKEND - AJAX Handler =====
+// Démarrer la session AVANT tout
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Inclure la classe au démarrage pour les appels AJAX
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['action'])) {
+if ((($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET') && isset($_REQUEST['action']))) {
     include 'ag.class.php';
     exit; // Le auto-router d'ag.class.php va s'exécuter et appeler exit
 }
@@ -62,7 +67,7 @@ if (isset($_SESSION['user_id'])) {
       
       <div class="input-group">
         <i class="fas fa-user-tag"></i>
-        <input type="text" placeholder="Pseudo ou Nom" id="auth-username" required>
+        <input type="text" placeholder="Pseudo" id="auth-username" required>
       </div>
       <div class="input-group">
         <i class="fas fa-lock"></i>
@@ -483,7 +488,7 @@ if (isset($_SESSION['user_id'])) {
       <div class="create-post-card">
         <div class="create-post-header">
           <div class="mini-avatar" id="createPostAvatar">AG</div>
-          <textarea id="postContent" rows="2" placeholder="Quoi de neuf, Alexandre ?"></textarea>
+          <textarea id="postContent" rows="2" placeholder="Quoi de neuf ?"></textarea>
         </div>
         <div id="postImagesPreview" class="post-images-preview" style="display: none;">
           <div class="preview-grid"></div>

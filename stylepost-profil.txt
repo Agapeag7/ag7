@@ -1,0 +1,67 @@
+<div class="profile-posts-grid" id="profilePostsGrid">
+      <div class="grid-post-card">
+        <img src="https://picsum.photos/id/10/400/300" class="grid-post-image" alt="post">
+        <div class="grid-post-info">
+          <div class="grid-post-stats">
+            <span><i class="far fa-heart"></i> 34</span>
+            <span><i class="far fa-comment"></i> 5</span>
+          </div>
+        </div>
+      </div>
+    
+      <div class="grid-post-card">
+        <img src="https://picsum.photos/id/20/400/300" class="grid-post-image" alt="post">
+        <div class="grid-post-info">
+          <div class="grid-post-stats">
+            <span><i class="far fa-heart"></i> 78</span>
+            <span><i class="far fa-comment"></i> 12</span>
+          </div>
+        </div>
+      </div>
+    
+    </div>
+
+
+    --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+    --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
+    --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
+    --white: #ffffff;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --toggle-thumb-bg: #ffffff;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --transition: all 0.2s ease;
+    --emerald-500: hsl(217, 84%, 60%);
+    --emerald-600: hsl(217, 84%, 50%);
+    --emerald-700: hsl(217, 84%, 40%);
+    --bg-page: #1e293b;
+    --bg-container: #0f172a;
+    --card-bg: #1e293b;
+    --sidebar-bg: #0f172a;
+    --hover-bg: #334155;
+    --emerald-50: #1a3a3a;
+    --emerald-100: hsl(217, 84%, 97%);
+    --slate-50: #1e293b;
+    --slate-100: #1e293b;
+    --slate-200: #334155;
+    --slate-800: #0f172a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-light: #334155;
+    --active-bg: hsl(217, 50%, 22%);
+    --active-text-color: #ffffff;
+    font-size: 16px;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin: 0;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 16px 24px;
