@@ -1,2 +1,25 @@
-imgApp/
-pub/
+# Ignorer le contenu des dossiers uploads (garder les dossiers vides)
+imgApp/*
+!imgApp/.gitkeep
+
+pub/*
+!pub/.gitkeep
+
+# Dépendances
+node_modules/
+vendor/
+
+# Système
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environnement
+.env
+.env.local
