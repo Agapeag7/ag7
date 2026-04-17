@@ -1905,7 +1905,7 @@ async function loadCurrentProfile() {
     currentUserProfile.username = '@' + (profile.user_username || "user");
     currentUserProfile.bio = profile.user_bio || "Pas de bio";
     currentUserProfile.location = profile.user_location || "Localisation inconnue";
-    currentUserProfile.memberSince = profile.user_created_at ? new Date(profile.user_created_at).toLocaleDateString('fr-FR', {year: 'numeric', month: 'long'}) : "Janvier 2024";
+    currentUserProfile.memberSince = profile.member_since || "Janvier 2024";
     currentUserProfile.avatarInitials = profile.user_name
       ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
       : 'U';
@@ -1922,7 +1922,6 @@ async function loadCurrentProfile() {
     currentUserProfile.followers_count = profile.followers_count || 0;
     currentUserProfile.following_count = profile.following_count || 0;
     
-    console.log('Profil chargé:', currentUserProfile);
     return true;
   } catch (e) {
     console.error('Erreur au chargement du profil:', e);
@@ -1994,7 +1993,7 @@ function updateProfileUI() {
   // Grille des posts - À REMPLIR DYNAMIQUEMENT (pas de données statiques hardcodées)
   const grid = document.getElementById("profilePostsGrid");
   if (grid) {
-    grid.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">Aucune publication pour le moment</p>';
+    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 20px; font-size: 16px;">Aucune publication pour le moment</div>';
   }
 }
 

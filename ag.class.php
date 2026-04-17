@@ -1329,6 +1329,20 @@ class Router {
         $profile['followers_count'] = $follow->getFollowersCount($_SESSION['user_id']);
         $profile['following_count'] = $follow->getFollowingCount($_SESSION['user_id']);
         
+        // Formater la date de création (Janvier 2024 en français)
+        if (!empty($profile['created_at'])) {
+            $dateObj = new DateTime($profile['created_at']);
+            $profile['member_since'] = $dateObj->format('F Y'); // Format: January 2024
+            // Traduire en français
+            $enToFr = [
+                'January' => 'Janvier', 'February' => 'Février', 'March' => 'Mars',
+                'April' => 'Avril', 'May' => 'Mai', 'June' => 'Juin',
+                'July' => 'Juillet', 'August' => 'Août', 'September' => 'Septembre',
+                'October' => 'Octobre', 'November' => 'Novembre', 'December' => 'Décembre'
+            ];
+            $profile['member_since'] = strtr($profile['member_since'], $enToFr);
+        }
+        
         // Retourner le filename uniquement (le frontend ajoute le chemin via getPhotoURL())
         // Ne pas ajouter de préfixe imgApp/ ici pour éviter la duplication
         

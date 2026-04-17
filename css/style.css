@@ -2817,6 +2817,15 @@ body.dark .modal-comment-input::placeholder,
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
   padding: 0 32px 32px;
+  min-height: 200px;
+}
+
+/* Quand c'est vide, centrer le message */
+.profile-posts-grid:not(:has(.grid-post-card)) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: 1fr;
 }
 .grid-post-card {
   background: var(--card-bg);
