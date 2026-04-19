@@ -574,6 +574,24 @@ if (isset($_SESSION['user_id'])) {
         </div>
       </div>
     </div>
+
+    <!-- Modal Suppression Publication -->
+    <div id="deletePostModal" class="delete-post-modal hidden">
+      <div class="delete-post-card">
+        <button class="delete-post-close">&times;</button>
+        <div style="text-align: center; margin-bottom: 24px;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 16px; display: block;"></i>
+          <h2 style="margin: 0; color: #ef4444;">Supprimer la publication</h2>
+        </div>
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 24px; font-size: 15px;">
+          Êtes-vous sûr de vouloir supprimer cette publication ? Cette action est irréversible et supprimera également tous les commentaires et likes associés.
+        </p>
+        <div class="delete-post-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" id="cancelDeleteBtn" class="btn-secondary">Annuler</button>
+          <button type="button" id="confirmDeleteBtn" class="btn-danger" style="background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">Supprimer</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 

@@ -17,7 +17,6 @@ let currentUserId = null;
 
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 Initialisation Actus...');
   
   // Récupérer l'ID utilisateur
   fetchCurrentUser();
@@ -41,7 +40,6 @@ function setupActusNavigation() {
   // Charger le feed quand la vue devient visible
   const observer = new MutationObserver(() => {
     if (feedView.classList.contains('active') && !actusState.posts.length && !actusState.isLoading) {
-      console.log('📡 Vue Actus active, chargement du feed...');
       loadActusFeed();
     }
   });
@@ -80,7 +78,8 @@ function setupActusUI() {
     });
   }
   
-  console.log('✅ UI Actus configurée');
+  // Setup modal suppression
+  setupDeleteModal();
 }
 
 // ===== RÉCUPÉRER L'UTILISATEUR COURANT =====
@@ -93,7 +92,6 @@ async function fetchCurrentUser() {
     
     if (data.success && data.profile) {
       currentUserId = data.profile.user_id;
-      console.log('✅ Utilisateur courant:', currentUserId);
       
       // Mettre à jour l'avatar de création de post
       const avatar = document.getElementById('createPostAvatar');
@@ -114,7 +112,6 @@ async function loadActusFeed() {
   if (actusState.isLoading) return;
   
   actusState.isLoading = true;
-  console.log('📥 Chargement du feed...');
   
   try {
     const result = await ActusAPI.getFeed(actusState.limit, actusState.offset);
@@ -126,7 +123,6 @@ async function loadActusFeed() {
     }
     
     actusState.posts = result.posts || [];
-    console.log(`✅ ${actusState.posts.length} posts chargés`);
     renderActusFeed();
     
   } catch (error) {
@@ -142,7 +138,6 @@ function renderActusFeed() {
   const feedContainer = document.getElementById('feedContainer');
   if (!feedContainer) return;
   
-  console.log(`🎨 Rendu de ${actusState.posts.length} posts`);
   feedContainer.innerHTML = '';
   
   if (actusState.posts.length === 0) {
@@ -492,28 +487,89 @@ async function handleCommentLike(e) {
 }
 
 // ===== SUPPRIMER POST =====
+// ===== SUPPRIMER POST =====
+let deletePostState = {
+  postId: null,
+  postBtn: null
+};
+
 async function handleDeletePost(e) {
   const btn = e.currentTarget;
   const postId = parseInt(btn.dataset.postId);
   
   console.log('🗑️ Delete clicked:', postId);
-  console.log('📍 Current User ID:', currentUserId);
   
-  if (!confirm('Supprimer cette publication ?')) return;
+  // Stocker les infos pour la confirmation
+  deletePostState.postId = postId;
+  deletePostState.postBtn = btn;
   
-  btn.disabled = true;
-  console.log('⏳ Suppression en cours...');
-  const result = await ActusAPI.deletePost(postId);
-  btn.disabled = false;
+  // Afficher le modal
+  const modal = document.getElementById('deletePostModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+  }
+}
+
+// Gestion du modal de suppression
+function setupDeleteModal() {
+  const modal = document.getElementById('deletePostModal');
+  const cancelBtn = document.getElementById('cancelDeleteBtn');
+  const confirmBtn = document.getElementById('confirmDeleteBtn');
+  const closeBtn = document.querySelector('.delete-post-close');
   
-  console.log('📋 Résultat suppression:', result);
+  if (!modal) return;
   
-  if (result.success) {
-    showNotification('success', 'Supprimé', result.message);
-    actusState.posts = actusState.posts.filter(p => p.id !== postId);
-    renderActusFeed();
-  } else {
-    showNotification('error', 'Erreur', result.message);
+  // Bouton Annuler
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      deletePostState.postId = null;
+      deletePostState.postBtn = null;
+    });
+  }
+  
+  // Bouton X (fermer)
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      deletePostState.postId = null;
+      deletePostState.postBtn = null;
+    });
+  }
+  
+  // Bouton Confirmer
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', async () => {
+      if (!deletePostState.postId) return;
+      
+      const postId = deletePostState.postId;
+      const btn = deletePostState.postBtn;
+      
+      // Fermer le modal
+      modal.classList.add('hidden');
+      
+      console.log('⏳ Suppression en cours...');
+      if (btn) btn.disabled = true;
+      
+      // Appeler l'API
+      const result = await ActusAPI.deletePost(postId);
+      
+      if (btn) btn.disabled = false;
+      
+      console.log('📋 Résultat suppression:', result);
+      
+      if (result.success) {
+        showNotification('success', 'Supprimé', result.message);
+        actusState.posts = actusState.posts.filter(p => p.id !== postId);
+        renderActusFeed();
+      } else {
+        showNotification('error', 'Erreur', result.message);
+      }
+      
+      // Réinitialiser
+      deletePostState.postId = null;
+      deletePostState.postBtn = null;
+    });
   }
 }
 

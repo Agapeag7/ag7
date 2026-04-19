@@ -409,10 +409,9 @@ function showNotification(type = 'info', title = '', message = '', duration = 40
       if (viewId === 'feed') {
         // Attendre que loadActusFeed soit disponible
         if (typeof loadActusFeed === 'function') {
-          console.log('📬 Chargement du feed Actus...');
           loadActusFeed();
         } else {
-          console.warn('⚠️ loadActusFeed non disponible');
+          console.warn('loadActusFeed non disponible');
         }
       }
     }
