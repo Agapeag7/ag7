@@ -1,4 +1,10 @@
-postCard.addEventListener('click', () => {
-          console.log('Publication cliquée:', post.id);
-          // TODO: Ouvrir la publication en modal
-        });
+scripts.js:2009 Uncaught ReferenceError: renderFeed is not defined
+    at scripts.js:2009:1
+(anonymous)	@	scripts.js:2009
+
+actus-complete.js:20 🚀 DOMContentLoaded - START
+actus-complete.js:23 👤 Fetching current user...
+actus-complete.js:121 Erreur lors du chargement de l'utilisateur: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+fetchCurrentUser	@	actus-complete.js:121
+await in fetchCurrentUser		
+(anonymous)	@	actus-complete.js:24

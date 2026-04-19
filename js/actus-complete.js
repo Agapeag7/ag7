@@ -17,18 +17,30 @@ let currentUserId = null;
 
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 DOMContentLoaded - START');
   
   // Récupérer l'ID utilisateur et ATTENDRE
+  console.log('👤 Fetching current user...');
   await fetchCurrentUser();
+  console.log('✅ Current user:', currentUserId);
   
   // Ensuite configurer l'UI
+  console.log('⚙️ Setting up navigation...');
   setupActusNavigation();
+  
+  console.log('⚙️ Setting up UI...');
   setupActusUI();
+  
+  // FORCE LOAD THE FEED
+  console.log('📰 Force loading feed...');
+  await loadActusFeed();
   
   // Double-check modal initialization
   setTimeout(() => {
     setupDeleteModal();
   }, 100);
+  
+  console.log('🚀 DOMContentLoaded - DONE');
 });
 
 // ===== CONFIGURATION NAVIGATION ACTUS =====
@@ -138,12 +150,14 @@ async function loadActusFeed() {
 
 // ===== RENDRE LE FEED =====
 function renderActusFeed() {
+  console.log('📰 renderActusFeed() called');
   const feedContainer = document.getElementById('feedContainer');
   if (!feedContainer) {
     console.error('❌ feedContainer NOT FOUND');
     return;
   }
   
+  console.log(`📊 Rendering ${actusState.posts.length} posts`);
   feedContainer.innerHTML = '';
   
   if (actusState.posts.length === 0) {
@@ -151,10 +165,12 @@ function renderActusFeed() {
     return;
   }
   
-  actusState.posts.forEach(post => {
+  actusState.posts.forEach((post, idx) => {
+    console.log(`  Post ${idx + 1}:`, post.id, post.author);
     feedContainer.appendChild(createPostElement(post));
   });
   
+  console.log('🔌 Calling attachPostEvents()');
   attachPostEvents();
 }
 
@@ -304,42 +320,41 @@ function createPostElement(post) {
 
 // ===== ATTACHER LES ÉVÉNEMENTS AUX POSTS =====
 function attachPostEvents() {
-  
-  // Likes
-  document.querySelectorAll('.post-action-btn.like-btn').forEach(btn => {
-    btn.addEventListener('click', handleLike);
-  });
-  
-  // Afficher/cacher commentaires
-  document.querySelectorAll('.post-action-btn.comment-btn').forEach(btn => {
-    btn.addEventListener('click', handleToggleComments);
-  });
-  
-  // Soumettre commentaire
-  document.querySelectorAll('.submit-comment').forEach(btn => {
-    btn.addEventListener('click', handleSubmitComment);
-  });
-  
-  // Supprimer post - DEBUGGING
-  const deleteButtons = document.querySelectorAll('.post-delete-btn');
-  deleteButtons.forEach((btn, idx) => {
+  try {
+    console.log('🔌 attachPostEvents() START');
     
-    btn.addEventListener('click', (e) => {
-      handleDeletePost(e);
+    console.log('Step 1: Find like buttons');
+    const likeBtns = document.querySelectorAll('.post-action-btn.like-btn');
+    console.log('Step 1 SUCCESS:', likeBtns.length, 'like buttons found');
+    
+    likeBtns.forEach(btn => {
+      btn.addEventListener('click', handleLike);
     });
-  });
-  
-  // Afficher images en modal
-  document.querySelectorAll('.post-image').forEach(img => {
-    img.addEventListener('click', function() {
-      const postId = this.dataset.postId;
-      const post = actusState.posts.find(p => p.id == postId);
-      if (post && post.images.length > 0) {
-        openImageViewer(post.images, parseInt(this.dataset.index));
-      }
+    console.log('✅ Like handlers attached');
+    
+    console.log('Step 2: Find comment buttons');
+    const commentBtns = document.querySelectorAll('.post-action-btn.comment-btn');
+    console.log('Step 2 SUCCESS:', commentBtns.length, 'comment buttons found');
+    
+    commentBtns.forEach(btn => {
+      btn.addEventListener('click', handleToggleComments);
     });
-  });
-  
+    console.log('💬 Comment toggle handlers attached');
+    
+    console.log('Step 3: Find submit buttons');
+    const submitBtns = document.querySelectorAll('.submit-comment');
+    console.log('Step 3 SUCCESS:', submitBtns.length, 'submit buttons found');
+    
+    submitBtns.forEach(btn => {
+      console.log('  Attaching listener to submit button:', btn);
+      btn.addEventListener('click', handleSubmitComment);
+    });
+    console.log('✍️ Submit handlers attached');
+    
+    console.log('🔌 attachPostEvents() DONE');
+  } catch(e) {
+    console.error('💥 ERROR in attachPostEvents():', e.message, e.stack);
+  }
 }
 
 // ===== LIKE =====
@@ -378,36 +393,75 @@ async function handleLike(e) {
 
 // ===== AFFICHER/CACHER COMMENTAIRES =====
 function handleToggleComments(e) {
+  console.log('👆 handleToggleComments() called');
   const btn = e.currentTarget;
+  console.log('Button element:', btn);
+  
   const postCard = btn.closest('.post-card');
+  console.log('Post card:', postCard);
+  
+  if (!postCard) {
+    console.error('❌ Post card not found!');
+    return;
+  }
+  
+  const postId = parseInt(postCard.dataset.id);
+  console.log('Post ID:', postId);
+  
   const commentSection = postCard.querySelector('.comments-section');
+  console.log('Comment section:', commentSection);
+  
+  if (!commentSection) {
+    console.error('❌ Comment section not found!');
+    return;
+  }
   
   if (commentSection.style.display === 'none') {
+    console.log('📂 Expanding comments section...');
     commentSection.style.display = 'block';
-    loadPostComments(parseInt(postCard.dataset.id));
+    loadPostComments(postId);
   } else {
+    console.log('📁 Collapsing comments section...');
     commentSection.style.display = 'none';
   }
 }
 
 // ===== CHARGER LES COMMENTAIRES =====
 async function loadPostComments(postId) {
+  console.log('💬 loadPostComments - postId:', postId);
   const postCard = document.querySelector(`[data-id="${postId}"]`);
+  if (!postCard) {
+    console.error('❌ Post card not found for id:', postId);
+    return;
+  }
+  
   const commentsList = postCard.querySelector('.comments-list');
-  commentsList.innerHTML = '';
+  if (!commentsList) {
+    console.error('❌ Comments list container not found');
+    return;
+  }
+  
+  commentsList.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">Chargement...</p>';
   
   // Récupérer les commentaires via l'API
   const result = await ActusAPI.getComments(postId);
+  console.log('📥 API Response:', result);
   
   if (!result.success) {
+    console.error('❌ API Error:', result.message);
     showNotification('error', 'Erreur', result.message);
+    commentsList.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">Erreur au chargement</p>';
     return;
   }
   
   if (!result.comments || result.comments.length === 0) {
+    console.log('⚪ No comments found');
     commentsList.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">Aucun commentaire</p>';
     return;
   }
+  
+  console.log(`✅ ${result.comments.length} commentaires chargés`);
+  commentsList.innerHTML = '';
   
   // Afficher les commentaires avec réponses
   result.comments.forEach(comment => {
@@ -453,6 +507,8 @@ async function loadPostComments(postId) {
   postCard.querySelectorAll('.comment-like-btn').forEach(btn => {
     btn.addEventListener('click', handleCommentLike);
   });
+  
+  console.log('✅ Comments displayed');
 }
 
 // ===== SOUMETTRE COMMENTAIRE =====
@@ -469,18 +525,36 @@ async function handleSubmitComment(e) {
     return;
   }
   
+  console.log('💬 Submitting comment for post:', postId, 'text:', text, 'anonym:', anonCheckbox.checked);
+  
   btn.disabled = true;
   const result = await ActusAPI.addComment(postId, text, null, anonCheckbox.checked);
   btn.disabled = false;
   
+  console.log('📤 API Response:', result);
+  
   if (result.success) {
+    console.log('✅ Comment added successfully');
     showNotification('success', 'Succès', 'Commentaire ajouté');
     input.value = '';
     anonCheckbox.checked = false;
     
-    // Recharger les commentaires
-    loadPostComments(postId);
+    // Recharger les commentaires pour afficher la nouvelle
+    console.log('🔄 Reloading comments...');
+    await loadPostComments(postId);
+    
+    // Mettre à jour le compteur de commentaires
+    const statsSpan = postCard.querySelector('.post-stats span:nth-child(2)');
+    if (statsSpan) {
+      const post = actusState.posts.find(p => p.id === postId);
+      if (post) {
+        post.comments = (post.comments || 0) + 1;
+        statsSpan.textContent = `${post.comments} Commentaires`;
+        console.log('📊 Updated comment count to:', post.comments);
+      }
+    }
   } else {
+    console.error('API Error:', result.message);
     showNotification('error', 'Erreur', result.message);
   }
 }

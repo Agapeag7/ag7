@@ -37,6 +37,28 @@ function showNotification(type = 'info', title = '', message = '', duration = 40
   return toast;
 }
 
+// ===== PROFIL GLOBAL =====
+// Initialize BEFORE the IIFE that needs it
+let currentUserProfile = {
+  name: "Utilisateur",
+  username: "@user",
+  bio: "Pas de bio",
+  location: "Localisation inconnue",
+  memberSince: "Janvier 2024",
+  avatarInitials: "U",
+  profilePhoto: null,
+  coverPhoto: null,
+  postsCount: 0,
+  followers_count: 0,
+  following_count: 0,
+  followers: [],
+  following: [],
+  posts: [
+    { id: 1, image: "https://picsum.photos/id/10/400/300", likes: 34, comments: 5 },
+    { id: 2, image: "https://picsum.photos/id/20/400/300", likes: 112, comments: 8 }
+  ]
+};
+
 (function(){
     "use strict";
 
@@ -1263,9 +1285,12 @@ if (searchUsersInput) {
 }
 
 // ========== GESTION DU FEED (PUBLICATIONS) ==========
-let posts = [];
+// ENTIÈREMENT GÉRÉE PAR actus-complete.js - NE RIEN MODIFIER ICI
+// Les commentaires sont maintenant persistants via ActusAPI.addComment()
 
 // Charger le feed depuis le backend
+// DISABLED - USE actus-complete.js INSTEAD
+/*
 async function loadFeed() {
   try {
     const response = await fetch(window.location.href + '?action=getFeed&limit=50&offset=0', {
@@ -1326,7 +1351,7 @@ async function loadFeed() {
       visibility: post.visibility
     }));
 
-    renderFeed();
+    // renderFeed(); // DISABLED
     return true;
   } catch (e) {
     console.error('Erreur au chargement du feed:', e);
@@ -1334,27 +1359,31 @@ async function loadFeed() {
     return false;
   }
 }
+*/
 
 // Charger le feed quand on arrive sur la page
+// DISABLED - actus-complete.js le fait maintenant au DOMContentLoaded
+/*
 document.addEventListener('DOMContentLoaded', () => {
   // S'assurer que le profil est chargé avant de charger le feed
   if (document.getElementById('view-feed')?.style.display !== 'none') {
     loadFeed();
   }
 });
+*/
 
 const feedContainer = document.getElementById('feedContainer');
 const publishBtn = document.getElementById('publishPostBtn');
 const postContentInput = document.getElementById('postContent');
 
-// Variables pour les images de post
+// Variables pour les images de post - DISABLED, utiliser actus-complete.js
 const addImageBtn = document.getElementById('addImageBtn');
 const postImageInput = document.getElementById('postImageInput');
 const postImagesPreview = document.getElementById('postImagesPreview');
 const clearImagesBtn = document.getElementById('clearImagesBtn');
 let postImages = [];
 
-// Variables pour le carousel
+// Variables pour le carousel - KEEP THESE (utilisées par openImageViewer d'actus-complete.js)
 const imageCarouselModal = document.getElementById('imageCarouselModal');
 const carouselImage = document.getElementById('carouselImage');
 const imageCounter = document.getElementById('imageCounter');
@@ -1369,7 +1398,8 @@ let currentImageIndex = 0;
 let postImageIndices = {};
 let lastSlideDirection = 'next';  // 'next' or 'prev' to track slide direction
 
-function renderFeed(postIdToAnimate = null) {
+/*
+// DISABLED - OLD FEED RENDER
   if (!feedContainer) return;
   feedContainer.innerHTML = '';
   posts.forEach(post => {
@@ -1975,13 +2005,13 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') prevImage();
 });
 
-// Initialisation du feed
-renderFeed();
+// Initialisation du feed - USAMOS ACTUS-COMPLETE.JS AGORA
+// renderFeed();
 
 // Initialisation de la grille découvrir
 renderDiscoverGrid();
 
-// ========== PROFIL AVEC FOLLOWERS (DONNÉES SIMULÉES) ==========
+// ========== PROFIL AVEC FOLLOWERS (DECLARADO NO TOPO DO ARQUIVO) ==========
 
 // Fonction helper pour construire l'URL complète d'une photo
 function getPhotoURL(filename) {
@@ -2103,29 +2133,7 @@ async function loadUserPosts(userId) {
   }
 }
 
-let currentUserProfile = {
-  name: "Utilisateur",
-  username: "@user",
-  bio: "Pas de bio",
-  location: "Localisation inconnue",
-  memberSince: "Janvier 2024",
-  avatarInitials: "U",
-  profilePhoto: null,
-  coverPhoto: null,
-  postsCount: 0,
-  followers_count: 0,
-  following_count: 0,
-  followers: [],
-  following: [],
-  posts: [
-    { id: 1, image: "https://picsum.photos/id/10/400/300", likes: 34, comments: 5 },
-    { id: 2, image: "https://picsum.photos/id/20/400/300", likes: 78, comments: 12 },
-    { id: 3, image: "https://picsum.photos/id/30/400/300", likes: 45, comments: 8 },
-    { id: 4, image: "https://picsum.photos/id/40/400/300", likes: 22, comments: 3 },
-    { id: 5, image: "https://picsum.photos/id/50/400/300", likes: 91, comments: 17 },
-    { id: 6, image: "https://picsum.photos/id/60/400/300", likes: 56, comments: 9 }
-  ]
-};
+// currentUserProfile est déjà déclaré et initialisé plus haut dans le fichier
 
 function updateProfileUI() {
   // Mettre à jour la photo de couverture

@@ -207,6 +207,8 @@ const ActusAPI = {
    */
   async addComment(post_id, comment_text, comment_parent_id = null, comment_anonym = false) {
     try {
+      console.log('📤 addComment() - Envoi au backend:', {post_id, comment_text, comment_parent_id, comment_anonym});
+      
       const formData = new FormData();
       formData.append('action', 'addComment');
       formData.append('post_id', post_id);
@@ -224,6 +226,7 @@ const ActusAPI = {
       });
 
       const data = await response.json();
+      console.log('📥 addComment() - Réponse du backend:', data);
       
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Erreur lors de l\'ajout');
@@ -231,7 +234,7 @@ const ActusAPI = {
 
       return { success: true, comment: data.comment, message: data.message };
     } catch (error) {
-      console.error('Erreur addComment:', error);
+      console.error('❌ Erreur addComment:', error.message);
       return { success: false, message: error.message };
     }
   },
@@ -243,15 +246,20 @@ const ActusAPI = {
    */
   async getComments(post_id) {
     try {
+      console.log('📥 getComments() - Récupération (post_id:', post_id, ')');
+      
       const url = new URL(window.location.href);
       url.searchParams.set('action', 'getComments');
       url.searchParams.set('post_id', post_id);
+      
+      console.log('🔗 URL:', url.toString());
 
       const response = await fetch(url.toString(), {
         method: 'GET'
       });
 
       const data = await response.json();
+      console.log('✅ getComments() - Réponse du backend:', data);
       
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Erreur lors du chargement');
@@ -259,7 +267,7 @@ const ActusAPI = {
 
       return { success: true, comments: data.comments, total: data.total };
     } catch (error) {
-      console.error('Erreur getComments:', error);
+      console.error('❌ Erreur getComments:', error.message);
       return { success: false, message: error.message, comments: [], total: 0 };
     }
   },

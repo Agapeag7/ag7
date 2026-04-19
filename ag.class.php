@@ -442,11 +442,13 @@ class CommentaireModel extends BaseModel {
     }
     
     public function getByPostId($post_id, $limit = 50, $offset = 0) {
+        // Récupère TOUS les commentaires (principaux ET réponses) pour un post
+        // actionGetComments() les organisera par hiérarchie
         $sql = 'SELECT c.*, u.user_name, u.user_username, u.user_photo_url 
                 FROM commentaires c 
                 JOIN utilisateurs u ON c.comment_user_id = u.user_id 
-                WHERE c.comment_post_id = ? AND c.comment_parent_id IS NULL
-                ORDER BY c.created_at DESC LIMIT ? OFFSET ?';
+                WHERE c.comment_post_id = ?
+                ORDER BY c.comment_parent_id, c.created_at DESC LIMIT ? OFFSET ?';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$post_id, (int)$limit, (int)$offset]);
         return $stmt->fetchAll();
