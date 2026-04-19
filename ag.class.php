@@ -1337,7 +1337,7 @@ class Router {
                 ];
             }
             
-            Utils::jsonResponse(['success' => true, 'posts' => $enriched]);
+            Utils::jsonResponse(['success' => true, 'posts' => $enriched, 'current_user_id' => $user_id]);
         } catch (Exception $e) {
             error_log('Erreur actionGetFeed: ' . $e->getMessage());
             Utils::jsonResponse(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);

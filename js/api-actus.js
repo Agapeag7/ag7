@@ -66,7 +66,7 @@ const ActusAPI = {
         throw new Error(data.message || 'Erreur lors du chargement');
       }
 
-      return { success: true, posts: data.posts };
+      return { success: true, posts: data.posts, current_user_id: data.current_user_id };
     } catch (error) {
       console.error('Erreur getFeed:', error);
       return { success: false, message: error.message, posts: [] };

@@ -161,6 +161,12 @@ async function loadActusFeed() {
       return;
     }
     
+    // 🔑 IMPORTANT: Set currentUserId from the backend response!
+    if (result.current_user_id) {
+      currentUserId = result.current_user_id;
+      console.log('👤 currentUserId set from getFeed():', currentUserId);
+    }
+    
     actusState.posts = result.posts || [];
     renderActusFeed();
     
