@@ -2268,6 +2268,7 @@ function updateProfileUI() {
           img.className = 'grid-post-image';
           img.src = postImageUrl;
           img.alt = 'post';
+          img.loading = 'lazy';
           postCard.appendChild(img);
         } else {
           // Placeholder pour post sans image
