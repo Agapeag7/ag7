@@ -1843,36 +1843,21 @@ if (modalCommentInput) {
 }
 
 // Gestion des images pour les posts
+// ===== DÉSACTIVÉ: Les handlers pour les images sont maintenant dans actus-complete.js =====
+// Image selection et preview sont gérés par handleImageSelect() dans actus-complete.js
+/*
 if (addImageBtn) {
-  addImageBtn.addEventListener('click', () => {
-    postImageInput.click();
-  });
+  // OLD CODE - DISABLED - USE actus-complete.js INSTEAD
 }
 
 if (postImageInput) {
-  postImageInput.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        postImages.push({
-          src: event.target.result,
-          file: file
-        });
-        renderPostImagesPreview();
-      };
-      reader.readAsDataURL(file);
-    });
-  });
+  // OLD CODE - DISABLED - USE actus-complete.js INSTEAD
 }
 
 if (clearImagesBtn) {
-  clearImagesBtn.addEventListener('click', () => {
-    postImages = [];
-    postImageInput.value = '';
-    renderPostImagesPreview();
-  });
+  // OLD CODE - DISABLED - USE actus-complete.js INSTEAD
 }
+*/
 
 function renderPostImagesPreview() {
   const previewGrid = postImagesPreview.querySelector('.preview-grid');
