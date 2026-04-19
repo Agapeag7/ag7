@@ -41,7 +41,7 @@ if (isset($_SESSION['user_id'])) {
 <div id="login-section" class="section">
   <div class="login-container">
     <div class="login-header">
-      <img src="ico/AG7.png" alt="Ag7" class="login-logo">
+      <img src="ico/AG7.png" alt="Ag7" class="login-logo" loading="lazy">
       <h2 id="login-title">Se connecter</h2>
       <p id="login-subtitle">Accédez à votre espace de discussion</p>
     </div>
@@ -61,7 +61,7 @@ if (isset($_SESSION['user_id'])) {
           <input type="file" id="profile-photo-input" accept="image/*" style="display: none;">
           <i class="fas fa-cloud-upload-alt" style="font-size: 28px; color: var(--emerald-500); margin-bottom: 8px; display: block;"></i>
           <span id="photo-upload-text" style="display: block; font-size: 14px; color: var(--text-secondary);">Cliquez pour uploader une photo</span>
-          <img id="photo-preview" src="" style="display: none; max-width: 100%; max-height: 120px; border-radius: 12px; margin-top: 12px;">
+          <img id="photo-preview" src="" style="display: none; max-width: 100%; max-height: 120px; border-radius: 12px; margin-top: 12px;" loading="lazy">
         </div>
       </div>
       
@@ -108,7 +108,7 @@ if (isset($_SESSION['user_id'])) {
   <div class="main-view">
     <!-- HEADER GLOBAL -->
     <div class="app-header">
-      <img src="ico/AG7.png" alt="Ag7" class="app-header-logo">
+      <img src="ico/AG7.png" alt="Ag7" class="app-header-logo" loading="lazy">
       <h1 class="app-header-title">Ag7</h1>
     </div>
 
@@ -259,7 +259,7 @@ if (isset($_SESSION['user_id'])) {
     <div id="view-profile" class="view">
       <div class="profile-cover-wrapper">
         <div class="profile-cover">
-          <img src="https://picsum.photos/id/104/1200/400" alt="cover" class="cover-img">
+          <img src="https://picsum.photos/id/104/1200/400" alt="cover" class="cover-img" loading="lazy">
           <button class="change-cover-btn"><i class="fas fa-camera"></i></button>
         </div>
       </div>
@@ -330,7 +330,7 @@ if (isset($_SESSION['user_id'])) {
             <label><i class="fas fa-user-circle"></i> Photo de profil</label>
             <div class="photo-upload-container" id="profilePhotoUpload">
               <div class="photo-preview">
-                <img id="profilePhotoPreview" src="" alt="Photo profil" style="display: none;">
+                <img id="profilePhotoPreview" src="" alt="Photo profil" style="display: none;" loading="lazy">
                 <span id="profilePhotoInitials">AG</span>
               </div>
               <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
@@ -343,7 +343,7 @@ if (isset($_SESSION['user_id'])) {
             <label><i class="fas fa-image"></i> Photo de couverture</label>
             <div class="photo-upload-container" id="coverPhotoUpload">
               <div class="photo-preview">
-                <img id="coverPhotoPreview" src="" alt="Photo couverture" style="width:100%; height: 150px; object-fit: cover;">
+                <img id="coverPhotoPreview" src="" alt="Photo couverture" style="width:100%; height: 150px; object-fit: cover;" loading="lazy">
               </div>
               <input type="file" id="coverPhotoInput" accept="image/*" style="display: none;">
               <button type="button" class="btn-secondary">Changer</button>
@@ -513,7 +513,7 @@ if (isset($_SESSION['user_id'])) {
         <button class="story-close">&times;</button>
         <div class="story-viewers-count" id="storyViewersCount"></div>
         <div class="story-viewer">
-          <img id="storyImage" src="" alt="Story">
+          <img id="storyImage" src="" alt="Story" loading="lazy">
           <div class="story-caption"></div>
         </div>
       </div>
@@ -526,7 +526,7 @@ if (isset($_SESSION['user_id'])) {
         <button class="carousel-prev"><i class="fas fa-chevron-left"></i></button>
         
         <div class="carousel-viewer">
-          <img id="carouselImage" src="" alt="carousel-image">
+          <img id="carouselImage" src="" alt="carousel-image" loading="lazy">
           <div class="image-counter" id="imageCounter"></div>
         </div>
         
@@ -565,7 +565,7 @@ if (isset($_SESSION['user_id'])) {
             <button type="button" id="uploadStoryImageBtn" class="btn-secondary">
               <i class="fas fa-image"></i> Ajouter une image
             </button>
-            <img id="storyImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 12px; border-radius: 12px;">
+            <img id="storyImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 12px; border-radius: 12px;" loading="lazy">
           </div>
           <div class="create-story-actions">
             <button type="button" id="cancelStoryBtn" class="btn-secondary">Annuler</button>
@@ -579,6 +579,10 @@ if (isset($_SESSION['user_id'])) {
 
 </div> <!-- Fin app-section -->
 
+<!-- API Actus -->
+<script src="js/api-actus.js"></script>
+<!-- Intégration Actus -->
+<script src="js/actus-integration.js"></script>
 <script src="js/scripts.js"></script>
 <!-- Petite police système pour un rendu optimal -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">

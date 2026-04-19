@@ -1393,13 +1393,13 @@ function renderFeed(postIdToAnimate = null) {
           <button class="feed-image-prev" data-id="${post.id}" ${currentImageIdx === 0 ? 'style="opacity: 0.3; cursor: default;"' : ''}>
             <i class="fas fa-chevron-left"></i>
           </button>
-          <img src="${currentImage}" class="post-image" data-slide-direction="${slideDirection}" alt="image post ${currentImageIdx + 1}">
+          <img src="${currentImage}" class="post-image" data-slide-direction="${slideDirection}" alt="image post ${currentImageIdx + 1}" loading="lazy">
           <button class="feed-image-next" data-id="${post.id}" ${currentImageIdx === images.length - 1 ? 'style="opacity: 0.3; cursor: default;"' : ''}>
             <i class="fas fa-chevron-right"></i>
           </button>
           <div class="feed-image-counter">${currentImageIdx + 1} / ${images.length}</div>
         </div>
-      ` : `<img src="${currentImage}" class="post-image" alt="image post">`;
+      ` : `<img src="${currentImage}" class="post-image" alt="image post" loading="lazy">`;
       imagesHtml = imageNavigation;
     }
     
@@ -1881,7 +1881,7 @@ function renderPostImagesPreview() {
       const previewItem = document.createElement('div');
       previewItem.className = 'preview-image';
       previewItem.innerHTML = `
-        <img src="${img.src}" alt="preview">
+        <img src="${img.src}" alt="preview" loading="lazy">
         <button type="button" class="remove-image-btn" data-index="${index}">×</button>
       `;
       previewItem.querySelector('.remove-image-btn').addEventListener('click', () => {
