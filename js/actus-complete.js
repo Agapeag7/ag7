@@ -138,7 +138,6 @@ async function loadActusFeed() {
 
 // ===== RENDRE LE FEED =====
 function renderActusFeed() {
-  console.log('🎬 renderActusFeed called');
   const feedContainer = document.getElementById('feedContainer');
   if (!feedContainer) {
     console.error('❌ feedContainer NOT FOUND');
@@ -168,7 +167,6 @@ function createPostElement(post) {
   const canDelete = currentUserId && parseInt(currentUserId) === parseInt(post.user_id);
   
   // DEBUG: Log pour chaque post
-  console.log(`Post ${post.id}: currentUserId=${currentUserId}, post.user_id=${post.user_id}, canDelete=${canDelete}`);
   
   const isLiked = post.userHasLiked;
   
@@ -306,7 +304,6 @@ function createPostElement(post) {
 
 // ===== ATTACHER LES ÉVÉNEMENTS AUX POSTS =====
 function attachPostEvents() {
-  console.log('🔗 attachPostEvents STARTED');
   
   // Likes
   document.querySelectorAll('.post-action-btn.like-btn').forEach(btn => {
@@ -325,15 +322,9 @@ function attachPostEvents() {
   
   // Supprimer post - DEBUGGING
   const deleteButtons = document.querySelectorAll('.post-delete-btn');
-  console.log('Found delete buttons:', deleteButtons.length);
   deleteButtons.forEach((btn, idx) => {
-    console.log(`  Button ${idx}:`, {
-      display: window.getComputedStyle(btn).display,
-      postId: btn.dataset.postId,
-      visible: window.getComputedStyle(btn).display !== 'none'
-    });
+    
     btn.addEventListener('click', (e) => {
-      console.log('🗑️ Delete button clicked!', e);
       handleDeletePost(e);
     });
   });
@@ -349,7 +340,6 @@ function attachPostEvents() {
     });
   });
   
-  console.log('attachPostEvents COMPLETED');
 }
 
 // ===== LIKE =====
@@ -535,7 +525,6 @@ async function handleDeletePost(e) {
   
   const postId = parseInt(btn.dataset.postId);
   
-  console.log('🗑️ Delete clicked:', postId, 'button:', btn);
   
   // Stocker les infos pour la confirmation
   deletePostState.postId = postId;
@@ -544,12 +533,9 @@ async function handleDeletePost(e) {
   // Afficher le modal
   const modal = document.getElementById('deletePostModal');
   if (modal) {
-    console.log('📂 Modal found - removing hidden class');
     modal.classList.remove('hidden');
-    console.log('📂 Modal classes:', modal.className);
-    console.log('📂 Modal display:', window.getComputedStyle(modal).display);
   } else {
-    console.error('❌ Modal NOT found!');
+    console.error('Modal NOT found!');
   }
 }
 
@@ -568,7 +554,6 @@ function setupDeleteModal() {
   // Bouton Annuler
   if (cancelBtn) {
     cancelBtn.onclick = () => {
-      console.log('📌 Cancel button clicked');
       modal.classList.add('hidden');
       deletePostState.postId = null;
       deletePostState.postBtn = null;
@@ -578,7 +563,6 @@ function setupDeleteModal() {
   // Bouton X (fermer)
   if (closeBtn) {
     closeBtn.onclick = () => {
-      console.log('📌 Close button clicked');
       modal.classList.add('hidden');
       deletePostState.postId = null;
       deletePostState.postBtn = null;
@@ -596,16 +580,13 @@ function setupDeleteModal() {
       // Fermer le modal
       modal.classList.add('hidden');
       
-      console.log('⏳ Suppression en cours... postId:', postId);
       if (btn) btn.disabled = true;
       
       // Appeler l'API
       const result = await ActusAPI.deletePost(postId);
       
       if (btn) btn.disabled = false;
-      
-      console.log('📋 Résultat suppression:', result);
-      
+            
       if (result.success) {
         showNotification('success', 'Supprimé', result.message);
         actusState.posts = actusState.posts.filter(p => p.id !== postId);
@@ -639,8 +620,6 @@ async function handlePublishPost(e) {
     .filter(img => img.file)
     .map(img => img.file);
   
-  console.log('📝 Publishing post - Images count:', imageFiles.length);
-  console.log('📊 Current posts count BEFORE publish:', actusState.posts.length);
   
   const result = await ActusAPI.createPost(content, 'public', imageFiles);
   
@@ -653,12 +632,9 @@ async function handlePublishPost(e) {
     postImages = [];
     renderImagePreview();
     
-    console.log('✅ Post created successfully - Post ID:', result.post_id);
     
     // SIMPLE: Recharger le feed complètement pour éviter les duplicatas
-    console.log('🔄 Reloading feed after publish');
     await loadActusFeed();
-    console.log('📊 Posts count AFTER reload:', actusState.posts.length);
     
   } else {
     showNotification('error', 'Erreur', result.message);
