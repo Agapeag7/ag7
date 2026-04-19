@@ -52,10 +52,19 @@ function setupActusNavigation() {
     return;
   }
   
-  // Charger le feed quand la vue devient visible
+  // NOTE: LoadActusFeed est appelé explicitement dans DOMContentLoaded
+  // NO NEED pour observer - évite les double-chargements
+  // L'observer ici est juste un fallback si la vue devient visible après
+  let observerActive = false;
+  
   const observer = new MutationObserver(() => {
-    if (feedView.classList.contains('active') && !actusState.posts.length && !actusState.isLoading) {
-      loadActusFeed();
+    // Load seulement si pas encore chargé ET si pas déjà en cours
+    if (feedView.classList.contains('active') && !actusState.posts.length && !actusState.isLoading && !observerActive) {
+      observerActive = true;
+      console.log('📂 Observer: Loading feed on view activate');
+      loadActusFeed().then(() => {
+        observerActive = false;
+      });
     }
   });
   
@@ -103,10 +112,25 @@ async function fetchCurrentUser() {
     const response = await fetch(`${window.location.href}?action=getCurrentProfile`, {
       method: 'GET'
     });
+    
+    // Vérifier le statut de la réponse
+    if (!response.ok) {
+      console.warn('⚠️ getCurrentProfile non disponible (status:', response.status + ')');
+      return;
+    }
+    
+    // Vérifier que c'est du JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('⚠️ Réponse non-JSON (content-type:', contentType + ')');
+      return;
+    }
+    
     const data = await response.json();
     
     if (data.success && data.profile) {
       currentUserId = data.profile.user_id;
+      console.log('✅ Current user ID:', currentUserId);
       
       // Mettre à jour l'avatar de création de post
       const avatar = document.getElementById('createPostAvatar');
@@ -118,7 +142,7 @@ async function fetchCurrentUser() {
       }
     }
   } catch (error) {
-    console.error('Erreur lors du chargement de l\'utilisateur:', error);
+    console.warn('⚠️ Erreur lors du chargement de l\'utilisateur (non-critique):', error.message);
   }
 }
 
@@ -490,7 +514,7 @@ async function loadPostComments(postId) {
         <div style="margin-left: 24px; margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--border-light);">
           ${comment.replies.map(reply => `
             <div style="margin-bottom: 8px; font-size: 13px;">
-              <strong>${reply.isAnonymous ? '😷 Anonyme' : reply.author}</strong>
+              <strong>${reply.isAnonymous ? 'Anonyme' : reply.author}</strong>
               <span style="color: var(--text-secondary);">:</span>
               <div style="margin-top: 2px; color: var(--text-main);">${escapeHtml(reply.text)}</div>
             </div>
