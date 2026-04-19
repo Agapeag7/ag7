@@ -1,0 +1,173 @@
+<div id="view-feed" class="view active">
+      <!-- Stories horizontales -->
+      <div class="stories-container" id="storiesContainer"><div class="story-item" id="addStoryBtn">
+    <div class="story-avatar add-story">
+      <i class="fas fa-plus"></i>
+    </div>
+    <span class="story-name">Votre story</span>
+  </div><div class="story-item">
+      <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/68.jpg');"></div>
+      <span class="story-name">Marie</span>
+    </div><div class="story-item">
+      <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/men/32.jpg');"></div>
+      <span class="story-name">Thomas</span>
+    </div><div class="story-item">
+      <div class="story-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/45.jpg');"></div>
+      <span class="story-name">Sophie</span>
+    </div></div>
+
+      <!-- Création d'une publication -->
+      <div class="create-post-card">
+        <div class="create-post-header">
+          <div class="mini-avatar" id="createPostAvatar" style="background-image: none;">AG</div>
+          <textarea id="postContent" rows="2" placeholder="Quoi de neuf, Alexandre ?"></textarea>
+        </div>
+        <div id="postImagesPreview" class="post-images-preview" style="display: none;">
+          <div class="preview-grid"></div>
+          <button type="button" id="clearImagesBtn" class="btn-secondary" style="margin-top: 12px;">Supprimer les images</button>
+        </div>
+        <div class="create-post-actions">
+          <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
+          <input type="file" id="postImageInput" accept="image/*" multiple="" style="display: none;">
+          <button id="publishPostBtn" class="btn-primary">Publier</button>
+        </div>
+      </div>
+
+      <!-- Flux des publications -->
+      <div id="feedContainer" class="feed-container"><div class="post-card" data-id="1">
+      <div class="post-header">
+        <div class="post-avatar">DT</div>
+        <div>
+          <div class="post-author">Design Team</div>
+          <div class="post-time">Il y a 2 heures</div>
+        </div>
+      </div>
+      <div class="post-content">
+        <p>Les nouvelles maquettes de l'application Ag7 sont disponibles ! Support multi-images comme Instagram 🎨</p>
+        
+        <div class="post-image-container">
+          <button class="feed-image-prev" data-id="1" style="opacity: 0.3; cursor: default;">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <img src="https://picsum.photos/id/20/600/600" class="post-image" data-slide-direction="next" alt="image post 1">
+          <button class="feed-image-next" data-id="1">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <div class="feed-image-counter">1 / 4</div>
+        </div>
+      
+      </div>
+      <div class="post-stats">
+        <span>156 likes</span>
+        <span>2 commentaires</span>
+      </div>
+      <div class="post-actions">
+        <button class="post-action-btn like-btn "><i class="far fa-heart"></i> Like</button>
+        <button class="post-action-btn comment-btn"><i class="far fa-comment"></i> Commenter</button>
+      </div>
+      <div class="comments-section">
+        <div class="comments-list">
+          <div class="comment-item"><strong style="margin-right: 8px;">Vous</strong> J'ai hâte de voir ça</div>
+        </div>
+        <div class="comment-input">
+          <input type="text" placeholder="Ajouter un commentaire..." class="new-comment-input">
+          <label class="anonymous-toggle">
+            <input type="checkbox" class="anonymous-checkbox">
+            <i class="fas fa-mask"></i>
+          </label>
+          <button class="submit-comment">Envoyer</button>
+        </div>
+      </div>
+    </div><div class="post-card" data-id="2">
+      <div class="post-header">
+        <div class="post-avatar">ML</div>
+        <div>
+          <div class="post-author">Marie Lambert</div>
+          <div class="post-time">Hier</div>
+        </div>
+      </div>
+      <div class="post-content">
+        <p>Quelqu'un pour un café-débat sur l'UX ce midi ?</p>
+        
+      </div>
+      <div class="post-stats">
+        <span>12 likes</span>
+        <span>2 commentaires</span>
+      </div>
+      <div class="post-actions">
+        <button class="post-action-btn like-btn "><i class="far fa-heart"></i> Like</button>
+        <button class="post-action-btn comment-btn"><i class="far fa-comment"></i> Commenter</button>
+      </div>
+      <div class="comments-section">
+        <div class="comments-list">
+          <div class="comment-item"><strong style="margin-right: 8px;">Vous</strong> À la pause déjeuner</div>
+        </div>
+        <div class="comment-input">
+          <input type="text" placeholder="Ajouter un commentaire..." class="new-comment-input">
+          <label class="anonymous-toggle">
+            <input type="checkbox" class="anonymous-checkbox">
+            <i class="fas fa-mask"></i>
+          </label>
+          <button class="submit-comment">Envoyer</button>
+        </div>
+      </div>
+    </div></div>
+    </div>
+
+
+
+
+        --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+    --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
+    --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
+    --white: #ffffff;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --toggle-thumb-bg: #ffffff;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --transition: all 0.2s ease;
+    --emerald-500: hsl(217, 84%, 60%);
+    --emerald-600: hsl(217, 84%, 50%);
+    --emerald-700: hsl(217, 84%, 40%);
+    --bg-page: #1e293b;
+    --bg-container: #0f172a;
+    --card-bg: #1e293b;
+    --sidebar-bg: #0f172a;
+    --hover-bg: #334155;
+    --emerald-50: #1a3a3a;
+    --emerald-100: hsl(217, 84%, 97%);
+    --slate-50: #1e293b;
+    --slate-100: #1e293b;
+    --slate-200: #334155;
+    --slate-800: #0f172a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-light: #334155;
+    --active-bg: hsl(217, 50%, 22%);
+    --active-text-color: #ffffff;
+    font-size: 16px;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin: 0;
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 28px 32px;
+    background: var(--bg-container);
+    transition: opacity 0.25s ease;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+    box-sizing: border-box;
+    display: block;
+    opacity: 1;
+
+
+
+    document.querySelector("#view-feed")

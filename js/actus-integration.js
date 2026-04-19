@@ -1,10 +1,10 @@
 /**
  * INTÉGRATION ACTUS - Frontend
  * ========================================
- * Fonctions pour lier l'API Actus au frontend
+ * Système complet de gestion des publications Actus
  */
 
-// Variables de gestion du feed
+// Variables globales
 let actusState = {
   posts: [],
   currentPostId: null,
@@ -12,6 +12,9 @@ let actusState = {
   offset: 0,
   limit: 50
 };
+
+let currentUserId = null;
+let postImages = [];
 
 /**
  * Charger le feed depuis l'API

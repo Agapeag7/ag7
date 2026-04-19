@@ -581,8 +581,8 @@ if (isset($_SESSION['user_id'])) {
 
 <!-- API Actus -->
 <script src="js/api-actus.js"></script>
-<!-- Intégration Actus -->
-<script src="js/actus-integration.js"></script>
+<!-- Intégration Actus Complète -->
+<script src="js/actus-complete.js"></script>
 <script src="js/scripts.js"></script>
 <!-- Petite police système pour un rendu optimal -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">

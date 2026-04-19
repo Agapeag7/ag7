@@ -1,5 +1,0 @@
-postCard.style.cursor = 'pointer';
-        postCard.addEventListener('click', () => {
-          console.log('Publication cliquée:', post.id);
-          // TODO: Ouvrir la publication en modal
-        });

@@ -405,9 +405,15 @@ function showNotification(type = 'info', title = '', message = '', duration = 40
         });
       }
       
-      // Charger le feed quand on accède à la section feed
+      // Charger le feed Actus quand on accède à la section feed
       if (viewId === 'feed') {
-        loadFeed();
+        // Attendre que loadActusFeed soit disponible
+        if (typeof loadActusFeed === 'function') {
+          console.log('📬 Chargement du feed Actus...');
+          loadActusFeed();
+        } else {
+          console.warn('⚠️ loadActusFeed non disponible');
+        }
       }
     }
 
