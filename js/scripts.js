@@ -1899,76 +1899,16 @@ function renderPostImagesPreview() {
 }
 
 // Publier un nouveau post
+// ===== DÉSACTIVÉ: Le handler pour le bouton Publier est maintenant dans actus-complete.js =====
+// Le handler dans actus-complete.js utilise ActusAPI pour la création de publication
+// Ce code ancien est conservé comme référence mais ne doit pas s'exécuter
+/*
 if (publishBtn) {
   publishBtn.addEventListener('click', () => {
-    const content = postContentInput.value.trim();
-    
-    // Permettre: texte seul, images seules, ou texte + images
-    if (!content && postImages.length === 0) {
-      showNotification('warning', 'Champs vides', 'Écrivez quelque chose ou ajoutez une image');
-      return;
-    }
-
-    publishBtn.disabled = true;
-    publishBtn.textContent = 'Création en cours...';
-
-    const formData = new FormData();
-    formData.append('action', 'createPost');
-    formData.append('post_content', content); // Peut être vide si images présentes
-    formData.append('post_visibility', 'public');
-    
-
-    // Ajouter les images (postImages contient {src, file})
-    postImages.forEach((img) => {
-      if (img.file) {
-        formData.append('post_images[]', img.file);
-      }
-    });
-
-    fetch(window.location.href, {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => {
-      if (!response.ok) {
-        // Si erreur, essayer de parser le JSON d'erreur
-        return response.text().then(text => {
-          try {
-            const errorData = JSON.parse(text);
-            throw new Error(errorData.message || `Erreur ${response.status}`);
-          } catch (e) {
-            throw new Error(`Erreur ${response.status}: ${text.substring(0, 100)}`);
-          }
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.success) {
-        showNotification('success', 'Succès', 'Publication créée !');
-        postContentInput.value = '';
-        postImages = [];
-        postImageInput.value = '';
-        renderPostImagesPreview();
-        
-        // Recharger le feed
-        setTimeout(() => {
-          loadFeed();
-        }, 500);
-      } else {
-        showNotification('error', 'Erreur', data.message || 'Impossible de créer la publication');
-      }
-    })
-    .catch(err => {
-      console.error('Erreur:', err);
-      showNotification('error', 'Erreur', err.message || 'Une erreur est survenue lors de la création du post');
-    })
-    .finally(() => {
-      publishBtn.disabled = false;
-      publishBtn.textContent = 'Publier';
-    });
+    // OLD CODE - DISABLED - USE actus-complete.js INSTEAD
   });
 }
+*/
 
 // ========== GESTION DU CAROUSEL D'IMAGES ==========
 

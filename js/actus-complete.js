@@ -16,16 +16,20 @@ let actusState = {
 let currentUserId = null;
 
 // ===== INITIALISATION AU CHARGEMENT =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   
-  // Récupérer l'ID utilisateur
-  fetchCurrentUser();
+  // Récupérer l'ID utilisateur et ATTENDRE
+  await fetchCurrentUser();
+  console.log('✅ currentUserId loaded:', currentUserId);
   
-  // Attendre que la navigation soit disponible
+  // Ensuite configurer l'UI
+  setupActusNavigation();
+  setupActusUI();
+  
+  // Double-check modal initialization
   setTimeout(() => {
-    setupActusNavigation();
-    setupActusUI();
-  }, 500);
+    setupDeleteModal();
+  }, 100);
 });
 
 // ===== CONFIGURATION NAVIGATION ACTUS =====
@@ -506,7 +510,12 @@ async function handleDeletePost(e) {
   // Afficher le modal
   const modal = document.getElementById('deletePostModal');
   if (modal) {
+    console.log('📂 Modal found - removing hidden class');
     modal.classList.remove('hidden');
+    console.log('📂 Modal classes:', modal.className);
+    console.log('📂 Modal display:', window.getComputedStyle(modal).display);
+  } else {
+    console.error('❌ Modal NOT found!');
   }
 }
 
@@ -517,29 +526,41 @@ function setupDeleteModal() {
   const confirmBtn = document.getElementById('confirmDeleteBtn');
   const closeBtn = document.querySelector('.delete-post-close');
   
-  if (!modal) return;
+  console.log('🔧 setupDeleteModal - État des éléments:', {
+    modal: !!modal,
+    cancelBtn: !!cancelBtn,
+    confirmBtn: !!confirmBtn,
+    closeBtn: !!closeBtn
+  });
+  
+  if (!modal) {
+    console.warn('❌ Modal suppression NOT FOUND');
+    return;
+  }
   
   // Bouton Annuler
   if (cancelBtn) {
-    cancelBtn.addEventListener('click', () => {
+    cancelBtn.onclick = () => {
+      console.log('📌 Cancel button clicked');
       modal.classList.add('hidden');
       deletePostState.postId = null;
       deletePostState.postBtn = null;
-    });
+    };
   }
   
   // Bouton X (fermer)
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
+    closeBtn.onclick = () => {
+      console.log('📌 Close button clicked');
       modal.classList.add('hidden');
       deletePostState.postId = null;
       deletePostState.postBtn = null;
-    });
+    };
   }
   
   // Bouton Confirmer
   if (confirmBtn) {
-    confirmBtn.addEventListener('click', async () => {
+    confirmBtn.onclick = async () => {
       if (!deletePostState.postId) return;
       
       const postId = deletePostState.postId;
@@ -548,7 +569,7 @@ function setupDeleteModal() {
       // Fermer le modal
       modal.classList.add('hidden');
       
-      console.log('⏳ Suppression en cours...');
+      console.log('⏳ Suppression en cours... postId:', postId);
       if (btn) btn.disabled = true;
       
       // Appeler l'API
@@ -569,8 +590,10 @@ function setupDeleteModal() {
       // Réinitialiser
       deletePostState.postId = null;
       deletePostState.postBtn = null;
-    });
+    };
   }
+  
+  console.log('✅ setupDeleteModal - Complété');
 }
 
 // ===== PUBLIER UN POST =====
@@ -591,6 +614,9 @@ async function handlePublishPost(e) {
     .filter(img => img.file)
     .map(img => img.file);
   
+  console.log('📝 Publishing post - Images count:', imageFiles.length);
+  console.log('📊 Current posts count BEFORE publish:', actusState.posts.length);
+  
   const result = await ActusAPI.createPost(content, 'public', imageFiles);
   
   btn.disabled = false;
@@ -602,14 +628,18 @@ async function handlePublishPost(e) {
     postImages = [];
     renderImagePreview();
     
-    // Recharger le feed
-    setTimeout(() => {
-      loadActusFeed();
-    }, 500);
+    console.log('✅ Post created successfully - Post ID:', result.post_id);
+    
+    // SIMPLE: Recharger le feed complètement pour éviter les duplicatas
+    console.log('🔄 Reloading feed after publish');
+    await loadActusFeed();
+    console.log('📊 Posts count AFTER reload:', actusState.posts.length);
+    
   } else {
     showNotification('error', 'Erreur', result.message);
   }
 }
+
 
 // ===== SÉLECTIONNER IMAGES =====
 function handleImageSelect(e) {

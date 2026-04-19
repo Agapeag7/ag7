@@ -1,15 +1,10 @@
-scripts.js:1296 Erreur JSON parsing: SyntaxError: Unexpected token '<', "<br />
-<b>"... is not valid JSON
-    at JSON.parse (<anonymous>)
-    at loadFeed (scripts.js:1294:21)
-loadFeed	@	scripts.js:1296
-await in loadFeed		
-(anonymous)	@	scripts.js:1343
-
-scripts.js:1297 Réponse reçue: <br />
-<b>Warning</b>:  Undefined property: Router::$pdo in <b>C:\xampp\htdocs\ag7\ag.class.php</b> on line <b>1316</b><br />
-<br />
-<b>Fatal error</b>:  Uncaught Error: Call to a member function prep
-loadFeed	@	scripts.js:1297
-await in loadFeed		
-(anonymous)	@	scripts.js:1343
+✅ currentUserId loaded: 9
+actus-complete.js:529 🔧 setupDeleteModal - État des éléments: {modal: true, cancelBtn: true, confirmBtn: true, closeBtn: true}cancelBtn: truecloseBtn: trueconfirmBtn: truemodal: true[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+actus-complete.js:596 ✅ setupDeleteModal - Complété
+actus-complete.js:529 🔧 setupDeleteModal - État des éléments: {modal: true, cancelBtn: true, confirmBtn: true, closeBtn: true}cancelBtn: truecloseBtn: trueconfirmBtn: truemodal: true[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+actus-complete.js:596 ✅ setupDeleteModal - Complété
+actus-complete.js:617 📝 Publishing post - Images count: 0
+actus-complete.js:618 📊 Current posts count BEFORE publish: 12
+actus-complete.js:631 ✅ Post created successfully - Post ID: 15
+actus-complete.js:634 🔄 Reloading feed after publish
+actus-complete.js:636 📊 Posts count AFTER reload: 14
