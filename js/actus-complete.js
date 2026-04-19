@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Récupérer l'ID utilisateur et ATTENDRE
   await fetchCurrentUser();
-  console.log('✅ currentUserId loaded:', currentUserId);
   
   // Ensuite configurer l'UI
   setupActusNavigation();
@@ -139,8 +138,12 @@ async function loadActusFeed() {
 
 // ===== RENDRE LE FEED =====
 function renderActusFeed() {
+  console.log('🎬 renderActusFeed called');
   const feedContainer = document.getElementById('feedContainer');
-  if (!feedContainer) return;
+  if (!feedContainer) {
+    console.error('❌ feedContainer NOT FOUND');
+    return;
+  }
   
   feedContainer.innerHTML = '';
   
@@ -163,6 +166,10 @@ function createPostElement(post) {
   postDiv.dataset.id = post.id;
   
   const canDelete = currentUserId && parseInt(currentUserId) === parseInt(post.user_id);
+  
+  // DEBUG: Log pour chaque post
+  console.log(`Post ${post.id}: currentUserId=${currentUserId}, post.user_id=${post.user_id}, canDelete=${canDelete}`);
+  
   const isLiked = post.userHasLiked;
   
   // Header
@@ -175,7 +182,7 @@ function createPostElement(post) {
         <div class="post-author">${post.author}</div>
         <div class="post-time">${formatTime(post.timestamp)}</div>
       </div>
-      <button class="post-delete-btn" data-post-id="${post.id}" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; ${!canDelete ? 'display: none;' : ''}"><i class="fas fa-trash"></i></button>
+      <button class="post-delete-btn" data-post-id="${post.id}" onclick="handleDeletePost(event)" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; ${!canDelete ? 'display: none;' : ''}"><i class="fas fa-trash"></i></button>
     </div>`;
   
   // Content
@@ -299,6 +306,8 @@ function createPostElement(post) {
 
 // ===== ATTACHER LES ÉVÉNEMENTS AUX POSTS =====
 function attachPostEvents() {
+  console.log('🔗 attachPostEvents STARTED');
+  
   // Likes
   document.querySelectorAll('.post-action-btn.like-btn').forEach(btn => {
     btn.addEventListener('click', handleLike);
@@ -314,9 +323,19 @@ function attachPostEvents() {
     btn.addEventListener('click', handleSubmitComment);
   });
   
-  // Supprimer post
-  document.querySelectorAll('.post-delete-btn').forEach(btn => {
-    btn.addEventListener('click', handleDeletePost);
+  // Supprimer post - DEBUGGING
+  const deleteButtons = document.querySelectorAll('.post-delete-btn');
+  console.log('Found delete buttons:', deleteButtons.length);
+  deleteButtons.forEach((btn, idx) => {
+    console.log(`  Button ${idx}:`, {
+      display: window.getComputedStyle(btn).display,
+      postId: btn.dataset.postId,
+      visible: window.getComputedStyle(btn).display !== 'none'
+    });
+    btn.addEventListener('click', (e) => {
+      console.log('🗑️ Delete button clicked!', e);
+      handleDeletePost(e);
+    });
   });
   
   // Afficher images en modal
@@ -329,6 +348,8 @@ function attachPostEvents() {
       }
     });
   });
+  
+  console.log('attachPostEvents COMPLETED');
 }
 
 // ===== LIKE =====
@@ -498,10 +519,23 @@ let deletePostState = {
 };
 
 async function handleDeletePost(e) {
-  const btn = e.currentTarget;
+  // Si appelée via onclick, e est l'event
+  // Si appelée via addEventListener, e.currentTarget est le bouton
+  let btn = e.currentTarget;
+  
+  // Si onclick inline, le target est le bouton ou son icône
+  if (!btn) {
+    btn = e.target.closest('.post-delete-btn');
+  }
+  
+  if (!btn) {
+    console.error('❌ Button not found');
+    return;
+  }
+  
   const postId = parseInt(btn.dataset.postId);
   
-  console.log('🗑️ Delete clicked:', postId);
+  console.log('🗑️ Delete clicked:', postId, 'button:', btn);
   
   // Stocker les infos pour la confirmation
   deletePostState.postId = postId;
@@ -526,15 +560,8 @@ function setupDeleteModal() {
   const confirmBtn = document.getElementById('confirmDeleteBtn');
   const closeBtn = document.querySelector('.delete-post-close');
   
-  console.log('🔧 setupDeleteModal - État des éléments:', {
-    modal: !!modal,
-    cancelBtn: !!cancelBtn,
-    confirmBtn: !!confirmBtn,
-    closeBtn: !!closeBtn
-  });
-  
   if (!modal) {
-    console.warn('❌ Modal suppression NOT FOUND');
+    console.warn('Modal suppression NOT FOUND');
     return;
   }
   
@@ -592,8 +619,6 @@ function setupDeleteModal() {
       deletePostState.postBtn = null;
     };
   }
-  
-  console.log('✅ setupDeleteModal - Complété');
 }
 
 // ===== PUBLIER UN POST =====

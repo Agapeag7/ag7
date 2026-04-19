@@ -584,7 +584,7 @@ if (isset($_SESSION['user_id'])) {
           <h2 style="margin: 0; color: #ef4444;">Supprimer la publication</h2>
         </div>
         <p style="text-align: center; color: var(--text-secondary); margin-bottom: 24px; font-size: 15px;">
-          Êtes-vous sûr de vouloir supprimer cette publication ? Cette action est irréversible et supprimera également tous les commentaires et likes associés.
+          Êtes-vous sûr de vouloir supprimer cette publication ? Cette action est irréversible
         </p>
         <div class="delete-post-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
           <button type="button" id="cancelDeleteBtn" class="btn-secondary">Annuler</button>
