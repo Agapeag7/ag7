@@ -1,24 +1,4 @@
-actus-complete.js:23 ✅ currentUserId loaded: 10
-actus-complete.js:543 🔧 setupDeleteModal - État des éléments: {modal: true, cancelBtn: true, confirmBtn: true, closeBtn: true}
-actus-complete.js:610 ✅ setupDeleteModal - Complété
-actus-complete.js:543 🔧 setupDeleteModal - État des éléments: {modal: true, cancelBtn: true, confirmBtn: true, closeBtn: true}
-actus-complete.js:610 ✅ setupDeleteModal - Complété
-actus-complete.js:168 📝 Post 20: currentUserId=10, post.user_id=10, canDelete=true
-actus-complete.js:168 📝 Post 19: currentUserId=10, post.user_id=10, canDelete=true
-actus-complete.js:168 📝 Post 18: currentUserId=10, post.user_id=10, canDelete=true
-actus-complete.js:168 📝 Post 17: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 16: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 15: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 14: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 13: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 12: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 10: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 11: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 9: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 8: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 7: currentUserId=10, post.user_id=10, canDelete=true
-actus-complete.js:168 📝 Post 6: currentUserId=10, post.user_id=10, canDelete=true
-actus-complete.js:168 📝 Post 5: currentUserId=10, post.user_id=10, canDelete=true
-actus-complete.js:168 📝 Post 4: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 3: currentUserId=10, post.user_id=9, canDelete=false
-actus-complete.js:168 📝 Post 2: currentUserId=10, post.user_id=9, canDelete=false
+postCard.addEventListener('click', () => {
+          console.log('Publication cliquée:', post.id);
+          // TODO: Ouvrir la publication en modal
+        });
