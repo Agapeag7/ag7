@@ -1296,7 +1296,10 @@ class Router {
                     $userHasLiked = $likeModel->hasLiked($user_id, $post['post_id']);
                 }
                 
-                // Récupérer les derniers commentaires
+                // Compter les VRAIS likes depuis la table likes_publications (pas la colonne statique)
+                $likesCount = $likeModel->getLikesCount($post['post_id']);
+                
+                // Récupérer les derniers commentaires (pour pré-affichage dans le feed)
                 $comments = $comModel->getByPostId($post['post_id'], 3); // 3 derniers commentaires
                 $commentsList = [];
                 foreach ($comments as $comment) {
@@ -1309,6 +1312,12 @@ class Router {
                     ];
                 }
                 
+                // Compter les VRAIS commentaires depuis la table commentaires (pas la colonne statique)
+                $stmt = $this->db->prepare('SELECT COUNT(*) as count FROM commentaires WHERE comment_post_id = ? AND comment_parent_id IS NULL');
+                $stmt->execute([$post['post_id']]);
+                $result = $stmt->fetch();
+                $commentsCount = (int)($result['count'] ?? 0);
+                
                 $enriched[] = [
                     'id' => $post['post_id'],
                     'author' => $post['user_name'],
@@ -1316,8 +1325,8 @@ class Router {
                     'avatar' => $post['user_photo_url'] ? 'imgApp/' . $post['user_photo_url'] : null,
                     'content' => $post['post_content'],
                     'images' => $imageUrls,
-                    'likes' => (int)$post['post_likes_count'],
-                    'comments' => (int)($post['post_comments'] ?? 0),
+                    'likes' => (int)$likesCount,
+                    'comments' => (int)$commentsCount,
                     'userHasLiked' => $userHasLiked,
                     'commentsList' => $commentsList,
                     'timestamp' => $post['post_created_at'],

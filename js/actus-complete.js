@@ -200,8 +200,8 @@ function createPostElement(post) {
   // Stats
   let statsHTML = `
     <div class="post-stats">
-      <span>${post.likes} J'aime</span>
-      <span>${post.comments ? post.comments.length : 0} Commentaires</span>
+      <span>${post.likes || 0} J'aime</span>
+      <span>${post.comments || 0} Commentaires</span>
     </div>`;
   
   // Actions
@@ -215,9 +215,9 @@ function createPostElement(post) {
       </button>
     </div>`;
   
-  // Comments section
+  // Comments section (cachée par défaut)
   let commentsHTML = `
-    <div class="comments-section">
+    <div class="comments-section" style="display: none;">
       <div class="comments-list"></div>
       <div class="comment-input">
         <input type="text" placeholder="Ajouter un commentaire..." class="new-comment-input" maxlength="500">
@@ -230,6 +230,29 @@ function createPostElement(post) {
     </div>`;
   
   postDiv.innerHTML = headerHTML + contentHTML + statsHTML + actionsHTML + commentsHTML;
+  
+  // Pré-afficher les commentaires pré-chargés
+  if (post.commentsList && post.commentsList.length > 0) {
+    const commentsList = postDiv.querySelector('.comments-list');
+    post.commentsList.forEach(comment => {
+      const commentEl = document.createElement('div');
+      commentEl.className = 'comment-item';
+      commentEl.innerHTML = `<strong style="margin-right: 8px;">${comment.isAnonymous ? '😷 Anonyme' : comment.author}</strong> ${escapeHtml(comment.text)}`;
+      commentsList.appendChild(commentEl);
+    });
+    
+    // Ajouter un lien "Voir tous les commentaires" si plus de commentaires existent
+    if (post.comments && post.comments > post.commentsList.length) {
+      const seeMoreBtn = document.createElement('button');
+      seeMoreBtn.className = 'see-more-comments-btn';
+      seeMoreBtn.textContent = `Voir tous les ${post.comments} commentaires`;
+      seeMoreBtn.style.cssText = 'background: none; border: none; color: var(--emerald-500); cursor: pointer; font-weight: 500; font-size: 13px; padding: 8px 0; margin-top: 8px;';
+      seeMoreBtn.addEventListener('click', () => {
+        loadPostComments(post.id);
+      });
+      commentsList.appendChild(seeMoreBtn);
+    }
+  }
   
   // Gestion carousel images
   if (post.images && post.images.length > 1) {
@@ -359,6 +382,11 @@ function handleToggleComments(e) {
 
 // ===== CHARGER LES COMMENTAIRES =====
 async function loadPostComments(postId) {
+  const postCard = document.querySelector(`[data-id="${postId}"]`);
+  const commentsList = postCard.querySelector('.comments-list');
+  commentsList.innerHTML = '';
+  
+  // Récupérer les commentaires via l'API
   const result = await ActusAPI.getComments(postId);
   
   if (!result.success) {
@@ -366,14 +394,48 @@ async function loadPostComments(postId) {
     return;
   }
   
-  const postCard = document.querySelector(`[data-id="${postId}"]`);
-  const commentsList = postCard.querySelector('.comments-list');
-  commentsList.innerHTML = '';
+  if (!result.comments || result.comments.length === 0) {
+    commentsList.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">Aucun commentaire</p>';
+    return;
+  }
   
+  // Afficher les commentaires avec réponses
   result.comments.forEach(comment => {
     const commentEl = document.createElement('div');
     commentEl.className = 'comment-item';
-    commentEl.innerHTML = `<strong style="margin-right: 8px;">${comment.isAnonymous ? 'Anonyme' : comment.author}</strong> ${escapeHtml(comment.text)}`;
+    commentEl.style.cssText = 'margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light);';
+    
+    let commentHTML = `
+      <div style="margin-bottom: 4px;">
+        <strong>${comment.isAnonymous ? '😷 Anonyme' : comment.author}</strong>
+        <span style="font-size: 12px; color: var(--text-secondary);"> • ${formatTime(comment.timestamp)}</span>
+      </div>
+      <div style="margin-left: 4px; padding: 6px 8px; background: var(--hover-bg); border-radius: 8px;">
+        ${escapeHtml(comment.text)}
+      </div>
+      <div style="margin-top: 4px; font-size: 12px;">
+        <button class="comment-like-btn" data-comment-id="${comment.id}" style="border: none; background: none; cursor: pointer; color: var(--text-secondary); padding: 0;">
+          👍 ${comment.likes}
+        </button>
+      </div>
+    `;
+    
+    // Ajouter les réponses si présentes
+    if (comment.replies && comment.replies.length > 0) {
+      commentHTML += `
+        <div style="margin-left: 24px; margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--border-light);">
+          ${comment.replies.map(reply => `
+            <div style="margin-bottom: 8px; font-size: 13px;">
+              <strong>${reply.isAnonymous ? '😷 Anonyme' : reply.author}</strong>
+              <span style="color: var(--text-secondary);">:</span>
+              <div style="margin-top: 2px; color: var(--text-main);">${escapeHtml(reply.text)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+    
+    commentEl.innerHTML = commentHTML;
     commentsList.appendChild(commentEl);
   });
   
