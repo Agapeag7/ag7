@@ -163,7 +163,7 @@ function createPostElement(post) {
   postDiv.className = 'post-card';
   postDiv.dataset.id = post.id;
   
-  const canDelete = currentUserId && post.user_id === currentUserId;
+  const canDelete = currentUserId && parseInt(currentUserId) === parseInt(post.user_id);
   const isLiked = post.userHasLiked;
   
   // Header
@@ -176,7 +176,7 @@ function createPostElement(post) {
         <div class="post-author">${post.author}</div>
         <div class="post-time">${formatTime(post.timestamp)}</div>
       </div>
-      ${canDelete ? `<button class="post-delete-btn" data-post-id="${post.id}" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer;"><i class="fas fa-trash"></i></button>` : ''}
+      <button class="post-delete-btn" data-post-id="${post.id}" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; ${!canDelete ? 'display: none;' : ''}"><i class="fas fa-trash"></i></button>
     </div>`;
   
   // Content
@@ -496,11 +496,17 @@ async function handleDeletePost(e) {
   const btn = e.currentTarget;
   const postId = parseInt(btn.dataset.postId);
   
+  console.log('🗑️ Delete clicked:', postId);
+  console.log('📍 Current User ID:', currentUserId);
+  
   if (!confirm('Supprimer cette publication ?')) return;
   
   btn.disabled = true;
+  console.log('⏳ Suppression en cours...');
   const result = await ActusAPI.deletePost(postId);
   btn.disabled = false;
+  
+  console.log('📋 Résultat suppression:', result);
   
   if (result.success) {
     showNotification('success', 'Supprimé', result.message);
