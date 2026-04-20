@@ -1,4 +1,278 @@
-actus-complete.js:125 ⚠️ Réponse non-JSON (content-type: text/html; charset=UTF-8)
-fetchCurrentUser	@	actus-complete.js:125
-await in fetchCurrentUser		
-(anonymous)	@	actus-complete.js:24
+Voici les modifications à apporter pour :
+
+1. **Remplacer les émojis textuels (😷 Anonyme) par des vraies icônes Font Awesome** dans les commentaires.
+2. **Ouvrir une modale** quand l’utilisateur clique sur « Commenter » (au lieu d’afficher la section sous le post).
+3. **Conserver l’affichage des derniers commentaires** sous le post avant ouverture de la modale.
+
+---
+
+## 1. Modifications dans `actus-complete.js`
+
+### a) Remplacer la gestion du bouton « Commenter »
+
+Dans la fonction `attachPostEvents`, remplacer l’écouteur du bouton `comment-btn` par un appel à une nouvelle fonction `openCommentsModal`.
+
+```javascript
+// Dans attachPostEvents()
+const commentBtns = document.querySelectorAll('.post-action-btn.comment-btn');
+commentBtns.forEach(btn => {
+  btn.removeEventListener('click', handleToggleComments);
+  btn.addEventListener('click', (e) => {
+    const postId = parseInt(btn.dataset.postId);
+    openCommentsModal(postId);
+  });
+});
+```
+
+### b) Créer la fonction `openCommentsModal`
+
+Cette fonction charge les commentaires via l’API, remplit la modale existante (`#commentsModal`) et l’affiche.
+
+```javascript
+async function openCommentsModal(postId) {
+  const modal = document.getElementById('commentsModal');
+  const listContainer = modal.querySelector('.all-comments-list');
+  const commentInput = modal.querySelector('.modal-comment-input');
+  const anonCheckbox = modal.querySelector('.modal-anonymous-checkbox');
+  const submitBtn = modal.querySelector('.modal-submit-comment');
+
+  // Afficher un état de chargement
+  listContainer.innerHTML = '<div style="text-align:center; padding:20px;">Chargement des commentaires...</div>';
+  modal.classList.remove('hidden');
+
+  // Charger les commentaires
+  const result = await ActusAPI.getComments(postId);
+  if (!result.success) {
+    listContainer.innerHTML = `<div class="error-message">Erreur : ${result.message}</div>`;
+    return;
+  }
+
+  // Construire l’arborescence des commentaires (principaux + réponses)
+  const comments = result.comments;
+  listContainer.innerHTML = '';
+
+  if (!comments.length) {
+    listContainer.innerHTML = '<div style="text-align:center; padding:20px;">Aucun commentaire pour le moment.</div>';
+  } else {
+    comments.forEach(comment => {
+      const commentDiv = createCommentElement(comment, postId);
+      listContainer.appendChild(commentDiv);
+    });
+  }
+
+  // Gérer l’envoi d’un nouveau commentaire
+  const sendComment = async () => {
+    const text = commentInput.value.trim();
+    if (!text) {
+      showNotification('warning', 'Champ vide', 'Écrivez un commentaire');
+      return;
+    }
+    submitBtn.disabled = true;
+    const addResult = await ActusAPI.addComment(postId, text, null, anonCheckbox.checked);
+    submitBtn.disabled = false;
+    if (addResult.success) {
+      showNotification('success', 'Succès', 'Commentaire ajouté');
+      commentInput.value = '';
+      anonCheckbox.checked = false;
+      // Recharger la modale pour afficher le nouveau commentaire
+      await openCommentsModal(postId);
+      // Mettre à jour le compteur de commentaires dans le post correspondant
+      updatePostCommentCount(postId);
+    } else {
+      showNotification('error', 'Erreur', addResult.message);
+    }
+  };
+
+  submitBtn.onclick = sendComment;
+  commentInput.onkeypress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendComment();
+    }
+  };
+}
+```
+
+### c) Fonction utilitaire `createCommentElement`
+
+Pour générer l’affichage d’un commentaire (principal ou réponse) avec des **icônes** au lieu d’émojis.
+
+```javascript
+function createCommentElement(comment, postId, isReply = false) {
+  const wrapper = document.createElement('div');
+  wrapper.className = `comment-item-full ${isReply ? 'reply-item' : ''}`;
+  
+  // Auteur avec icône anonyme si nécessaire
+  const authorHtml = comment.isAnonymous
+    ? `<i class="fas fa-mask" style="margin-right: 6px;"></i><strong>Anonyme</strong>`
+    : `<strong>${escapeHtml(comment.author)}</strong>`;
+
+  const date = new Date(comment.timestamp);
+  const timeStr = date.toLocaleString('fr-FR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+
+  wrapper.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>${authorHtml} <span style="font-size:12px; color:var(--text-secondary);">• ${timeStr}</span></div>
+      <div>
+        <button class="comment-like-btn" data-comment-id="${comment.id}" data-post-id="${postId}" style="background:none; border:none; cursor:pointer;">
+          <i class="fas fa-heart"></i> <span class="like-count">${comment.likes}</span>
+        </button>
+      </div>
+    </div>
+    <div style="margin: 8px 0 4px 24px; padding: 8px; background: var(--hover-bg); border-radius: 12px;">
+      ${escapeHtml(comment.text)}
+    </div>
+  `;
+
+  // Ajouter les réponses si présentes
+  if (comment.replies && comment.replies.length) {
+    const repliesDiv = document.createElement('div');
+    repliesDiv.style.marginLeft = '32px';
+    repliesDiv.style.marginTop = '8px';
+    repliesDiv.style.borderLeft = '2px solid var(--border-light)';
+    repliesDiv.style.paddingLeft = '12px';
+    comment.replies.forEach(reply => {
+      const replyEl = createCommentElement(reply, postId, true);
+      repliesDiv.appendChild(replyEl);
+    });
+    wrapper.appendChild(repliesDiv);
+  }
+
+  // Gestion du like sur ce commentaire
+  const likeBtn = wrapper.querySelector('.comment-like-btn');
+  if (likeBtn) {
+    likeBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const commentId = parseInt(likeBtn.dataset.commentId);
+      const result = await ActusAPI.toggleCommentLike(commentId);
+      if (result.success) {
+        const likeSpan = likeBtn.querySelector('.like-count');
+        if (likeSpan) likeSpan.textContent = result.likes_count;
+        if (result.isLiked) {
+          likeBtn.style.color = '#ef4444';
+        } else {
+          likeBtn.style.color = '';
+        }
+      } else {
+        showNotification('error', 'Erreur', result.message);
+      }
+    });
+  }
+
+  return wrapper;
+}
+```
+
+### d) Fonction `updatePostCommentCount`
+
+Pour rafraîchir le compteur de commentaires dans la carte du post après un ajout.
+
+```javascript
+async function updatePostCommentCount(postId) {
+  const postCard = document.querySelector(`.post-card[data-id="${postId}"]`);
+  if (!postCard) return;
+  const statsSpan = postCard.querySelector('.post-stats span:nth-child(2)');
+  if (!statsSpan) return;
+  // Recharger les stats depuis l’API (ou incrémenter localement)
+  const result = await ActusAPI.getPostStats(postId);
+  if (result.success) {
+    statsSpan.textContent = `${result.stats.comments} Commentaires`;
+    // Mettre à jour l’objet posts dans actusState
+    const post = actusState.posts.find(p => p.id === postId);
+    if (post) post.comments = result.stats.comments;
+  }
+}
+```
+
+### e) Supprimer l’ancienne fonction `handleToggleComments`
+
+Elle n’est plus utilisée. Vous pouvez la commenter ou la supprimer.
+
+### f) Adapter `createPostElement`
+
+Dans le rendu initial d’un post, gardez l’affichage des **3 derniers commentaires** (comme actuellement) mais sans la zone de saisie (celle-ci sera désormais dans la modale).  
+Supprimez donc la partie `comments-section` générée dans `createPostElement` et remplacez-la simplement par une liste des derniers commentaires (sans formulaire).
+
+Modifiez la fin de `createPostElement` :
+
+```javascript
+// Au lieu d'ajouter commentsSection avec formulaire, ajoutez seulement les commentaires pré-chargés
+if (post.commentsList && post.commentsList.length > 0) {
+  const commentsPreview = document.createElement('div');
+  commentsPreview.className = 'post-comments-preview';
+  commentsPreview.style.marginTop = '8px';
+  commentsPreview.style.padding = '0 20px 12px';
+  commentsPreview.style.borderTop = '1px solid var(--border-light)';
+  
+  post.commentsList.slice(0, 3).forEach(comment => {
+    const commentLine = document.createElement('div');
+    commentLine.className = 'comment-preview-item';
+    commentLine.style.fontSize = '13px';
+    commentLine.style.marginTop = '8px';
+    commentLine.style.color = 'var(--text-secondary)';
+    commentLine.innerHTML = `
+      <strong>${comment.isAnonymous ? '<i class="fas fa-mask"></i> Anonyme' : comment.author}</strong>
+      <span style="margin-left: 6px;">${escapeHtml(comment.text)}</span>
+    `;
+    commentsPreview.appendChild(commentLine);
+  });
+  
+  if (post.comments > 3) {
+    const moreBtn = document.createElement('div');
+    moreBtn.className = 'see-more-comments';
+    moreBtn.style.fontSize = '12px';
+    moreBtn.style.marginTop = '8px';
+    moreBtn.style.color = 'var(--emerald-500)';
+    moreBtn.style.cursor = 'pointer';
+    moreBtn.innerHTML = `<i class="fas fa-comments"></i> Voir les ${post.comments} commentaires`;
+    moreBtn.addEventListener('click', () => openCommentsModal(post.id));
+    commentsPreview.appendChild(moreBtn);
+  }
+  
+  postDiv.appendChild(commentsPreview);
+}
+```
+
+---
+
+## 2. Ajustements CSS (optionnels)
+
+Ajoutez ces styles pour harmoniser l’affichage des commentaires dans la modale :
+
+```css
+/* Amélioration de la modale commentaires */
+.comments-modal .comment-item-full {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-light);
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+}
+.comments-modal .reply-item {
+  background: var(--hover-bg);
+  margin-top: 8px;
+}
+.comment-like-btn {
+  transition: 0.2s;
+}
+.comment-like-btn:hover {
+  transform: scale(1.05);
+}
+.comment-like-btn.liked {
+  color: #ef4444;
+}
+```
+
+---
+
+## 3. Remarque importante
+
+- La modale `#commentsModal` existe déjà dans `index.html`, assurez-vous qu’elle n’est pas cachée par défaut (`hidden`).
+- La fonction `showNotification` doit être disponible (elle l’est dans `scripts.js`).
+- Les appels à `ActusAPI.getPostStats` et `ActusAPI.toggleCommentLike` sont déjà implémentés dans `api-actus.js`.
+
+Avec ces modifications, le comportement devient :
+- Sous chaque publication, affichage des 3 derniers commentaires (sans champ de saisie).
+- Un clic sur « Commenter » ou sur « Voir les X commentaires » ouvre une modale complète.
+- Dans la modale, on peut liker les commentaires et en ajouter de nouveaux (anonyme ou non).
+- Les émojis sont remplacés par l’icône `fa-mask`.

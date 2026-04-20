@@ -32,9 +32,8 @@
       --transition: all 0.2s ease;
     }
 
-    body.dark {
-      /* Les variables sont appliquées dynamiquement par le JavaScript */
-    }
+    /* body.dark {
+    } */
 
     [data-theme="dark"] {
       --white: #0f172a;

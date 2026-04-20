@@ -265,29 +265,43 @@ function createPostElement(post) {
       </div>
     </div>`;
   
-  postDiv.innerHTML = headerHTML + contentHTML + statsHTML + actionsHTML + commentsHTML;
+  postDiv.innerHTML = headerHTML + contentHTML + statsHTML + actionsHTML;
   
-  // Pré-afficher les commentaires pré-chargés
+  // Afficher l'aperçu des commentaires pré-chargés
   if (post.commentsList && post.commentsList.length > 0) {
-    const commentsList = postDiv.querySelector('.comments-list');
-    post.commentsList.forEach(comment => {
-      const commentEl = document.createElement('div');
-      commentEl.className = 'comment-item';
-      commentEl.innerHTML = `<strong style="margin-right: 8px;">${comment.isAnonymous ? '😷 Anonyme' : comment.author}</strong> ${escapeHtml(comment.text)}`;
-      commentsList.appendChild(commentEl);
+    const commentsPreview = document.createElement('div');
+    commentsPreview.className = 'post-comments-preview';
+    commentsPreview.style.marginTop = '8px';
+    commentsPreview.style.padding = '0 0 12px';
+    commentsPreview.style.borderTop = '1px solid var(--border-light)';
+    
+    post.commentsList.slice(0, 3).forEach(comment => {
+      const commentLine = document.createElement('div');
+      commentLine.className = 'comment-preview-item';
+      commentLine.style.fontSize = '13px';
+      commentLine.style.marginTop = '8px';
+      commentLine.style.color = 'var(--text-secondary)';
+      const authorDisplay = comment.isAnonymous 
+        ? '<i class="fas fa-mask" style="margin-right: 4px;"></i><strong>Anonyme</strong>'
+        : `<strong>${escapeHtml(comment.author)}</strong>`;
+      commentLine.innerHTML = `${authorDisplay} <span style="margin-left: 6px;">${escapeHtml(comment.text)}</span>`;
+      commentsPreview.appendChild(commentLine);
     });
     
-    // Ajouter un lien "Voir tous les commentaires" si plus de commentaires existent
-    if (post.comments && post.comments > post.commentsList.length) {
-      const seeMoreBtn = document.createElement('button');
-      seeMoreBtn.className = 'see-more-comments-btn';
-      seeMoreBtn.textContent = `Voir tous les ${post.comments} commentaires`;
-      seeMoreBtn.style.cssText = 'background: none; border: none; color: var(--emerald-500); cursor: pointer; font-weight: 500; font-size: 13px; padding: 8px 0; margin-top: 8px;';
-      seeMoreBtn.addEventListener('click', () => {
-        loadPostComments(post.id);
-      });
-      commentsList.appendChild(seeMoreBtn);
+    if (post.comments > 3) {
+      const moreBtn = document.createElement('div');
+      moreBtn.className = 'see-more-comments';
+      moreBtn.style.fontSize = '12px';
+      moreBtn.style.marginTop = '8px';
+      moreBtn.style.color = 'var(--emerald-500)';
+      moreBtn.style.cursor = 'pointer';
+      moreBtn.style.fontWeight = '500';
+      moreBtn.innerHTML = `<i class="fas fa-comments"></i> Voir les ${post.comments} commentaires`;
+      moreBtn.addEventListener('click', () => openCommentsModal(post.id));
+      commentsPreview.appendChild(moreBtn);
     }
+    
+    postDiv.appendChild(commentsPreview);
   }
   
   // Gestion carousel images
@@ -347,13 +361,10 @@ function attachPostEvents() {
     const commentBtns = document.querySelectorAll('.post-action-btn.comment-btn');
     
     commentBtns.forEach(btn => {
-      btn.addEventListener('click', handleToggleComments);
-    });
-    
-    const submitBtns = document.querySelectorAll('.submit-comment');
-    
-    submitBtns.forEach(btn => {
-      btn.addEventListener('click', handleSubmitComment);
+      btn.addEventListener('click', (e) => {
+        const postId = parseInt(btn.dataset.postId);
+        openCommentsModal(postId);
+      });
     });
     
   } catch(e) {
@@ -395,172 +406,163 @@ async function handleLike(e) {
   }
 }
 
-// ===== AFFICHER/CACHER COMMENTAIRES =====
-function handleToggleComments(e) {
-  const btn = e.currentTarget;
-  
-  const postCard = btn.closest('.post-card');
-  
-  if (!postCard) {
-    console.error('Post card not found!');
-    return;
-  }
-  
-  const postId = parseInt(postCard.dataset.id);
-  
-  const commentSection = postCard.querySelector('.comments-section');
-  
-  if (!commentSection) {
-    console.error('Comment section not found!');
-    return;
-  }
-  
-  if (commentSection.style.display === 'none') {
-    commentSection.style.display = 'block';
-    loadPostComments(postId);
-  } else {
-    commentSection.style.display = 'none';
-  }
-}
+// ===== MODAL COMMENTAIRES =====
+async function openCommentsModal(postId) {
+  const modal = document.getElementById('commentsModal');
+  const listContainer = modal.querySelector('.all-comments-list') || modal.querySelector('.comments-list') || modal;
+  const commentInput = modal.querySelector('.modal-comment-input') || modal.querySelector('input[type="text"]');
+  const anonCheckbox = modal.querySelector('.modal-anonymous-checkbox') || modal.querySelector('input[type="checkbox"]');
+  const submitBtn = modal.querySelector('.modal-submit-comment') || modal.querySelector('button');
+  const closeBtn = modal.querySelector('.comments-modal-close');
 
-// ===== CHARGER LES COMMENTAIRES =====
-async function loadPostComments(postId) {
-  const postCard = document.querySelector(`[data-id="${postId}"]`);
-  if (!postCard) {
-    console.error('Post card not found for id:', postId);
-    return;
-  }
+  // Afficher l'état de chargement
+  listContainer.innerHTML = '<div style="text-align:center; padding:20px; color: var(--text-secondary);">Chargement des commentaires...</div>';
+  modal.classList.remove('hidden');
+
+  // Gérer la fermeture du modal
+  const closeHandler = () => { modal.classList.add('hidden'); };
+  if (closeBtn) closeBtn.onclick = closeHandler;
   
-  const commentsList = postCard.querySelector('.comments-list');
-  if (!commentsList) {
-    console.error('Comments list container not found');
-    return;
-  }
-  
-  commentsList.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">Chargement...</p>';
-  
-  // Récupérer les commentaires via l'API
+  // Fermer le modal en cliquant en dehors
+  modal.onclick = (e) => {
+    if (e.target === modal) closeHandler();
+  };
+
+  // Charger les commentaires
   const result = await ActusAPI.getComments(postId);
-  
   if (!result.success) {
-    console.error('API Error:', result.message);
-    showNotification('error', 'Erreur', result.message);
-    commentsList.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">Erreur au chargement</p>';
+    listContainer.innerHTML = `<div style="color: var(--text-secondary);">Erreur : ${result.message}</div>`;
     return;
   }
-  
-  if (!result.comments || result.comments.length === 0) {
-    commentsList.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px;">Aucun commentaire</p>';
-    return;
+
+  const comments = result.comments;
+  listContainer.innerHTML = '';
+
+  if (!comments.length) {
+    listContainer.innerHTML = '<div style="text-align:center; padding:20px; color: var(--text-secondary);">Aucun commentaire pour le moment.</div>';
+  } else {
+    comments.forEach(comment => {
+      const commentEl = createCommentElement(comment, postId);
+      listContainer.appendChild(commentEl);
+    });
   }
-  
-  commentsList.innerHTML = '';
-  
-  // Afficher les commentaires avec réponses
-  result.comments.forEach(comment => {
-    const commentEl = document.createElement('div');
-    commentEl.className = 'comment-item';
-    commentEl.style.cssText = 'margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light);';
-    
-    let commentHTML = `
-      <div style="margin-bottom: 4px;">
-        <strong>${comment.isAnonymous ? '😷 Anonyme' : comment.author}</strong>
-        <span style="font-size: 12px; color: var(--text-secondary);"> • ${formatTime(comment.timestamp)}</span>
-      </div>
-      <div style="margin-left: 4px; padding: 6px 8px; background: var(--hover-bg); border-radius: 8px;">
-        ${escapeHtml(comment.text)}
-      </div>
-      <div style="margin-top: 4px; font-size: 12px;">
-        <button class="comment-like-btn" data-comment-id="${comment.id}" style="border: none; background: none; cursor: pointer; color: var(--text-secondary); padding: 0;">
-          👍 ${comment.likes}
-        </button>
-      </div>
-    `;
-    
-    // Ajouter les réponses si présentes
-    if (comment.replies && comment.replies.length > 0) {
-      commentHTML += `
-        <div style="margin-left: 24px; margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--border-light);">
-          ${comment.replies.map(reply => `
-            <div style="margin-bottom: 8px; font-size: 13px;">
-              <strong>${reply.isAnonymous ? 'Anonyme' : reply.author}</strong>
-              <span style="color: var(--text-secondary);">:</span>
-              <div style="margin-top: 2px; color: var(--text-main);">${escapeHtml(reply.text)}</div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+
+  // Gérer l'envoi d'un nouveau commentaire
+  const sendComment = async () => {
+    const text = commentInput.value.trim();
+    if (!text) {
+      showNotification('warning', 'Champ vide', 'Écrivez un commentaire');
+      return;
     }
-    
-    commentEl.innerHTML = commentHTML;
-    commentsList.appendChild(commentEl);
-  });
-  
-  // Attacher événements likes commentaires
-  postCard.querySelectorAll('.comment-like-btn').forEach(btn => {
-    btn.addEventListener('click', handleCommentLike);
-  });
-  
+    submitBtn.disabled = true;
+    const addResult = await ActusAPI.addComment(postId, text, null, anonCheckbox?.checked || false);
+    submitBtn.disabled = false;
+    if (addResult.success) {
+      showNotification('success', 'Succès', 'Commentaire ajouté');
+      commentInput.value = '';
+      if (anonCheckbox) anonCheckbox.checked = false;
+      await openCommentsModal(postId);
+      updatePostCommentCount(postId);
+    } else {
+      showNotification('error', 'Erreur', addResult.message);
+    }
+  };
+
+  submitBtn.onclick = sendComment;
+  commentInput.onkeypress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendComment();
+    }
+  };
 }
 
-// ===== SOUMETTRE COMMENTAIRE =====
-async function handleSubmitComment(e) {
-  const btn = e.currentTarget;
-  const postId = parseInt(btn.dataset.postId);
-  const postCard = document.querySelector(`[data-id="${postId}"]`);
-  const input = postCard.querySelector('.new-comment-input');
-  const anonCheckbox = postCard.querySelector('.anonymous-checkbox');
+// ===== CRÉER ÉLÉMENT COMMENTAIRE =====
+function createCommentElement(comment, postId, isReply = false) {
+  const wrapper = document.createElement('div');
+  wrapper.className = `comment-item-full ${isReply ? 'reply-item' : ''}`;
+  wrapper.style.background = isReply ? 'var(--hover-bg)' : 'var(--card-bg)';
+  wrapper.style.borderBottom = isReply ? 'none' : '1px solid var(--border-light)';
+  wrapper.style.padding = '12px';
+  wrapper.style.marginBottom = '8px';
+  wrapper.style.borderRadius = '12px';
   
-  const text = input.value.trim();
-  if (!text) {
-    showNotification('warning', 'Champ vide', 'Écrivez un commentaire');
-    return;
+  const authorHtml = comment.isAnonymous
+    ? `<i class="fas fa-mask" style="margin-right: 6px;"></i><strong>Anonyme</strong>`
+    : `<strong>${escapeHtml(comment.author)}</strong>`;
+
+  const date = new Date(comment.timestamp);
+  const timeStr = date.toLocaleString('fr-FR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+
+  wrapper.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <div>${authorHtml} <span style="font-size:12px; color:var(--text-secondary);">• ${timeStr}</span></div>
+      <button class="comment-like-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px;">
+        <i class="fas fa-heart"></i> <span class="like-count">${comment.likes}</span>
+      </button>
+    </div>
+    <div style="margin: 0 0 4px 24px; padding: 8px; background: ${isReply ? 'var(--card-bg)' : 'var(--hover-bg)'}; border-radius: 12px;">
+      ${escapeHtml(comment.text)}
+    </div>
+  `;
+
+  if (comment.replies && comment.replies.length) {
+    const repliesDiv = document.createElement('div');
+    repliesDiv.style.marginLeft = '32px';
+    repliesDiv.style.marginTop = '8px';
+    repliesDiv.style.borderLeft = '2px solid var(--border-light)';
+    repliesDiv.style.paddingLeft = '12px';
+    comment.replies.forEach(reply => {
+      const replyEl = createCommentElement(reply, postId, true);
+      repliesDiv.appendChild(replyEl);
+    });
+    wrapper.appendChild(repliesDiv);
   }
-  
-  
-  btn.disabled = true;
-  const result = await ActusAPI.addComment(postId, text, null, anonCheckbox.checked);
-  btn.disabled = false;
-  
-  
-  if (result.success) {
-    showNotification('success', 'Succès', 'Commentaire ajouté');
-    input.value = '';
-    anonCheckbox.checked = false;
-    
-    // Recharger les commentaires pour afficher la nouvelle
-    await loadPostComments(postId);
-    
-    // Mettre à jour le compteur de commentaires
-    const statsSpan = postCard.querySelector('.post-stats span:nth-child(2)');
-    if (statsSpan) {
-      const post = actusState.posts.find(p => p.id === postId);
-      if (post) {
-        post.comments = (post.comments || 0) + 1;
-        statsSpan.textContent = `${post.comments} Commentaires`;
+
+  const likeBtn = wrapper.querySelector('.comment-like-btn');
+  if (likeBtn) {
+    likeBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const commentId = parseInt(likeBtn.dataset.commentId);
+      const result = await ActusAPI.toggleCommentLike(commentId);
+      if (result.success) {
+        const likeSpan = likeBtn.querySelector('.like-count');
+        if (likeSpan) likeSpan.textContent = result.likes_count;
+        likeBtn.style.color = result.isLiked ? '#ef4444' : 'var(--text-secondary)';
+      } else {
+        showNotification('error', 'Erreur', result.message);
       }
-    }
-  } else {
-    console.error('API Error:', result.message);
-    showNotification('error', 'Erreur', result.message);
+    });
+  }
+
+  return wrapper;
+}
+
+// ===== METTRE À JOUR COMPTEUR COMMENTAIRES =====
+async function updatePostCommentCount(postId) {
+  const postCard = document.querySelector(`.post-card[data-id="${postId}"]`);
+  if (!postCard) return;
+  const statsSpan = postCard.querySelector('.post-stats span:nth-child(2)');
+  if (!statsSpan) return;
+  const result = await ActusAPI.getPostStats(postId);
+  if (result.success) {
+    statsSpan.textContent = `${result.stats.comments} Commentaires`;
+    const post = actusState.posts.find(p => p.id === postId);
+    if (post) post.comments = result.stats.comments;
   }
 }
 
-// ===== LIKE COMMENTAIRE =====
-async function handleCommentLike(e) {
-  const btn = e.currentTarget;
-  const commentId = parseInt(btn.dataset.commentId);
-  
-  btn.disabled = true;
-  const result = await ActusAPI.toggleCommentLike(commentId);
-  btn.disabled = false;
-  
-  if (result.success) {
-    btn.textContent = `👍 ${result.likes_count}`;
-  } else {
-    showNotification('error', 'Erreur', result.message);
-  }
-}
+// ===== ANCIENNES FONCTIONS (DÉPRÉCIÉES - REMPLACÉES PAR LE SYSTÈME MODAL) =====
+// Ces fonctions géraient les commentaires inline et sont remplacées par:
+// - openCommentsModal() pour ouvrir la modale
+// - createCommentElement() pour créer les éléments commentaires
+// - updatePostCommentCount() pour mettre à jour le compteur
+// 
+// Les fonctions suivantes ne sont plus utilisées mais gardées pour référence:
+// - handleToggleComments() - removed
+// - loadPostComments() - removed
+// - handleSubmitComment() - removed
+// - handleCommentLike() - functionality integrated into createCommentElement()
 
 // ===== SUPPRIMER POST =====
 // ===== SUPPRIMER POST =====
