@@ -3534,3 +3534,27 @@ body.dark .modal-comment-input::placeholder,
   transition: 0.2s;
   font-size: 14px;
 }
+
+/* ===== CAS DES COMMENTAIRES LONGS DANS L'APERÇU DU FEED ===== */
+.post-comments-preview {
+  word-wrap: break-word;          /* Coupe les mots longs */
+  overflow-wrap: break-word;      /* Alternative standard */
+  word-break: break-word;         /* Casse les mots trop longs */
+  white-space: normal;            /* Autorise les retours à la ligne */
+  max-width: 100%;                /* Ne dépasse pas la largeur du parent */
+  overflow-x: hidden;             /* Cache tout débordement horizontal */
+}
+
+.comment-preview-item {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  max-width: 100%;
+  padding-right: 8px;
+}
+
+/* Optionnel : sécurise la carte de post elle-même */
+.post-card {
+  overflow-x: hidden;
+}
