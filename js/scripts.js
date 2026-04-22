@@ -1548,8 +1548,6 @@ async function loadUserPosts(userId) {
       visibility: post.visibility
     }));
 
-    // Debug : afficher dans la console le nombre de posts chargés
-    console.log(`${currentUserProfile.posts.length} posts chargés pour l'utilisateur ${userId}`);
   } catch (e) {
     console.error('Erreur loadUserPosts:', e);
     currentUserProfile.posts = [];
