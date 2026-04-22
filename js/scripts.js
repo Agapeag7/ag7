@@ -1488,23 +1488,22 @@ async function loadCurrentProfile() {
       ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
       : 'U';
     
-    // Définir la photo de profil
     if (profile.user_photo_url) {
       currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
     }
-    
-    // Définir la photo de couverture
     if (profile.user_cover_photo_url) {
       currentUserProfile.coverPhoto = getPhotoURL(profile.user_cover_photo_url);
     }
     
-    // Mettre à jour les stats RÉELLES de la base de données
     currentUserProfile.postsCount = profile.posts_count || 0;
     currentUserProfile.followers_count = profile.followers_count || 0;
     currentUserProfile.following_count = profile.following_count || 0;
     
-    // Charger les publications de l'utilisateur
+    // Charger les publications
     await loadUserPosts(profile.user_id);
+    
+    // METTRE À JOUR L'INTERFACE
+    updateProfileUI();
     
     return true;
   } catch (e) {
@@ -1512,7 +1511,6 @@ async function loadCurrentProfile() {
     return false;
   }
 }
-
 async function loadUserPosts(userId) {
   try {
     // Construire l'URL absolue pour éviter les problèmes de chemin
@@ -1874,25 +1872,10 @@ editProfileForm.addEventListener('submit', async (e) => {
     const result = await response.json();
     
     if (result.success && result.profile) {
-      // Mettre à jour le profil local AVEC la photo de couverture
-      currentUserProfile.name = result.profile.user_name;
-      currentUserProfile.username = '@' + result.profile.user_username;
-      currentUserProfile.bio = result.profile.user_bio || 'Pas de bio';
-      if (result.profile.user_photo_url) {
-        currentUserProfile.profilePhoto = getPhotoURL(result.profile.user_photo_url);
-      }
-      if (result.profile.user_cover_photo_url) {
-        currentUserProfile.coverPhoto = getPhotoURL(result.profile.user_cover_photo_url);
-      }
-      currentUserProfile.avatarInitials = result.profile.user_name
-        ? result.profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-        : 'U';
-        
-        // Fermer la modale et mettre à jour l'UI        
-        await loadCurrentProfile(); // recharge tout et met à jour l'UI
-        editProfileModal.classList.add('hidden');
-
-        showNotification('success', 'Succès', 'Profil mis à jour avec succès');
+      // Recharger toutes les données depuis le serveur (profil + publications)
+      await loadCurrentProfile();
+      editProfileModal.classList.add('hidden');
+      showNotification('success', 'Succès', 'Profil mis à jour avec succès');
     } else {
       showNotification('error', 'Erreur', result.message || 'Impossible de mettre à jour le profil');
     }
@@ -1907,12 +1890,9 @@ editProfileForm.addEventListener('submit', async (e) => {
 
 // Initialisation - Charger le profil réel d'abord
 if (typeof loadCurrentProfile === 'function') {
-  loadCurrentProfile().then(() => {
-    updateProfileUI();
-  }).catch(err => {
+  loadCurrentProfile().catch(err => {
     console.error('Impossible de charger le profil:', err);
-    // Mettre à jour quand même avec les données par défaut
-    updateProfileUI();
+    updateProfileUI(); // fallback avec données par défaut
   });
 } else {
   updateProfileUI();
