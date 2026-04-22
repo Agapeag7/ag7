@@ -273,6 +273,7 @@ function createPostElement(post) {
     commentsPreview.className = 'post-comments-preview';
     commentsPreview.style.marginTop = '8px';
     commentsPreview.style.marginLeft = '15px';
+    commentsPreview.style.marginRight = '15px';
     commentsPreview.style.padding = '0 0 12px';
     commentsPreview.style.borderTop = '1px solid var(--border-light)';
     
@@ -281,6 +282,7 @@ function createPostElement(post) {
       commentLine.className = 'comment-preview-item';
       commentLine.style.fontSize = '13px';
       commentLine.style.marginTop = '8px';
+
       commentLine.style.color = 'var(--text-secondary)';
       const authorDisplay = comment.isAnonymous 
         ? '<i class="fas fa-mask" style="margin-right: 4px;"></i><strong>Anonyme</strong>'
