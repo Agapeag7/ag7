@@ -172,7 +172,7 @@ async function loadActusFeed() {
 function renderActusFeed() {
   const feedContainer = document.getElementById('feedContainer');
   if (!feedContainer) {
-    console.error('❌ feedContainer NOT FOUND');
+    console.error('feedContainer NOT FOUND');
     return;
   }
   
@@ -272,6 +272,7 @@ function createPostElement(post) {
     const commentsPreview = document.createElement('div');
     commentsPreview.className = 'post-comments-preview';
     commentsPreview.style.marginTop = '8px';
+    commentsPreview.style.marginLeft = '15px';
     commentsPreview.style.padding = '0 0 12px';
     commentsPreview.style.borderTop = '1px solid var(--border-light)';
     
