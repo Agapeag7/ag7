@@ -251,7 +251,6 @@ let currentUserProfile = {
             
             // Charger les données réelles du profil depuis le serveur
             await loadCurrentProfile();
-            updateProfileUI();
             
             authForm.reset();
             setAuthMode(true);
@@ -422,9 +421,7 @@ let currentUserProfile = {
       
       // Charger le profil réel quand on accède à la section profil
       if (viewId === 'profile') {
-        loadCurrentProfile().then(() => {
-          updateProfileUI();
-        });
+        loadCurrentProfile();
       }
       
       // Charger le feed Actus quand on accède à la section feed
@@ -1475,18 +1472,18 @@ async function loadCurrentProfile() {
     
     const profile = result.profile;
     
-    // IMPORTANT : Réinitialiser TOUS les champs pour éviter les données fantômes lors d'un changement de compte
+    // Réinitialiser les données
     currentUserProfile.profilePhoto = null;
     currentUserProfile.coverPhoto = null;
-    currentUserProfile.posts = []; // Réinitialiser les posts
+    currentUserProfile.posts = [];
     
-    // Mettre à jour currentUserProfile avec les vraies données
+    // Remplir le profil
     currentUserProfile.name = profile.user_name || "User";
     currentUserProfile.username = '@' + (profile.user_username || "user");
     currentUserProfile.bio = profile.user_bio || "Pas de bio";
     currentUserProfile.location = profile.user_location || "Localisation inconnue";
     currentUserProfile.memberSince = profile.member_since || "Janvier 2024";
-    currentUserProfile.userid = profile.user_id; // Stocker l'ID utilisateur
+    currentUserProfile.userid = profile.user_id;
     currentUserProfile.avatarInitials = profile.user_name
       ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
       : 'U';
@@ -1518,23 +1515,26 @@ async function loadCurrentProfile() {
 
 async function loadUserPosts(userId) {
   try {
-    const response = await fetch(`?action=getUserPosts&user_id=${userId}&limit=50`);
-    
+    // Construire l'URL absolue pour éviter les problèmes de chemin
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'getUserPosts');
+    url.searchParams.set('user_id', userId);
+    url.searchParams.set('limit', 50);
+
+    const response = await fetch(url.toString());
     if (!response.ok) {
-      console.error('Erreur HTTP lors du chargement des posts:', response.status);
-      currentUserProfile.posts = [];
-      return;
+      throw new Error(`HTTP ${response.status}`);
     }
-    
     const result = await response.json();
+
     if (!result.success) {
-      console.error('Erreur serveur:', result.message);
+      console.error('Erreur getUserPosts:', result.message);
       currentUserProfile.posts = [];
       return;
     }
-    
-    // Convertir les posts au format utilisé par la grille
-    currentUserProfile.posts = result.posts.map(post => ({
+
+    // Mapper les données reçues
+    currentUserProfile.posts = (result.posts || []).map(post => ({
       id: post.id,
       author: post.author,
       username: post.username,
@@ -1542,16 +1542,18 @@ async function loadUserPosts(userId) {
       content: post.content,
       image: post.images && post.images.length > 0 ? post.images[0] : null,
       images: post.images || [],
-      likes: post.likes,
-      comments: post.comments,
-      userHasLiked: post.userHasLiked,
+      likes: post.likes || 0,
+      comments: post.comments || 0,
+      userHasLiked: post.userHasLiked || false,
       timestamp: post.timestamp,
       user_id: post.user_id,
       visibility: post.visibility
-    })) || [];
-    
+    }));
+
+    // Debug : afficher dans la console le nombre de posts chargés
+    console.log(`${currentUserProfile.posts.length} posts chargés pour l'utilisateur ${userId}`);
   } catch (e) {
-    console.error('Erreur au chargement des posts du profil:', e);
+    console.error('Erreur loadUserPosts:', e);
     currentUserProfile.posts = [];
   }
 }
@@ -1872,24 +1874,25 @@ editProfileForm.addEventListener('submit', async (e) => {
     const result = await response.json();
     
     if (result.success && result.profile) {
-    // Mettre à jour le profil local AVEC la photo de couverture
-    currentUserProfile.name = result.profile.user_name;
-    currentUserProfile.username = '@' + result.profile.user_username;
-    currentUserProfile.bio = result.profile.user_bio || 'Pas de bio';
-    if (result.profile.user_photo_url) {
-      currentUserProfile.profilePhoto = getPhotoURL(result.profile.user_photo_url);
-    }
-    if (result.profile.user_cover_photo_url) {
-      currentUserProfile.coverPhoto = getPhotoURL(result.profile.user_cover_photo_url);
-    }
-    currentUserProfile.avatarInitials = result.profile.user_name
-      ? result.profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-      : 'U';
-      
-      // Fermer la modale et mettre à jour l'UI
-      editProfileModal.classList.add('hidden');
-      updateProfileUI();
-      showNotification('success', 'Succès', 'Profil mis à jour avec succès');
+      // Mettre à jour le profil local AVEC la photo de couverture
+      currentUserProfile.name = result.profile.user_name;
+      currentUserProfile.username = '@' + result.profile.user_username;
+      currentUserProfile.bio = result.profile.user_bio || 'Pas de bio';
+      if (result.profile.user_photo_url) {
+        currentUserProfile.profilePhoto = getPhotoURL(result.profile.user_photo_url);
+      }
+      if (result.profile.user_cover_photo_url) {
+        currentUserProfile.coverPhoto = getPhotoURL(result.profile.user_cover_photo_url);
+      }
+      currentUserProfile.avatarInitials = result.profile.user_name
+        ? result.profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        : 'U';
+        
+        // Fermer la modale et mettre à jour l'UI        
+        await loadCurrentProfile(); // recharge tout et met à jour l'UI
+        editProfileModal.classList.add('hidden');
+
+        showNotification('success', 'Succès', 'Profil mis à jour avec succès');
     } else {
       showNotification('error', 'Erreur', result.message || 'Impossible de mettre à jour le profil');
     }
