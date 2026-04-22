@@ -1,0 +1,137 @@
+Le problème vient du fait que les publications du profil ne sont pas chargées correctement depuis la base de données. Plusieurs causes possibles : l'URL de l’API getUserPosts n’est pas absolue, l’ordre d’exécution entre le chargement des données et le rafraîchissement de l’interface peut être incorrect, ou les données reçues ne sont pas mappées correctement.
+
+Voici les corrections à apporter dans scripts.js.
+
+1. Rendre l’appel getUserPosts plus robuste
+Remplacez la fonction loadUserPosts par celle-ci :
+
+javascript
+async function loadUserPosts(userId) {
+  try {
+    // Construire l'URL absolue pour éviter les problèmes de chemin
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'getUserPosts');
+    url.searchParams.set('user_id', userId);
+    url.searchParams.set('limit', 50);
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const result = await response.json();
+
+    if (!result.success) {
+      console.error('Erreur getUserPosts:', result.message);
+      currentUserProfile.posts = [];
+      return;
+    }
+
+    // Mapper les données reçues
+    currentUserProfile.posts = (result.posts || []).map(post => ({
+      id: post.id,
+      author: post.author,
+      username: post.username,
+      avatar: post.avatar,
+      content: post.content,
+      image: post.images && post.images.length > 0 ? post.images[0] : null,
+      images: post.images || [],
+      likes: post.likes || 0,
+      comments: post.comments || 0,
+      userHasLiked: post.userHasLiked || false,
+      timestamp: post.timestamp,
+      user_id: post.user_id,
+      visibility: post.visibility
+    }));
+
+    // Debug : afficher dans la console le nombre de posts chargés
+    console.log(`📦 ${currentUserProfile.posts.length} posts chargés pour l'utilisateur ${userId}`);
+  } catch (e) {
+    console.error('Erreur loadUserPosts:', e);
+    currentUserProfile.posts = [];
+  }
+}
+2. Synchroniser le chargement du profil avec la mise à jour de l’UI
+Modifiez la fonction loadCurrentProfile pour qu’elle appelle elle-même updateProfileUI() une fois toutes les données récupérées. Ainsi, plus besoin de le faire manuellement à chaque appel.
+
+javascript
+async function loadCurrentProfile() {
+  try {
+    const formData = new FormData();
+    formData.append('action', 'getCurrentProfile');
+
+    const response = await fetch(window.location.href, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      console.error('Erreur HTTP:', response.status);
+      return false;
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      console.error('Erreur serveur:', result.message);
+      return false;
+    }
+
+    const profile = result.profile;
+
+    // Réinitialiser les données
+    currentUserProfile.profilePhoto = null;
+    currentUserProfile.coverPhoto = null;
+    currentUserProfile.posts = [];
+
+    // Remplir le profil
+    currentUserProfile.name = profile.user_name || "User";
+    currentUserProfile.username = '@' + (profile.user_username || "user");
+    currentUserProfile.bio = profile.user_bio || "Pas de bio";
+    currentUserProfile.location = profile.user_location || "Localisation inconnue";
+    currentUserProfile.memberSince = profile.member_since || "Janvier 2024";
+    currentUserProfile.userid = profile.user_id;
+    currentUserProfile.avatarInitials = profile.user_name
+      ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      : 'U';
+
+    if (profile.user_photo_url) {
+      currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
+    }
+    if (profile.user_cover_photo_url) {
+      currentUserProfile.coverPhoto = getPhotoURL(profile.user_cover_photo_url);
+    }
+
+    currentUserProfile.postsCount = profile.posts_count || 0;
+    currentUserProfile.followers_count = profile.followers_count || 0;
+    currentUserProfile.following_count = profile.following_count || 0;
+
+    // Charger les publications
+    await loadUserPosts(profile.user_id);
+
+    // Mettre à jour l’interface immédiatement
+    updateProfileUI();
+
+    return true;
+  } catch (e) {
+    console.error('Erreur loadCurrentProfile:', e);
+    return false;
+  }
+}
+3. Supprimer les appels redondants à updateProfileUI
+Dans le code existant, recherchez les endroits où updateProfileUI() est appelé après loadCurrentProfile() et supprimez-les pour éviter deux rafraîchissements successifs.
+
+Par exemple, dans switchView :
+
+javascript
+if (viewId === 'profile') {
+  loadCurrentProfile(); // plus besoin de .then(updateProfileUI)
+}
+Et après la connexion :
+
+javascript
+await loadCurrentProfile();
+// updateProfileUI();  // à supprimer
+4. Vérifier que la grille des posts est bien remplie
+La fonction updateProfileUI() contient déjà la logique pour vider et remplir #profilePostsGrid. Avec les modifications ci-dessus, elle sera exécutée après le chargement complet des données.
+
+Si vous souhaitez forcer l’affichage des statistiques (likes / commentaires) même quand l’image est manquante, assurez-vous que le bloc .grid-post-stats est bien présent. Le code actuel le crée systématiquement.
+
