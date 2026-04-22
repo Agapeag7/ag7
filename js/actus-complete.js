@@ -282,12 +282,18 @@ function createPostElement(post) {
       commentLine.className = 'comment-preview-item';
       commentLine.style.fontSize = '13px';
       commentLine.style.marginTop = '8px';
-
       commentLine.style.color = 'var(--text-secondary)';
       const authorDisplay = comment.isAnonymous 
         ? '<i class="fas fa-mask" style="margin-right: 4px;"></i><strong>Anonyme</strong>'
         : `<strong>${escapeHtml(comment.author)}</strong>`;
-      commentLine.innerHTML = `${authorDisplay} <span style="margin-left: 6px;">${escapeHtml(comment.text)}</span>`;
+      
+      // Tronquer le commentaire à 50 caractères
+      let commentText = comment.text;
+      if (commentText.length > 50) {
+        commentText = commentText.substring(0, 50) + '…';
+      }
+      
+      commentLine.innerHTML = `${authorDisplay} <span style="margin-left: 6px;">${escapeHtml(commentText)}</span>`;
       commentsPreview.appendChild(commentLine);
     });
     
