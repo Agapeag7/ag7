@@ -1242,7 +1242,7 @@ function displayCurrentStory() {
   // Construire l'URL de l'image
   let imageUrl = story.story_image_url;
   if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
-    imageUrl = 'pub/' + imageUrl;
+    imageUrl = 'story/' + imageUrl;
   } else if (!imageUrl) {
     imageUrl = 'https://picsum.photos/id/50/600/800'; // fallback
   }
@@ -1250,17 +1250,30 @@ function displayCurrentStory() {
   storyImage.src = imageUrl;
   storyCaption.textContent = story.story_text || '';
   
-  // Afficher le compteur de vues (si c'est la story de l'utilisateur connecté ? 
-  // On pourrait vérifier story.story_user_id === currentUserId, mais on peut afficher pour toutes)
-  const viewersCountEl = document.getElementById('storyViewersCount');
-  if (viewersCountEl) {
-    const viewCount = story.viewers_count || 0;
-    viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${viewCount}`;
-    viewersCountEl.style.display = 'flex';
+  // Affichage du temps restant
+  const expiresAt = new Date(story.story_expires_at);
+  const now = new Date();
+  const diffHours = Math.max(0, (expiresAt - now) / (1000 * 60 * 60));
+  const remainingHours = Math.floor(diffHours);
+  const remainingMinutes = Math.floor((diffHours % 1) * 60);
+  let remainingText = '';
+  if (remainingHours > 0) {
+    remainingText = `${remainingHours}h ${remainingMinutes}m`;
+  } else {
+    remainingText = `${remainingMinutes}m`;
   }
   
-  // Navigation dans le carousel (flèches gauche/droite)
-  // Ajouter des indicateurs de progression (optionnel)
+  // Afficher ou masquer le compteur de vues selon le propriétaire
+  const viewersCountEl = document.getElementById('storyViewersCount');
+  if (viewersCountEl) {
+    if (story.is_owner && story.viewers_count !== null) {
+      viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${story.viewers_count} · expire dans ${remainingText}`;
+      viewersCountEl.style.display = 'flex';
+    } else {
+      viewersCountEl.innerHTML = `<i class="fas fa-hourglass-half"></i> expire dans ${remainingText}`;
+      viewersCountEl.style.display = 'flex';
+    }
+  }
 }
 
 // Navigation entre les stories avec les touches du clavier

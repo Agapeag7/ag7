@@ -176,6 +176,43 @@ class Utils {
         error_log("move_uploaded_file échoué pour image de post: tmp=" . $tmpName . ", dest=" . $uploadPath);
         return false;
     }
+
+    public static function uploadStoryImage($tmpName, $fileName) {
+        $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        
+        if (!in_array($ext, $allowedExt)) {
+            error_log("Upload story échoué: Extension .{$ext} non autorisée");
+            return false;
+        }
+        
+        $uploadDir = __DIR__ . '/story';
+        if (!is_dir($uploadDir)) {
+            if (!@mkdir($uploadDir, 0777, true)) {
+                error_log("Impossible de créer dossier story");
+                return false;
+            }
+        }
+        
+        if (!is_writable($uploadDir)) {
+            chmod($uploadDir, 0777);
+            if (!is_writable($uploadDir)) {
+                error_log("Dossier story n'est pas writable");
+                return false;
+            }
+        }
+        
+        $imageName = 'story_' . time() . '_' . uniqid() . '.' . $ext;
+        $uploadPath = $uploadDir . '/' . $imageName;
+        
+        if (@move_uploaded_file($tmpName, $uploadPath)) {
+            error_log("Story uploadée: $imageName");
+            return $imageName;
+        }
+        
+        error_log("move_uploaded_file échoué pour story: tmp=" . $tmpName . ", dest=" . $uploadPath);
+        return false;
+    }
 }
 
 abstract class BaseModel {
@@ -1574,8 +1611,7 @@ class Router {
         $imageUrl = null;
 
         if ($hasImage) {
-            // Utiliser la fonction d'upload existante (ou en créer une dédiée)
-            $imageUrl = Utils::uploadPostImage($_FILES['story_image']['tmp_name'], $_FILES['story_image']['name']);
+            $imageUrl = Utils::uploadStoryImage($_FILES['story_image']['tmp_name'], $_FILES['story_image']['name']);
             if (!$imageUrl) {
                 Utils::jsonResponse(['success' => false, 'message' => 'Échec de l\'upload'], 500);
             }
@@ -1601,7 +1637,13 @@ class Router {
 
         $result = [];
         foreach ($stories as $story) {
-            $story['viewers_count'] = $viewModel->getViewCount($story['story_id']);
+            $isOwner = ($currentUserId && $story['story_user_id'] == $currentUserId);
+            if ($isOwner) {
+                $story['viewers_count'] = $viewModel->getViewCount($story['story_id']);
+            } else {
+                $story['viewers_count'] = null; // ou non envoyé, mais pour simplifier on met null
+            }
+            $story['is_owner'] = $isOwner;
             if ($currentUserId) {
                 $story['viewed'] = $viewModel->hasViewed($story['story_id'], $currentUserId);
             }
@@ -1624,7 +1666,13 @@ class Router {
 
         $result = [];
         foreach ($stories as $story) {
-            $story['viewers_count'] = $viewModel->getViewCount($story['story_id']);
+            $isOwner = ($currentUserId && $story['story_user_id'] == $currentUserId);
+            if ($isOwner) {
+                $story['viewers_count'] = $viewModel->getViewCount($story['story_id']);
+            } else {
+                $story['viewers_count'] = null;
+            }
+            $story['is_owner'] = $isOwner;
             if ($currentUserId) {
                 $story['viewed'] = $viewModel->hasViewed($story['story_id'], $currentUserId);
             }
