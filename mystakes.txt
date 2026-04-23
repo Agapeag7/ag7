@@ -1,137 +1,163 @@
-Le problème vient du fait que les publications du profil ne sont pas chargées correctement depuis la base de données. Plusieurs causes possibles : l'URL de l’API getUserPosts n’est pas absolue, l’ordre d’exécution entre le chargement des données et le rafraîchissement de l’interface peut être incorrect, ou les données reçues ne sont pas mappées correctement.
+Voici l’analyse détaillée et les modifications à apporter pour une intégration de la logique des story :
 
-Voici les corrections à apporter dans scripts.js.
+🔍 État des lieux
+Composant	Statut actuel
+Base de données	Table stories et vues_stories définies, prêtes à l’emploi.
+Modèles PHP	StoryModel et StoryViewsModel implémentés avec toutes les méthodes utiles.
+Routeur PHP	Seules deux actions sont présentes : actionAddStoryView et actionGetStoryViewers. Manquent : création, récupération du flux, suppression.
+Frontend – UI	Modales et interface de création de stories existent dans index.php.
+Frontend – Logique	scripts.js gère les stories avec un tableau userStories et otherStories en mémoire, sans persistance.
 
-1. Rendre l’appel getUserPosts plus robuste
-Remplacez la fonction loadUserPosts par celle-ci :
+🧩 Fonctionnalités à ajouter côté backend (PHP)
+Dans ag.class.php, il faut enrichir la classe Router avec les méthodes suivantes :
 
+1. actionCreateStory()
+Vérifier l’authentification.
+
+Récupérer story_text (optionnel) et story_type (déduit de la présence d’une image).
+
+Gérer l’upload d’une image (réutiliser Utils::uploadPostImage ou créer une méthode dédiée dans Utils).
+
+Insérer dans la table stories avec une date d’expiration (+24h par défaut).
+
+Retourner l’ID de la story créée.
+
+2. actionGetActiveStories()
+Récupérer toutes les stories non expirées (getActiveStories() du modèle).
+
+Regrouper par utilisateur pour l’affichage du feed (optionnel, mais pratique).
+
+Ajouter les informations sur le nombre de vues et si l’utilisateur courant a déjà vu la story (via StoryViewsModel).
+
+3. actionGetUserStories($user_id)
+Récupérer les stories actives d’un utilisateur spécifique (pour son propre profil ou en cas de clic).
+
+4. actionViewStory()
+Enregistrer une vue pour une story (StoryViewsModel::addView()). Appelée automatiquement à l’ouverture de la story.
+
+5. actionDeleteStory() (optionnel)
+Permettre à l’utilisateur de supprimer sa propre story avant expiration.
+
+⚠️ Note de sécurité : toutes ces actions doivent vérifier $_SESSION['user_id'].
+
+📦 Modifications à apporter au frontend (JavaScript)
+Dans scripts.js (ou dans un nouveau fichier dédié stories.js), il faut remplacer le code simulé par des appels à ActusAPI (ou un nouveau namespace StoriesAPI).
+
+Exemple d’API à créer dans api-stories.js :
 javascript
-async function loadUserPosts(userId) {
-  try {
-    // Construire l'URL absolue pour éviter les problèmes de chemin
-    const url = new URL(window.location.href);
-    url.searchParams.set('action', 'getUserPosts');
-    url.searchParams.set('user_id', userId);
-    url.searchParams.set('limit', 50);
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const result = await response.json();
-
-    if (!result.success) {
-      console.error('Erreur getUserPosts:', result.message);
-      currentUserProfile.posts = [];
-      return;
-    }
-
-    // Mapper les données reçues
-    currentUserProfile.posts = (result.posts || []).map(post => ({
-      id: post.id,
-      author: post.author,
-      username: post.username,
-      avatar: post.avatar,
-      content: post.content,
-      image: post.images && post.images.length > 0 ? post.images[0] : null,
-      images: post.images || [],
-      likes: post.likes || 0,
-      comments: post.comments || 0,
-      userHasLiked: post.userHasLiked || false,
-      timestamp: post.timestamp,
-      user_id: post.user_id,
-      visibility: post.visibility
-    }));
-
-    // Debug : afficher dans la console le nombre de posts chargés
-    console.log(`📦 ${currentUserProfile.posts.length} posts chargés pour l'utilisateur ${userId}`);
-  } catch (e) {
-    console.error('Erreur loadUserPosts:', e);
-    currentUserProfile.posts = [];
-  }
-}
-2. Synchroniser le chargement du profil avec la mise à jour de l’UI
-Modifiez la fonction loadCurrentProfile pour qu’elle appelle elle-même updateProfileUI() une fois toutes les données récupérées. Ainsi, plus besoin de le faire manuellement à chaque appel.
-
-javascript
-async function loadCurrentProfile() {
-  try {
+const StoriesAPI = {
+  async createStory(text, imageFile) {
     const formData = new FormData();
-    formData.append('action', 'getCurrentProfile');
+    formData.append('action', 'createStory');
+    if (text) formData.append('story_text', text);
+    if (imageFile) formData.append('story_image', imageFile);
+    // ... fetch POST
+  },
+  async getActiveStories() { /* GET action=getActiveStories */ },
+  async viewStory(storyId) { /* POST action=viewStory */ },
+  async getUserStories(userId) { /* GET action=getUserStories */ }
+};
+Adaptation du code simulé :
+Remplacer userStories.push(...) par un appel à StoriesAPI.createStory() puis recharger le flux.
 
-    const response = await fetch(window.location.href, {
-      method: 'POST',
-      body: formData
+Modifier renderStories() pour qu’elle appelle getActiveStories() et construise la liste des stories depuis les données du serveur.
+
+Au clic sur une story, appeler viewStory(storyId) puis afficher le modal.
+
+📝 Implémentation concrète (extraits de code)
+Backend – Ajouts dans Router de ag.class.php
+php
+private function actionCreateStory() {
+    if (!isset($_SESSION['user_id'])) {
+        Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+    }
+
+    $text = $_POST['story_text'] ?? '';
+    $hasImage = isset($_FILES['story_image']) && $_FILES['story_image']['error'] === UPLOAD_ERR_OK;
+
+    if (empty($text) && !$hasImage) {
+        Utils::jsonResponse(['success' => false, 'message' => 'Aucun contenu'], 400);
+    }
+
+    $type = $hasImage ? 'text-image' : 'text';
+    $imageUrl = null;
+
+    if ($hasImage) {
+        // Réutiliser la fonction d'upload des posts ou créer une version pour stories
+        $imageUrl = Utils::uploadPostImage($_FILES['story_image']['tmp_name'], $_FILES['story_image']['name']);
+        if (!$imageUrl) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Échec de l\'upload'], 500);
+        }
+    }
+
+    $storyModel = new StoryModel($this->db);
+    $storyId = $storyModel->create([
+        'story_user_id' => $_SESSION['user_id'],
+        'story_type' => $type,
+        'story_text' => $text,
+        'story_image_url' => $imageUrl,
+        'story_duration' => 24
+    ]);
+
+    Utils::jsonResponse(['success' => true, 'story_id' => $storyId]);
+}
+
+private function actionGetActiveStories() {
+    $storyModel = new StoryModel($this->db);
+    $stories = $storyModel->getActiveStories(100);
+    $viewModel = new StoryViewsModel($this->db);
+    $currentUserId = $_SESSION['user_id'] ?? null;
+
+    $result = [];
+    foreach ($stories as $story) {
+        // Ajouter le compte de vues réel
+        $story['viewers_count'] = $viewModel->getViewCount($story['story_id']);
+        if ($currentUserId) {
+            $story['viewed'] = $viewModel->hasViewed($story['story_id'], $currentUserId);
+        }
+        $result[] = $story;
+    }
+
+    Utils::jsonResponse(['success' => true, 'stories' => $result]);
+}
+Frontend – Adaptation de renderStories()
+javascript
+async function renderStories() {
+    const container = document.getElementById('storiesContainer');
+    container.innerHTML = ''; // Bouton "Votre story" reste géré manuellement
+
+    const result = await StoriesAPI.getActiveStories();
+    if (!result.success) return;
+
+    // Regrouper par utilisateur
+    const storiesByUser = {};
+    result.stories.forEach(story => {
+        if (!storiesByUser[story.story_user_id]) storiesByUser[story.story_user_id] = [];
+        storiesByUser[story.story_user_id].push(story);
     });
 
-    if (!response.ok) {
-      console.error('Erreur HTTP:', response.status);
-      return false;
+    // Créer un élément par utilisateur avec son avatar
+    for (const userId in storiesByUser) {
+        const userStories = storiesByUser[userId];
+        const firstStory = userStories[0];
+        const storyEl = document.createElement('div');
+        storyEl.className = 'story-item';
+        storyEl.innerHTML = `
+            <div class="story-avatar" style="background-image: url('${firstStory.user_photo_url ? 'imgApp/'+firstStory.user_photo_url : ''}');"></div>
+            <span class="story-name">${firstStory.user_name}</span>
+        `;
+        storyEl.addEventListener('click', () => openStoryCarousel(userStories));
+        container.appendChild(storyEl);
     }
-
-    const result = await response.json();
-    if (!result.success) {
-      console.error('Erreur serveur:', result.message);
-      return false;
-    }
-
-    const profile = result.profile;
-
-    // Réinitialiser les données
-    currentUserProfile.profilePhoto = null;
-    currentUserProfile.coverPhoto = null;
-    currentUserProfile.posts = [];
-
-    // Remplir le profil
-    currentUserProfile.name = profile.user_name || "User";
-    currentUserProfile.username = '@' + (profile.user_username || "user");
-    currentUserProfile.bio = profile.user_bio || "Pas de bio";
-    currentUserProfile.location = profile.user_location || "Localisation inconnue";
-    currentUserProfile.memberSince = profile.member_since || "Janvier 2024";
-    currentUserProfile.userid = profile.user_id;
-    currentUserProfile.avatarInitials = profile.user_name
-      ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-      : 'U';
-
-    if (profile.user_photo_url) {
-      currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
-    }
-    if (profile.user_cover_photo_url) {
-      currentUserProfile.coverPhoto = getPhotoURL(profile.user_cover_photo_url);
-    }
-
-    currentUserProfile.postsCount = profile.posts_count || 0;
-    currentUserProfile.followers_count = profile.followers_count || 0;
-    currentUserProfile.following_count = profile.following_count || 0;
-
-    // Charger les publications
-    await loadUserPosts(profile.user_id);
-
-    // Mettre à jour l’interface immédiatement
-    updateProfileUI();
-
-    return true;
-  } catch (e) {
-    console.error('Erreur loadCurrentProfile:', e);
-    return false;
-  }
 }
-3. Supprimer les appels redondants à updateProfileUI
-Dans le code existant, recherchez les endroits où updateProfileUI() est appelé après loadCurrentProfile() et supprimez-les pour éviter deux rafraîchissements successifs.
 
-Par exemple, dans switchView :
+✅ Résultat final
+Après ces modifications :
 
-javascript
-if (viewId === 'profile') {
-  loadCurrentProfile(); // plus besoin de .then(updateProfileUI)
-}
-Et après la connexion :
+Les stories sont persistées en base de données.
 
-javascript
-await loadCurrentProfile();
-// updateProfileUI();  // à supprimer
-4. Vérifier que la grille des posts est bien remplie
-La fonction updateProfileUI() contient déjà la logique pour vider et remplir #profilePostsGrid. Avec les modifications ci-dessus, elle sera exécutée après le chargement complet des données.
+Elles expirent automatiquement après 24h.
 
-Si vous souhaitez forcer l’affichage des statistiques (likes / commentaires) même quand l’image est manquante, assurez-vous que le bloc .grid-post-stats est bien présent. Le code actuel le crée systématiquement.
+Les vues sont comptabilisées et distinctes par utilisateur.
 
+Le frontend affiche les stories réelles des utilisateurs suivis ou de tout le monde (selon la logique choisie).
