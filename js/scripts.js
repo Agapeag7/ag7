@@ -1367,13 +1367,6 @@ const feedContainer = document.getElementById('feedContainer');
 const publishBtn = document.getElementById('publishPostBtn');
 const postContentInput = document.getElementById('postContent');
 
-// Variables pour les images de post - DISABLED, utiliser actus-complete.js
-const addImageBtn = document.getElementById('addImageBtn');
-const postImageInput = document.getElementById('postImageInput');
-const postImagesPreview = document.getElementById('postImagesPreview');
-const clearImagesBtn = document.getElementById('clearImagesBtn');
-let postImages = [];
-
 // Variables pour le carousel - KEEP THESE (utilisées par openImageViewer d'actus-complete.js)
 const imageCarouselModal = document.getElementById('imageCarouselModal');
 const carouselImage = document.getElementById('carouselImage');
@@ -1388,44 +1381,6 @@ let currentImageIndex = 0;
 // Track carousel state per post
 let postImageIndices = {};
 let lastSlideDirection = 'next';  // 'next' or 'prev' to track slide direction
-
-
-
-function renderPostImagesPreview() {
-  const previewGrid = postImagesPreview.querySelector('.preview-grid');
-  previewGrid.innerHTML = '';
-  
-  if (postImages.length === 0) {
-    postImagesPreview.style.display = 'none';
-  } else {
-    postImagesPreview.style.display = 'block';
-    postImages.forEach((img, index) => {
-      const previewItem = document.createElement('div');
-      previewItem.className = 'preview-image';
-      previewItem.innerHTML = `
-        <img src="${img.src}" alt="preview" loading="lazy">
-        <button type="button" class="remove-image-btn" data-index="${index}">×</button>
-      `;
-      previewItem.querySelector('.remove-image-btn').addEventListener('click', () => {
-        postImages.splice(index, 1);
-        renderPostImagesPreview();
-      });
-      previewGrid.appendChild(previewItem);
-    });
-  }
-}
-
-// Publier un nouveau post
-// ===== DÉSACTIVÉ: Le handler pour le bouton Publier est maintenant dans actus-complete.js =====
-// Le handler dans actus-complete.js utilise ActusAPI pour la création de publication
-// Ce code ancien est conservé comme référence mais ne doit pas s'exécuter
-/*
-if (publishBtn) {
-  publishBtn.addEventListener('click', () => {
-    // OLD CODE - DISABLED - USE actus-complete.js INSTEAD
-  });
-}
-*/
 
 // ========== GESTION DU CAROUSEL D'IMAGES ==========
 

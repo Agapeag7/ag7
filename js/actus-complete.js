@@ -15,6 +15,8 @@ let actusState = {
 // postImages et currentUserId sont déclarés globalement
 let currentUserId = null;
 
+let postImages = [];
+
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('app-section').classList.contains('hidden')) {
@@ -307,42 +309,33 @@ function createPostElement(post) {
   // Gestion carousel images
   if (post.images && post.images.length > 1) {
     let currentImageIndex = 0;
-    
-    const updateCarousel = () => {
-      const img = postDiv.querySelector('.post-image');
-      const counter = postDiv.querySelector('.feed-image-counter');
-      const prevBtn = postDiv.querySelector('.feed-image-prev');
-      const nextBtn = postDiv.querySelector('.feed-image-next');
-      
-      img.src = post.images[currentImageIndex];
-      counter.textContent = `${currentImageIndex + 1} / ${post.images.length}`;
-      
-      prevBtn.style.opacity = currentImageIndex === 0 ? '0.3' : '1';
-      prevBtn.style.cursor = currentImageIndex === 0 ? 'default' : 'pointer';
-      nextBtn.style.opacity = currentImageIndex === post.images.length - 1 ? '0.3' : '1';
-      nextBtn.style.cursor = currentImageIndex === post.images.length - 1 ? 'default' : 'pointer';
-    };
-    
+    const imgEl = postDiv.querySelector('.post-image');
     const prevBtn = postDiv.querySelector('.feed-image-prev');
     const nextBtn = postDiv.querySelector('.feed-image-next');
-    
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (currentImageIndex > 0) {
-          currentImageIndex--;
-          updateCarousel();
-        }
-      });
-    }
-    
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        if (currentImageIndex < post.images.length - 1) {
-          currentImageIndex++;
-          updateCarousel();
-        }
-      });
-    }
+    const counter = postDiv.querySelector('.feed-image-counter');
+
+    const updateCarousel = () => {
+      imgEl.src = post.images[currentImageIndex];
+      counter.textContent = `${currentImageIndex + 1} / ${post.images.length}`;
+      prevBtn.style.opacity = currentImageIndex === 0 ? '0.3' : '1';
+      nextBtn.style.opacity = currentImageIndex === post.images.length - 1 ? '0.3' : '1';
+    };
+
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentImageIndex > 0) {
+        currentImageIndex--;
+        updateCarousel();
+      }
+    });
+
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentImageIndex < post.images.length - 1) {
+        currentImageIndex++;
+        updateCarousel();
+      }
+    });
   }
   
   return postDiv;
@@ -668,48 +661,45 @@ function setupDeleteModal() {
 // ===== PUBLIER UN POST =====
 async function handlePublishPost(e) {
   const content = document.getElementById('postContent').value.trim();
-  
   if (!content && postImages.length === 0) {
     showNotification('warning', 'Champs vides', 'Écrivez du texte ou ajoutez une image');
     return;
   }
-  
+
   const btn = e.currentTarget;
   btn.disabled = true;
-  btn.textContent = 'Publication en cours...';
-  
-  // Collecteur les fichiers images
-  const imageFiles = postImages
-    .filter(img => img.file)
-    .map(img => img.file);
-  
-  
+  btn.textContent = 'Publication...';
+
+  const imageFiles = postImages.filter(img => img.file).map(img => img.file);
+  console.log('Envoi de', imageFiles.length, 'image(s)');
+
   const result = await ActusAPI.createPost(content, 'public', imageFiles);
-  
+
   btn.disabled = false;
   btn.textContent = 'Publier';
-  
+
   if (result.success) {
     showNotification('success', 'Publié', result.message);
     document.getElementById('postContent').value = '';
     postImages = [];
     renderImagePreview();
-    
-    
-    // SIMPLE: Recharger le feed complètement pour éviter les duplicatas
-    await loadActusFeed();
-    
+    await loadActusFeed(); // recharge le feed
   } else {
     showNotification('error', 'Erreur', result.message);
   }
 }
 
-
 // ===== SÉLECTIONNER IMAGES =====
 function handleImageSelect(e) {
   const files = Array.from(e.target.files);
-  
+  if (!files.length) return;
+
   files.forEach(file => {
+    // Vérifier que c'est bien une image
+    if (!file.type.startsWith('image/')) {
+      showNotification('warning', 'Format non supporté', 'Seules les images sont autorisées');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (event) => {
       postImages.push({
@@ -720,39 +710,35 @@ function handleImageSelect(e) {
     };
     reader.readAsDataURL(file);
   });
-  
-  e.target.value = '';
+  e.target.value = ''; // permit re-upload
 }
 
 // ===== AFFICHER APERÇU IMAGES =====
 function renderImagePreview() {
   const preview = document.getElementById('postImagesPreview');
-  const grid = preview.querySelector('.preview-grid');
-  
+  const grid = preview?.querySelector('.preview-grid');
+  if (!grid) return;
+
   if (postImages.length === 0) {
     preview.style.display = 'none';
     return;
   }
-  
+
   preview.style.display = 'block';
   grid.innerHTML = '';
-  
+
   postImages.forEach((img, idx) => {
     const div = document.createElement('div');
     div.style.cssText = 'position: relative; border-radius: 8px; overflow: hidden;';
     div.innerHTML = `
       <img src="${img.src}" style="width: 100%; height: 150px; object-fit: cover;">
-      <button data-index="${idx}" style="position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.7); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-        ✕
-      </button>
+      <button data-index="${idx}" class="remove-img-btn" style="position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.7); color: white; border: none; cursor: pointer;">✕</button>
     `;
-    
-    const removeBtn = div.querySelector('button');
-    removeBtn.addEventListener('click', () => {
+    div.querySelector('.remove-img-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
       postImages.splice(idx, 1);
       renderImagePreview();
     });
-    
     grid.appendChild(div);
   });
 }
