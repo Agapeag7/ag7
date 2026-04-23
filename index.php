@@ -601,7 +601,12 @@ if (isset($_SESSION['user_id'])) {
 <script src="js/api-actus.js"></script>
 <!-- Intégration Actus Complète -->
 <script src="js/actus-complete.js"></script>
+
+<!-- API Stories (NOUVEAU) -->
+<script src="js/api-stories.js"></script>
+
 <script src="js/scripts.js"></script>
+
 <!-- Petite police système pour un rendu optimal -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </body>

@@ -13,6 +13,18 @@
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => 'localhost',
+        'secure' => true,   // nécessaire pour HTTPS
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+}
+
 class Database {
     private $pdo;
     
@@ -1544,6 +1556,102 @@ class Router {
         ];
         
         Utils::jsonResponse(['success' => true, 'stats' => $stats]);
+    }
+
+    private function actionCreateStory() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $text = $_POST['story_text'] ?? '';
+        $hasImage = isset($_FILES['story_image']) && $_FILES['story_image']['error'] === UPLOAD_ERR_OK;
+
+        if (empty($text) && !$hasImage) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Aucun contenu'], 400);
+        }
+
+        $type = $hasImage ? 'text-image' : 'text';
+        $imageUrl = null;
+
+        if ($hasImage) {
+            // Utiliser la fonction d'upload existante (ou en créer une dédiée)
+            $imageUrl = Utils::uploadPostImage($_FILES['story_image']['tmp_name'], $_FILES['story_image']['name']);
+            if (!$imageUrl) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Échec de l\'upload'], 500);
+            }
+        }
+
+        $storyModel = new StoryModel($this->db);
+        $storyId = $storyModel->create([
+            'story_user_id' => $_SESSION['user_id'],
+            'story_type' => $type,
+            'story_text' => $text,
+            'story_image_url' => $imageUrl,
+            'story_duration' => 24
+        ]);
+
+        Utils::jsonResponse(['success' => true, 'story_id' => $storyId, 'message' => 'Story créée']);
+    }
+
+    private function actionGetActiveStories() {
+        $storyModel = new StoryModel($this->db);
+        $stories = $storyModel->getActiveStories(100);
+        $viewModel = new StoryViewsModel($this->db);
+        $currentUserId = $_SESSION['user_id'] ?? null;
+
+        $result = [];
+        foreach ($stories as $story) {
+            $story['viewers_count'] = $viewModel->getViewCount($story['story_id']);
+            if ($currentUserId) {
+                $story['viewed'] = $viewModel->hasViewed($story['story_id'], $currentUserId);
+            }
+            $result[] = $story;
+        }
+
+        Utils::jsonResponse(['success' => true, 'stories' => $result]);
+    }
+
+    private function actionGetUserStories() {
+        $userId = $_GET['user_id'] ?? null;
+        if (!$userId) {
+            Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
+        }
+
+        $storyModel = new StoryModel($this->db);
+        $stories = $storyModel->getByUserId($userId);
+        $viewModel = new StoryViewsModel($this->db);
+        $currentUserId = $_SESSION['user_id'] ?? null;
+
+        $result = [];
+        foreach ($stories as $story) {
+            $story['viewers_count'] = $viewModel->getViewCount($story['story_id']);
+            if ($currentUserId) {
+                $story['viewed'] = $viewModel->hasViewed($story['story_id'], $currentUserId);
+            }
+            $result[] = $story;
+        }
+
+        Utils::jsonResponse(['success' => true, 'stories' => $result]);
+    }
+
+    private function actionDeleteStory() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $storyId = $_POST['story_id'] ?? null;
+        if (!$storyId) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Story ID manquant'], 400);
+        }
+
+        $storyModel = new StoryModel($this->db);
+        $story = $storyModel->getById($storyId);
+        if (!$story || $story['story_user_id'] != $_SESSION['user_id']) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Action non autorisée'], 403);
+        }
+
+        $storyModel->delete($storyId);
+        Utils::jsonResponse(['success' => true, 'message' => 'Story supprimée']);
     }
     
     private function actionFollowUser() {

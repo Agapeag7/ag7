@@ -17,23 +17,14 @@ let currentUserId = null;
 
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', async () => {
-  
-  // Récupérer l'ID utilisateur et ATTENDRE
-  await fetchCurrentUser();
-  
-  // Ensuite configurer l'UI
-  setupActusNavigation();
-  
-  setupActusUI();
-  
-  // FORCE LOAD THE FEED
-  await loadActusFeed();
-  
-  // Double-check modal initialization
-  setTimeout(() => {
-    setupDeleteModal();
-  }, 100);
-  
+    if (document.getElementById('app-section').classList.contains('hidden')) {
+        return; // on est sur la page de login, rien à faire
+    }
+    await fetchCurrentUser();
+    setupActusNavigation();
+    setupActusUI();
+    await loadActusFeed();
+    setTimeout(() => { setupDeleteModal(); }, 100);
 });
 
 // ===== CONFIGURATION NAVIGATION ACTUS =====
