@@ -5,6 +5,8 @@ imgApp/*
 pub/*
 !pub/.gitkeep
 
+story/*
+
 # Dépendances
 node_modules/
 vendor/
