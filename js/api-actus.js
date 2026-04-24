@@ -28,8 +28,9 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',   // ← indispensable
         body: formData
-      });
+    });
 
       const data = await response.json();
       
@@ -57,7 +58,8 @@ const ActusAPI = {
       url.searchParams.set('offset', offset);
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+          method: 'GET',
+          credentials: 'same-origin'
       });
 
       const data = await response.json();
@@ -85,6 +87,7 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 
@@ -112,7 +115,8 @@ const ActusAPI = {
       url.searchParams.set('post_id', post_id);
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+          method: 'GET',
+          credentials: 'same-origin'
       });
 
       const data = await response.json();
@@ -142,6 +146,7 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 
@@ -175,6 +180,7 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 
@@ -221,6 +227,7 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 
@@ -251,7 +258,8 @@ const ActusAPI = {
       
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+          method: 'GET',
+          credentials: 'same-origin'
       });
 
       const data = await response.json();
@@ -279,6 +287,7 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 

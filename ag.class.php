@@ -11,17 +11,8 @@
  * Usage: include 'ag.class.php' in endpoint scripts and call AG7\Router::handle()
  */
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-
+// Session is already started by index.php - verify it's active
 if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'domain' => 'localhost',
-        'secure' => true,   // nécessaire pour HTTPS
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
     session_start();
 }
 
@@ -62,6 +53,7 @@ class Utils {
     public static function jsonResponse($data, $code = 200) {
         http_response_code($code);
         header('Content-Type: application/json; charset=utf-8');
+        session_write_close(); // Sauvegarder la session avant exit
         echo json_encode($data, JSON_UNESCAPED_UNICODE);
         exit;
     }

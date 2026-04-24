@@ -199,6 +199,7 @@ let currentUserProfile = {
       // Envoyer au backend
       fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       })
       .then(response => {
@@ -1493,6 +1494,7 @@ async function loadCurrentProfile() {
     
     const response = await fetch(window.location.href, {
       method: 'POST',
+      credentials: 'same-origin',
       body: formData
     });
     

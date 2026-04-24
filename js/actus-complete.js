@@ -105,7 +105,8 @@ function setupActusUI() {
 async function fetchCurrentUser() {
   try {
     const response = await fetch(`${window.location.href}?action=getCurrentProfile`, {
-      method: 'GET'
+        method: 'GET',
+        credentials: 'same-origin'    // à ajouter
     });
     
     // Vérifier le statut de la réponse

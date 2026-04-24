@@ -24,6 +24,7 @@ const StoriesAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 
@@ -49,7 +50,8 @@ const StoriesAPI = {
       url.searchParams.set('action', 'getActiveStories');
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+        method: 'GET',
+        credentials: 'same-origin'
       });
 
       const data = await response.json();
@@ -77,6 +79,7 @@ const StoriesAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 
@@ -104,7 +107,8 @@ const StoriesAPI = {
       url.searchParams.set('user_id', userId);
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+        method: 'GET',
+        credentials: 'same-origin'
       });
 
       const data = await response.json();
@@ -132,6 +136,7 @@ const StoriesAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
+        credentials: 'same-origin',
         body: formData
       });
 
