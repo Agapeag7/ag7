@@ -18,16 +18,24 @@ let currentUserId = null;
 let postImages = [];
 
 // ===== INITIALISATION AU CHARGEMENT =====
-document.addEventListener('DOMContentLoaded', async () => {
-    if (document.getElementById('app-section').classList.contains('hidden')) {
-        return; // on est sur la page de login, rien à faire
-    }
-    await fetchCurrentUser();
+async function initActus() {
+    // Toujours attacher les écouteurs, même si l'application est cachée
+    await fetchCurrentUser();      // échoue gracieusement si pas connecté
     setupActusNavigation();
-    setupActusUI();
-    await loadActusFeed();
+    setupActusUI();                // ← indispensable pour le bouton Publier
+
+    // Ne charger le feed que si la section app est visible
+    if (!document.getElementById('app-section').classList.contains('hidden')) {
+        await loadActusFeed();
+    }
     setTimeout(() => { setupDeleteModal(); }, 100);
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initActus);
+} else {
+    initActus();
+}
 
 // ===== CONFIGURATION NAVIGATION ACTUS =====
 function setupActusNavigation() {
@@ -59,10 +67,12 @@ function setupActusNavigation() {
 // ===== CONFIGURATION UI ACTUS =====
 function setupActusUI() {
   // Bouton publication
-  const publishBtn = document.getElementById('publishPostBtn');
-  if (publishBtn) {
-    publishBtn.addEventListener('click', handlePublishPost);
-  }
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'publishPostBtn' || e.target.closest('#publishPostBtn')) {
+      e.preventDefault();
+      handlePublishPost(e);
+    }
+  });
   
   // Bouton ajout image
   const addImageBtn = document.getElementById('addImageBtn');
