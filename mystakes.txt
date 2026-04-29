@@ -1,0 +1,179 @@
+<div id="view-feed" class="view active">
+      <!-- Stories horizontales -->
+      <div class="stories-container" id="storiesContainer"><div class="story-item" id="addStoryBtn"><div class="story-avatar add-story"><i class="fas fa-plus"></i></div><span class="story-name">Votre story</span></div><div class="story-item">
+      <div class="story-avatar" style="background-image: url('imgApp/profile_1776360022_69e11a56769cb.jpg');">
+        
+      </div>
+      <span class="story-name">mhy</span>
+    </div></div>
+
+      <!-- Création d'une publication -->
+      <div class="create-post-card">
+        <div class="create-post-header">
+          <div class="mini-avatar" id="createPostAvatar" style="background-image: url(&quot;imgApp/profile_1776360022_69e11a56769cb.jpg&quot;); background-size: cover; background-position: center center;"></div>
+          <textarea id="postContent" rows="2" placeholder="Quoi de neuf, mhy ?"></textarea>
+        </div>
+        <div id="postImagesPreview" class="post-images-preview" style="display: none;">
+          <div class="preview-grid"></div>
+          <button type="button" id="clearImagesBtn" class="btn-secondary" style="margin-top: 12px;">Supprimer les images</button>
+        </div>
+        <div class="create-post-actions">
+          <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
+          <input type="file" id="postImageInput" accept="image/*" multiple="" style="display: none;">
+          <button id="publishPostBtn" class="btn-primary">Publier</button>
+        </div>
+      </div>
+
+      <!-- Flux des publications -->
+      <div id="feedContainer" class="feed-container"><div class="post-card" data-id="32">
+    <div class="post-header">
+      <div class="post-avatar" style="background-image: url('imgApp/profile_1776410907_69e1e11b54f93.jpg'); background-size: cover; background-position: center;">
+        
+      </div>
+      <div>
+        <div class="post-author">agape</div>
+        <div class="post-time">23m</div>
+      </div>
+      <button class="post-delete-btn" data-post-id="32" onclick="handleDeletePost(event)" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: none;"><i class="fas fa-trash"></i></button>
+    </div><div class="post-content"><p>Cartoon Retouch</p>
+      <div class="post-image-container">
+        <button class="feed-image-prev" data-id="32" style="opacity: 0.3; cursor: default;">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <img src="pub/post_1777454688_69f1ce60ab817.png" class="post-image" data-post-id="32" data-index="0" alt="image post" loading="lazy">
+        
+        
+      </div></div>
+    <div class="post-stats">
+      <span>1 J'aime</span>
+      <span>0 Commentaires</span>
+    </div>
+    <div class="post-actions">
+      <button class="post-action-btn like-btn liked" data-post-id="32" style="color: #ef4444;">
+        <i class="fas fa-heart"></i> Aimé
+      </button>
+      <button class="post-action-btn comment-btn" data-post-id="32">
+        <i class="fas fa-comment"></i> Commenter
+      </button>
+    </div></div><div class="post-card" data-id="27">
+    <div class="post-header">
+      <div class="post-avatar" style="background-image: url('imgApp/profile_1776360022_69e11a56769cb.jpg'); background-size: cover; background-position: center;">
+        
+      </div>
+      <div>
+        <div class="post-author">mhy</div>
+        <div class="post-time">4j</div>
+      </div>
+      <button class="post-delete-btn" data-post-id="27" onclick="handleDeletePost(event)" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; "><i class="fas fa-trash"></i></button>
+    </div><div class="post-content"><p>cool</p>
+      <div class="post-image-container">
+        <button class="feed-image-prev" data-id="27" style="opacity: 0.3; cursor: default;">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <img src="pub/post_1777031021_69eb576d7d17e.jpg" class="post-image" data-post-id="27" data-index="0" alt="image post" loading="lazy">
+        
+        
+      </div></div>
+    <div class="post-stats">
+      <span>2 J'aime</span>
+      <span>0 Commentaires</span>
+    </div>
+    <div class="post-actions">
+      <button class="post-action-btn like-btn liked" data-post-id="27" style="color: #ef4444;">
+        <i class="fas fa-heart"></i> Aimé
+      </button>
+      <button class="post-action-btn comment-btn" data-post-id="27">
+        <i class="fas fa-comment"></i> Commenter
+      </button>
+    </div></div><div class="post-card" data-id="26">
+    <div class="post-header">
+      <div class="post-avatar" style="background-image: url('imgApp/profile_1776360022_69e11a56769cb.jpg'); background-size: cover; background-position: center;">
+        
+      </div>
+      <div>
+        <div class="post-author">mhy</div>
+        <div class="post-time">6j</div>
+      </div>
+      <button class="post-delete-btn" data-post-id="26" onclick="handleDeletePost(event)" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; "><i class="fas fa-trash"></i></button>
+    </div><div class="post-content"><p>Ag7 Made this</p>
+      <div class="post-image-container">
+        <button class="feed-image-prev" data-id="26">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <img src="pub/post_1776853948_69e8a3bc7bd6d.jpg" class="post-image" data-post-id="26" data-index="0" alt="image post" loading="lazy">
+        <button class="feed-image-next" data-id="26"><i class="fas fa-chevron-right"></i></button>
+        <div class="feed-image-counter">1 / 2</div>
+      </div></div>
+    <div class="post-stats">
+      <span>1 J'aime</span>
+      <span>0 Commentaires</span>
+    </div>
+    <div class="post-actions">
+      <button class="post-action-btn like-btn liked" data-post-id="26" style="color: #ef4444;">
+        <i class="fas fa-heart"></i> Aimé
+      </button>
+      <button class="post-action-btn comment-btn" data-post-id="26">
+        <i class="fas fa-comment"></i> Commenter
+      </button>
+    </div></div><div class="post-card" data-id="24">
+    <div class="post-header">
+      <div class="post-avatar" style="background-image: url('imgApp/profile_1776628045_69e5314d4b3a1.jpg'); background-size: cover; background-position: center;">
+        
+      </div>
+      <div>
+        <div class="post-author">anderson</div>
+        <div class="post-time">20/04/2026</div>
+      </div>
+      <button class="post-delete-btn" data-post-id="24" onclick="handleDeletePost(event)" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: none;"><i class="fas fa-trash"></i></button>
+    </div><div class="post-content"><p>en personne</p>
+      <div class="post-image-container">
+        <button class="feed-image-prev" data-id="24">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <img src="pub/post_1776690062_69e6238e1856d.jpeg" class="post-image" data-post-id="24" data-index="0" alt="image post" loading="lazy">
+        <button class="feed-image-next" data-id="24"><i class="fas fa-chevron-right"></i></button>
+        <div class="feed-image-counter">1 / 2</div>
+      </div></div>
+    <div class="post-stats">
+      <span>2 J'aime</span>
+      <span>6 Commentaires</span>
+    </div>
+    <div class="post-actions">
+      <button class="post-action-btn like-btn liked" data-post-id="24" style="color: #ef4444;">
+        <i class="fas fa-heart"></i> Aimé
+      </button>
+      <button class="post-action-btn comment-btn" data-post-id="24">
+        <i class="fas fa-comment"></i> Commenter
+      </button>
+    </div><div class="post-comments-preview" style="margin-top: 8px; margin-left: 15px; margin-right: 15px; padding: 0px 0px 12px; border-top: 1px solid var(--border-light);"><div class="comment-preview-item" style="font-size: 13px; margin-top: 8px; color: var(--text-secondary);"><strong>mhy</strong> <span style="margin-left: 6px;">ah  bon ?</span></div><div class="comment-preview-item" style="font-size: 13px; margin-top: 8px; color: var(--text-secondary);"><strong>mhy</strong> <span style="margin-left: 6px;">Cool</span></div><div class="comment-preview-item" style="font-size: 13px; margin-top: 8px; color: var(--text-secondary);"><strong>agape</strong> <span style="margin-left: 6px;">d'accord</span></div><div class="see-more-comments" style="font-size: 12px; margin-top: 8px; color: var(--emerald-500); cursor: pointer; font-weight: 500;"><i class="fas fa-comments"></i> Voir les 6 commentaires</div></div></div><div class="post-card" data-id="6">
+    <div class="post-header">
+      <div class="post-avatar" style="background-image: url('imgApp/profile_1776360022_69e11a56769cb.jpg'); background-size: cover; background-position: center;">
+        
+      </div>
+      <div>
+        <div class="post-author">mhy</div>
+        <div class="post-time">19/04/2026</div>
+      </div>
+      <button class="post-delete-btn" data-post-id="6" onclick="handleDeletePost(event)" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer; "><i class="fas fa-trash"></i></button>
+    </div><div class="post-content"><p></p>
+      <div class="post-image-container">
+        <button class="feed-image-prev" data-id="6" style="opacity: 1;">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <img src="pub/post_1776592047_69e4a4af3d533.jpg" class="post-image" data-post-id="6" data-index="0" alt="image post" loading="lazy">
+        <button class="feed-image-next" data-id="6" style="opacity: 0.3;"><i class="fas fa-chevron-right"></i></button>
+        <div class="feed-image-counter">2 / 2</div>
+      </div></div>
+    <div class="post-stats">
+      <span>2 J'aime</span>
+      <span>1 Commentaires</span>
+    </div>
+    <div class="post-actions">
+      <button class="post-action-btn like-btn liked" data-post-id="6" style="color: #ef4444;">
+        <i class="fas fa-heart"></i> Aimé
+      </button>
+      <button class="post-action-btn comment-btn" data-post-id="6">
+        <i class="fas fa-comment"></i> Commenter
+      </button>
+    </div><div class="post-comments-preview" style="margin-top: 8px; margin-left: 15px; margin-right: 15px; padding: 0px 0px 12px; border-top: 1px solid var(--border-light);"><div class="comment-preview-item" style="font-size: 13px; margin-top: 8px; color: var(--text-secondary);"><strong>agape</strong> <span style="margin-left: 6px;">begin</span></div></div></div></div>
+    </div>

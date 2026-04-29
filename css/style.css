@@ -3496,6 +3496,26 @@ body.dark .modal-comment-input::placeholder,
     .commentsPreview {
       margin-right: 15px;
     }
+
+    /* Formulaire commentaires en mobile */
+    .add-comment-form {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .modal-comment-input {
+      width: 100%;
+    }
+
+    .modal-anonymous-toggle {
+      justify-content: flex-start;
+    }
+
+    .modal-submit-comment {
+      width: 100%;
+      order: 3;
+    }
   }
 
 /* ========== MODALE MODIFICATION PROFIL ========== */
