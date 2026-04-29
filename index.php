@@ -605,8 +605,8 @@ if (isset($_SESSION['user_id'])) {
           <img id="postDetailImage" src="" alt="post" class="post-detail-image" style="display: none; width: 100%; max-height: 500px; object-fit: cover; border-radius: 12px; margin: 16px 0;">
           
           <div class="post-detail-stats">
-            <span><i class="far fa-heart"></i> <span id="postDetailLikes">0</span> J'aime</span>
-            <span><i class="far fa-comment"></i> <span id="postDetailComments">0</span> Commentaires</span>
+            <span><span id="postDetailLikes">0</span> J'aime</span>
+            <span><span id="postDetailComments">0</span> Commentaires</span>
           </div>
         </div>
       </div>

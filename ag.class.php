@@ -541,6 +541,14 @@ class CommentaireModel extends BaseModel {
         $stmt = $this->pdo->prepare('UPDATE commentaires SET comment_likes = comment_likes - 1 WHERE comment_id = ?');
         return $stmt->execute([$comment_id]);
     }
+    
+    public function getCommentCountByPostId($post_id) {
+        // Compte les commentaires principaux (pas les réponses) pour un post
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) as count FROM commentaires WHERE comment_post_id = ? AND comment_parent_id IS NULL');
+        $stmt->execute([$post_id]);
+        $result = $stmt->fetch();
+        return (int)($result['count'] ?? 0);
+    }
 }
 
 /* ================== STORY MODEL ================== */
@@ -1835,6 +1843,10 @@ class Router {
                     $userHasLiked = $likeModel->hasLiked($current_user_id, $post['post_id']);
                 }
                 
+                // Récupérer les vrais comptes depuis la base de données
+                $actualLikesCount = $likeModel->getLikesCount($post['post_id']);
+                $actualCommentsCount = $comModel->getCommentCountByPostId($post['post_id']);
+                
                 // Récupérer les derniers commentaires
                 $comments = $comModel->getByPostId($post['post_id'], 3);
                 $commentsList = [];
@@ -1855,8 +1867,8 @@ class Router {
                     'avatar' => $post['user_photo_url'] ? 'imgApp/' . $post['user_photo_url'] : null,
                     'content' => $post['post_content'],
                     'images' => $imageUrls,
-                    'likes' => (int)$post['post_likes_count'],
-                    'comments' => (int)($post['post_comments'] ?? 0),
+                    'likes' => $actualLikesCount,
+                    'comments' => $actualCommentsCount,
                     'userHasLiked' => $userHasLiked,
                     'commentsList' => $commentsList,
                     'timestamp' => $post['post_created_at'],
