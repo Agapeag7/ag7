@@ -582,6 +582,36 @@ if (isset($_SESSION['user_id'])) {
       </div>
     </div>
 
+    <!-- Modale Détails Publication (depuis profil) -->
+    <div id="postDetailModal" class="post-detail-modal hidden">
+      <div class="post-detail-card">
+        <button class="post-detail-close">&times;</button>
+        <div class="post-detail-content">
+          <div class="post-detail-header">
+            <div class="post-detail-author-info">
+              <div class="post-detail-avatar" id="postDetailAvatar">AG</div>
+              <div>
+                <div class="post-detail-author-name" id="postDetailAuthor">Auteur</div>
+                <div class="post-detail-timestamp" id="postDetailTime">À l'instant</div>
+              </div>
+            </div>
+            <button class="post-detail-delete-btn" id="postDetailDeleteBtn" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 18px; display: none;">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          
+          <div class="post-detail-text" id="postDetailText"></div>
+          
+          <img id="postDetailImage" src="" alt="post" class="post-detail-image" style="display: none; width: 100%; max-height: 500px; object-fit: cover; border-radius: 12px; margin: 16px 0;">
+          
+          <div class="post-detail-stats">
+            <span><i class="far fa-heart"></i> <span id="postDetailLikes">0</span> J'aime</span>
+            <span><i class="far fa-comment"></i> <span id="postDetailComments">0</span> Commentaires</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal Suppression Publication -->
     <div id="deletePostModal" class="delete-post-modal hidden">
       <div class="delete-post-card">

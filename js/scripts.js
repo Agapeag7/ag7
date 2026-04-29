@@ -1694,14 +1694,114 @@ function updateProfileUI() {
         // Click handler
         postCard.style.cursor = 'pointer';
         postCard.addEventListener('click', () => {
-          console.log('Publication cliquée:', post.id);
-          // TODO: Ouvrir la publication en modal
+          openPostDetailModal(post);
         });
         
         grid.appendChild(postCard);
       });
     }
   }
+}
+
+// ========== MODALE DÉTAILS POST (PROFIL) ==========
+const postDetailModal = document.getElementById('postDetailModal');
+const postDetailClose = document.querySelector('.post-detail-close');
+const postDetailDeleteBtn = document.getElementById('postDetailDeleteBtn');
+let currentDetailPost = null;
+
+function openPostDetailModal(post) {
+  currentDetailPost = post;
+  
+  // Remplir les données du post
+  document.getElementById('postDetailAuthor').textContent = post.author || 'Utilisateur';
+  document.getElementById('postDetailText').textContent = post.content || '';
+  document.getElementById('postDetailTime').textContent = formatTime(post.timestamp) || 'À l\'instant';
+  document.getElementById('postDetailLikes').textContent = post.likes || 0;
+  document.getElementById('postDetailComments').textContent = post.comments || 0;
+  
+  // Afficher/masquer l'image
+  const imageEl = document.getElementById('postDetailImage');
+  if (post.image || (post.images && post.images.length > 0)) {
+    imageEl.src = post.image || post.images[0];
+    imageEl.style.display = 'block';
+  } else {
+    imageEl.style.display = 'none';
+  }
+  
+  // Avatar
+  const avatarEl = document.getElementById('postDetailAvatar');
+  if (post.avatar && post.avatar.startsWith('http')) {
+    avatarEl.style.backgroundImage = `url('${post.avatar}')`;
+    avatarEl.textContent = '';
+  } else if (post.avatar && post.avatar.startsWith('imgApp')) {
+    avatarEl.style.backgroundImage = `url('${post.avatar}')`;
+    avatarEl.textContent = '';
+  } else {
+    avatarEl.style.backgroundImage = 'none';
+    avatarEl.textContent = (post.author || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+  
+  // Afficher/masquer le bouton de suppression seulement si l'utilisateur est le propriétaire
+  if (currentUserId && parseInt(currentUserId) === parseInt(post.user_id)) {
+    postDetailDeleteBtn.style.display = 'block';
+  } else {
+    postDetailDeleteBtn.style.display = 'none';
+  }
+  
+  postDetailModal.classList.remove('hidden');
+}
+
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'À l\'instant';
+  if (diffMins < 60) return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  if (diffDays < 7) return `${diffDays}j`;
+  
+  return date.toLocaleDateString('fr-FR');
+}
+
+// Fermer la modale des détails du post
+if (postDetailClose) {
+  postDetailClose.addEventListener('click', () => {
+    postDetailModal.classList.add('hidden');
+    currentDetailPost = null;
+  });
+}
+
+// Fermer en cliquant en dehors
+postDetailModal.addEventListener('click', (e) => {
+  if (e.target === postDetailModal) {
+    postDetailModal.classList.add('hidden');
+    currentDetailPost = null;
+  }
+});
+
+// Bouton de suppression du post
+if (postDetailDeleteBtn) {
+  postDetailDeleteBtn.addEventListener('click', () => {
+    if (!currentDetailPost) return;
+    
+    // Créer un événement synthétique pour utiliser handleDeletePost
+    const syntheticEvent = {
+      currentTarget: {
+        dataset: { postId: currentDetailPost.id }
+      }
+    };
+    
+    // Fermer la modale du détail
+    postDetailModal.classList.add('hidden');
+    
+    // Appeler la fonction de suppression
+    handleDeletePost(syntheticEvent);
+  });
 }
 
 // Modale followers/following

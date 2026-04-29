@@ -679,7 +679,7 @@ async function handlePublishPost(e) {
 
   const btn = e.currentTarget;
   btn.disabled = true;
-  btn.textContent = 'Publication...';
+  btn.textContent = 'Publication en cours...';
 
   const imageFiles = postImages.filter(img => img.file).map(img => img.file);
   console.log('Envoi de', imageFiles.length, 'image(s)');
