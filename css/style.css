@@ -2104,6 +2104,10 @@ body.dark .new-comment-input::placeholder,
   color: var(--text-primary);
 }
 
+.story-caption {
+  color: var(--white);
+}
+
 .create-story-card h2 {
   margin-bottom: 20px;
   color: var(--text-primary);
