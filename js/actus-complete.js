@@ -326,6 +326,12 @@ function createPostElement(post) {
     const counter = postDiv.querySelector('.feed-image-counter');
 
     const updateCarousel = () => {
+      // Trigger animation by removing and re-adding animation class
+      imgEl.style.animation = 'none';
+      // Force reflow
+      void imgEl.offsetWidth;
+      imgEl.style.animation = 'slideIn 0.5s ease-in-out';
+      
       imgEl.src = post.images[currentImageIndex];
       counter.textContent = `${currentImageIndex + 1} / ${post.images.length}`;
       prevBtn.style.opacity = currentImageIndex === 0 ? '0.3' : '1';
@@ -490,6 +496,7 @@ function createCommentElement(comment, postId, isReply = false) {
   wrapper.style.padding = '12px';
   wrapper.style.marginBottom = '8px';
   wrapper.style.borderRadius = '12px';
+  wrapper.style.position = 'relative';
   
   const authorHtml = comment.isAnonymous
     ? `<i class="fas fa-mask" style="margin-right: 6px;"></i><strong>Anonyme</strong>`
@@ -501,9 +508,14 @@ function createCommentElement(comment, postId, isReply = false) {
   wrapper.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
       <div>${authorHtml} <span style="font-size:12px; color:var(--text-secondary);">• ${timeStr}</span></div>
-      <button class="comment-like-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px;">
-        <i class="fas fa-heart"></i> <span class="like-count">${comment.likes}</span>
-      </button>
+      <div style="display: flex; gap: 4px; align-items: center;">
+        <button class="comment-like-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px;">
+          <i class="fas fa-heart"></i> <span class="like-count">${comment.likes}</span>
+        </button>
+        <button class="comment-delete-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s;">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
     </div>
     <div style="margin: 0 0 4px 24px; padding: 8px; background: ${isReply ? 'var(--card-bg)' : 'var(--hover-bg)'}; border-radius: 12px;">
       ${escapeHtml(comment.text)}
@@ -535,6 +547,45 @@ function createCommentElement(comment, postId, isReply = false) {
         likeBtn.style.color = result.isLiked ? '#ef4444' : 'var(--text-secondary)';
       } else {
         showNotification('error', 'Erreur', result.message);
+      }
+    });
+  }
+
+  // Gestion du bouton de suppression
+  const deleteBtn = wrapper.querySelector('.comment-delete-btn');
+  if (deleteBtn) {
+    // Afficher/masquer le bouton au survol
+    wrapper.addEventListener('mouseenter', () => {
+      deleteBtn.style.opacity = '1';
+      deleteBtn.style.visibility = 'visible';
+      deleteBtn.style.color = '#ef4444';
+    });
+    wrapper.addEventListener('mouseleave', () => {
+      deleteBtn.style.opacity = '0';
+      deleteBtn.style.visibility = 'hidden';
+      deleteBtn.style.color = 'var(--text-secondary)';
+    });
+
+    // Afficher le bouton au toucher (mobile)
+    wrapper.addEventListener('touchstart', () => {
+      deleteBtn.style.opacity = '1';
+      deleteBtn.style.visibility = 'visible';
+      deleteBtn.style.color = '#ef4444';
+    });
+
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const commentId = parseInt(deleteBtn.dataset.commentId);
+      if (confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
+        const result = await ActusAPI.deleteComment(commentId);
+        if (result.success) {
+          showNotification('success', 'Succès', 'Commentaire supprimé');
+          wrapper.remove();
+          await openCommentsModal(postId);
+          updatePostCommentCount(postId);
+        } else {
+          showNotification('error', 'Erreur', result.message);
+        }
       }
     });
   }

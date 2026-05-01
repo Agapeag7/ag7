@@ -1,4 +1,11 @@
-- Ajout button et backend de suppression d'une story (seul l'utilisateur à qui appartient la story peut la supprimer)
-- Ajout d'animation slide (Pour post avec plus d'une image)
-- Ajout backend et button(button caché qui apparait quand on touche le commetaire) pour supprimer de commentaire (seul l'utilisateur à qui appartient le commentaire et l'utilisateur à qui appartient le post peuvent supprimer le commentaire)
-- Possibilités aux utilisateurs de likés des commentaires
+✓ Ajout button et backend de suppression d'une story (seul l'utilisateur à qui appartient la story peut la supprimer)
+✓ Ajout d'animation slide (Pour post avec plus d'une image)
+✓ Ajout backend et button (button caché qui apparait quand on touche/survole le commentaire) pour supprimer de commentaire (seul l'utilisateur à qui appartient le commentaire et l'utilisateur à qui appartient le post peuvent supprimer le commentaire)
+✓ Possibilités aux utilisateurs de likés des commentaires
+
+
+
+
+* A venir :
+- Ajout d'un Suivre quand on consulte le profil d'un autre utilisateur
+- quand l'utilisateur est suivie le bouton "Message" apparait

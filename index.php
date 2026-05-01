@@ -518,6 +518,7 @@ if (isset($_SESSION['user_id'])) {
     <div id="storyModal" class="story-modal hidden">
       <div class="story-modal-content">
         <button class="story-close">&times;</button>
+        <button class="story-delete-btn" id="storyDeleteBtn" style="position: absolute; top: 12px; right: 50px; background: none; border: none; color: white; cursor: pointer; font-size: 24px; z-index: 1050; display: none;"><i class="fas fa-trash"></i></button>
         <div class="story-viewers-count" id="storyViewersCount"></div>
         <div class="story-viewer">
           <img id="storyImage" src="" alt="Story" loading="lazy">

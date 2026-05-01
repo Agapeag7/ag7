@@ -1129,6 +1129,25 @@ cancelStoryBtn.addEventListener('click', () => {
 
 storyClose.addEventListener('click', () => storyModal.classList.add('hidden'));
 
+// Bouton suppression story
+const storyDeleteBtn = document.getElementById('storyDeleteBtn');
+if (storyDeleteBtn) {
+  storyDeleteBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette story ?')) {
+      const storyId = storyDeleteBtn.dataset.storyId;
+      const result = await StoriesAPI.deleteStory(storyId);
+      if (result.success) {
+        showNotification('success', 'Succès', 'Story supprimée');
+        storyModal.classList.add('hidden');
+        await loadAndRenderStories();
+      } else {
+        showNotification('error', 'Erreur', result.message || 'Impossible de supprimer la story');
+      }
+    }
+  });
+}
+
 createStoryModal.addEventListener('click', (e) => {
   if (e.target === createStoryModal) createStoryModal.classList.add('hidden');
 });
@@ -1248,6 +1267,12 @@ function displayCurrentStory() {
     imageUrl = 'https://picsum.photos/id/50/600/800'; // fallback
   }
   
+  // Trigger animation
+  storyImage.style.animation = 'none';
+  // Force reflow
+  void storyImage.offsetWidth;
+  storyImage.style.animation = 'slideIn 0.5s ease-in-out';
+  
   storyImage.src = imageUrl;
   storyCaption.textContent = story.story_text || '';
   
@@ -1273,6 +1298,17 @@ function displayCurrentStory() {
     } else {
       viewersCountEl.innerHTML = `<i class="fas fa-hourglass-half"></i> expire dans ${remainingText}`;
       viewersCountEl.style.display = 'flex';
+    }
+  }
+  
+  // Afficher/masquer le bouton de suppression selon le propriétaire
+  const deleteBtn = document.getElementById('storyDeleteBtn');
+  if (deleteBtn) {
+    if (story.is_owner) {
+      deleteBtn.style.display = 'block';
+      deleteBtn.dataset.storyId = story.story_id;
+    } else {
+      deleteBtn.style.display = 'none';
     }
   }
 }

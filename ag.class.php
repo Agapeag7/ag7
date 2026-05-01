@@ -2195,7 +2195,18 @@ class Router {
         $com = new CommentaireModel($this->db);
         $comment = $com->getById($comment_id);
         
-        if (!$comment || $comment['comment_user_id'] != $_SESSION['user_id']) {
+        if (!$comment) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Commentaire non trouvé'], 404);
+        }
+        
+        // Vérifier si c'est le propriétaire du commentaire OU du post
+        $post = new PublicationModel($this->db);
+        $postData = $post->getById($comment['comment_post_id']);
+        
+        $isCommentOwner = $comment['comment_user_id'] == $_SESSION['user_id'];
+        $isPostOwner = $postData && $postData['post_user_id'] == $_SESSION['user_id'];
+        
+        if (!$isCommentOwner && !$isPostOwner) {
             Utils::jsonResponse(['success' => false, 'message' => 'Vous ne pouvez pas supprimer ce commentaire'], 403);
         }
         
