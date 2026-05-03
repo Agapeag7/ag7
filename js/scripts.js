@@ -1175,6 +1175,17 @@ publishStoryBtn.addEventListener('click', async () => {
   
   if (result.success) {
     showNotification('success', 'Story publiée', 'Votre story est en ligne pour 24h');
+    
+    // Réinitialiser le formulaire et les aperçus
+    storyTextInput.value = '';
+    selectedStoryImageFile = null;
+    storyImagePreview.src = '';
+    storyImagePreview.style.display = 'none';
+    storyImageInput.value = '';
+    uploadStoryImageBtn.disabled = false;
+    uploadStoryImageBtn.style.opacity = '1';
+    uploadStoryImageBtn.style.cursor = 'pointer';
+    
     createStoryModal.classList.add('hidden');
     // Recharger le flux des stories
     await loadAndRenderStories();
@@ -1522,9 +1533,13 @@ function getPhotoURL(filename) {
   return 'imgApp/' + filename;
 }
 
+// Variable globale pour suivre le profil actuellement affiché
+let currentDisplayedUserId = null;
+
 // Charger le profil réel de l'utilisateur connecté depuis le serveur
 async function loadCurrentProfile() {
   try {
+    currentDisplayedUserId = null; // Reset pour le profil personnel
     const formData = new FormData();
     formData.append('action', 'getCurrentProfile');
     
@@ -1580,6 +1595,9 @@ async function loadCurrentProfile() {
     // METTRE À JOUR L'INTERFACE
     updateProfileUI();
     
+    // Masquer les boutons Suivre/Message pour le profil personnel
+    updateProfileActionButtons();
+    
     return true;
   } catch (e) {
     console.error('Erreur au chargement du profil:', e);
@@ -1631,6 +1649,118 @@ async function loadUserPosts(userId) {
 
 // currentUserProfile est déjà déclaré et initialisé plus haut dans le fichier
 
+// ===== GESTION BOUTONS FOLLOW/MESSAGE =====
+function updateProfileActionButtons() {
+  const editBtn = document.querySelector('.edit-profile-btn');
+  const followBtn = document.getElementById('followProfileBtn');
+  const messageBtn = document.getElementById('messageProfileBtn');
+  
+  if (!followBtn || !messageBtn) return;
+  
+  // Afficher les boutons Suivre/Message seulement pour les autres profils
+  if (currentDisplayedUserId === null || currentDisplayedUserId === currentUserProfile.userid) {
+    // Profil personnel - masquer Suivre/Message, afficher Modifier
+    editBtn.style.display = 'block';
+    followBtn.style.display = 'none';
+    messageBtn.style.display = 'none';
+  }
+}
+
+async function loadOtherUserProfile(userId) {
+  try {
+    currentDisplayedUserId = userId;
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'getUserProfile');
+    url.searchParams.set('user_id', userId);
+    
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      credentials: 'same-origin'
+    });
+    
+    if (!response.ok) {
+      showNotification('error', 'Erreur', 'Impossible de charger le profil');
+      return;
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      showNotification('error', 'Erreur', result.message);
+      return;
+    }
+    
+    const profile = result.profile;
+    
+    // Remplir les données du profil
+    currentUserProfile.name = profile.user_name || 'Utilisateur';
+    currentUserProfile.username = '@' + (profile.user_username || 'user');
+    currentUserProfile.bio = profile.user_bio || 'Pas de bio';
+    currentUserProfile.location = profile.user_location || 'Localisation inconnue';
+    currentUserProfile.memberSince = profile.member_since || 'Janvier 2024';
+    currentUserProfile.userid = profile.user_id;
+    currentUserProfile.avatarInitials = profile.user_name
+      ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      : 'U';
+    
+    if (profile.user_photo_url) {
+      currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
+    } else {
+      currentUserProfile.profilePhoto = null;
+    }
+    
+    if (profile.user_cover_photo_url) {
+      currentUserProfile.coverPhoto = getPhotoURL(profile.user_cover_photo_url);
+    } else {
+      currentUserProfile.coverPhoto = null;
+    }
+    
+    currentUserProfile.postsCount = profile.posts_count || 0;
+    currentUserProfile.followers_count = profile.followers_count || 0;
+    currentUserProfile.following_count = profile.following_count || 0;
+    currentUserProfile.is_following = profile.is_following || false;
+    
+    // Charger les publications
+    await loadUserPosts(userId);
+    
+    updateProfileUI();
+    updateProfileActionButtons();
+    updateFollowButton();
+    
+  } catch (error) {
+    console.error('Erreur loadOtherUserProfile:', error);
+    showNotification('error', 'Erreur', 'Impossible de charger le profil');
+  }
+}
+
+function updateFollowButton() {
+  const followBtn = document.getElementById('followProfileBtn');
+  const messageBtn = document.getElementById('messageProfileBtn');
+  const editBtn = document.querySelector('.edit-profile-btn');
+  
+  if (!followBtn || !messageBtn || !editBtn) return;
+  
+  if (currentDisplayedUserId === null || currentDisplayedUserId === currentUserProfile.userid) {
+    // Profil personnel
+    editBtn.style.display = 'block';
+    followBtn.style.display = 'none';
+    messageBtn.style.display = 'none';
+  } else {
+    // Profil d'une autre personne
+    editBtn.style.display = 'none';
+    followBtn.style.display = 'block';
+    
+    if (currentUserProfile.is_following) {
+      followBtn.innerHTML = '<i class="fas fa-check"></i> Suivi';
+      followBtn.classList.add('following');
+      messageBtn.style.display = 'block';
+    } else {
+      followBtn.innerHTML = '<i class="fas fa-user-plus"></i> Suivre';
+      followBtn.classList.remove('following');
+      messageBtn.style.display = 'none';
+    }
+  }
+}
+
 function updateProfileUI() {
   // Mettre à jour la photo de couverture
   const coverImg = document.querySelector('.cover-img');
@@ -1679,6 +1809,17 @@ function updateProfileUI() {
       createPostAvatar.style.backgroundImage = 'none';
       createPostAvatar.innerText = currentUserProfile.avatarInitials;
     }
+  }
+
+  // Configurer les événements des boutons Follow/Message
+  const followBtn = document.getElementById('followProfileBtn');
+  const messageBtn = document.getElementById('messageProfileBtn');
+  
+  if (followBtn) {
+    followBtn.onclick = handleFollowClick;
+  }
+  if (messageBtn) {
+    messageBtn.onclick = handleMessageClick;
   }
 
   // Grille des posts - Remplir avec les vraies publications
@@ -1870,6 +2011,64 @@ function openFollowModal(type) {
       btn.textContent = btn.classList.contains('following') ? 'Abonné' : 'Suivre';
     });
   });
+}
+
+// ===== GESTION CLICK BOUTON FOLLOW =====
+async function handleFollowClick(e) {
+  e.preventDefault();
+  if (!currentDisplayedUserId || currentDisplayedUserId === currentUserProfile.userid) return;
+  
+  const followBtn = document.getElementById('followProfileBtn');
+  followBtn.disabled = true;
+  
+  try {
+    const action = currentUserProfile.is_following ? 'unfollowUser' : 'followUser';
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('followed_id', currentDisplayedUserId);
+    
+    const response = await fetch(window.location.href, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: formData
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      currentUserProfile.is_following = !currentUserProfile.is_following;
+      updateFollowButton();
+      showNotification('success', 'Succès', currentUserProfile.is_following ? 'Vous suivez maintenant cet utilisateur' : 'Désabonnement réussi');
+    } else {
+      showNotification('error', 'Erreur', data.message);
+    }
+  } catch (error) {
+    console.error('Erreur follow:', error);
+    showNotification('error', 'Erreur', 'Impossible de suivre/dé-suivre');
+  } finally {
+    followBtn.disabled = false;
+  }
+}
+
+// ===== GESTION CLICK BOUTON MESSAGE =====
+function handleMessageClick(e) {
+  e.preventDefault();
+  if (!currentDisplayedUserId || !currentUserProfile.is_following) return;
+  
+  // Naviguer vers la vue chat et créer une conversation
+  const profileName = currentUserProfile.name;
+  const profileUsername = currentUserProfile.username;
+  
+  // Stocker les infos pour créer la conversation
+  sessionStorage.setItem('createConvWithUser', JSON.stringify({
+    user_id: currentDisplayedUserId,
+    user_name: profileName,
+    user_username: profileUsername
+  }));
+  
+  // Naviguer vers le chat
+  document.querySelector('[data-view="chat"]').click();
+  showNotification('success', 'Chat', 'Redirection vers la conversation...');
 }
 
 // Boutons d'icône pour changer les photos sur la page profil (délégation d'événements)

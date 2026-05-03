@@ -554,17 +554,27 @@ function createCommentElement(comment, postId, isReply = false) {
   // Gestion du bouton de suppression
   const deleteBtn = wrapper.querySelector('.comment-delete-btn');
   if (deleteBtn) {
-    // Afficher/masquer le bouton au survol
-    wrapper.addEventListener('mouseenter', () => {
-      deleteBtn.style.opacity = '1';
-      deleteBtn.style.visibility = 'visible';
-      deleteBtn.style.color = '#ef4444';
-    });
-    wrapper.addEventListener('mouseleave', () => {
-      deleteBtn.style.opacity = '0';
-      deleteBtn.style.visibility = 'hidden';
-      deleteBtn.style.color = 'var(--text-secondary)';
-    });
+    // Déterminer si l'utilisateur courant est propriétaire du commentaire ou du post
+    const isCommentOwner = comment.user_id === currentUserId;
+    const isPostOwner = comment.post_user_id === currentUserId;
+    
+    // Afficher le bouton seulement si l'utilisateur a la permission
+    if (isCommentOwner || isPostOwner) {
+      // Afficher/masquer le bouton au survol
+      wrapper.addEventListener('mouseenter', () => {
+        deleteBtn.style.opacity = '1';
+        deleteBtn.style.visibility = 'visible';
+        deleteBtn.style.color = '#ef4444';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        deleteBtn.style.opacity = '0';
+        deleteBtn.style.visibility = 'hidden';
+        deleteBtn.style.color = 'var(--text-secondary)';
+      });
+    } else {
+      // Masquer complètement le bouton pour les autres utilisateurs
+      deleteBtn.style.display = 'none';
+    }
 
     // Afficher le bouton au toucher (mobile)
     wrapper.addEventListener('touchstart', () => {

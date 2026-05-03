@@ -276,8 +276,11 @@ if (isset($_SESSION['user_id'])) {
           <div class="profile-avatar-large" id="profileAvatar">AG</div>
           <button class="change-profile-btn"><i class="fas fa-camera"></i></button>
         </div>
-        <div class="profile-actions">
+        <div class="profile-actions" id="profileActionsContainer">
           <button class="btn-primary edit-profile-btn"><i class="fas fa-pen"></i> Modifier le profil</button>
+          <!-- Boutons Suivre/Abonné et Message (affichés pour les autres profils) -->
+          <button class="btn-primary follow-profile-btn" id="followProfileBtn" style="display: none;"><i class="fas fa-user-plus"></i> Suivre</button>
+          <button class="btn-secondary message-profile-btn" id="messageProfileBtn" style="display: none;"><i class="fas fa-envelope"></i> Message</button>
         </div>
       </div>
       <div class="profile-bio">
