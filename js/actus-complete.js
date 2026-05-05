@@ -4,6 +4,10 @@
  * Gestion dynamique des publications, likes, commentaires
  */
 
+if (typeof postImages === 'undefined') {
+  var postImages = [];
+}
+
 // ===== ÉTAT GLOBAL =====
 let actusState = {
   posts: [],

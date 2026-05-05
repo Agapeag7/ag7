@@ -1073,14 +1073,44 @@ const publishStoryBtn = document.getElementById('publishStoryBtn');
 const cancelStoryBtn = document.getElementById('cancelStoryBtn');
 const storiesContainer = document.getElementById('storiesContainer');
 
-// Données simulées des stories
+// Données des stories
 let userStories = [];
 
-let otherStories = [
-  { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), viewers: 124 },
-  { id: 'thomas-1', type: 'text-image', text: 'Nouveau projet excitant !', image: 'https://randomuser.me/api/portraits/men/32.jpg', userName: 'Thomas', timestamp: new Date(Date.now() - 30 * 60 * 1000), viewers: 87 },
-  { id: 'sophie-1', type: 'text-image', text: 'En pleine réflexion...', image: 'https://randomuser.me/api/portraits/women/45.jpg', userName: 'Sophie', timestamp: new Date(Date.now() - 15 * 60 * 1000), viewers: 156 },
-];
+let otherStories = [];
+
+async function loadStories() {
+  const result = await StoriesAPI.getActiveStories();
+  if (result.success && result.stories) {
+    const user_id = currentUserProfile.userid; // l'ID de l'utilisateur connecté
+    userStories = [];
+    otherStories = [];
+    result.stories.forEach(s => {
+      const storyObj = {
+        id: s.story_id,
+        type: s.story_type,
+        text: s.story_text || '',
+        image: s.story_image_url ? 'story/' + s.story_image_url : null,
+        userName: s.user_name,
+        timestamp: s.story_created_at,
+        viewers: s.viewers_count,
+        userId: s.story_user_id,
+        isOwner: s.is_owner,
+        viewed: s.viewed
+      };
+      if (s.is_owner) userStories.push(storyObj);
+      else otherStories.push(storyObj);
+    });
+  }
+  renderStories();
+}
+
+loadStories();
+
+// let otherStories = [
+//   { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), viewers: 124 },
+//   { id: 'thomas-1', type: 'text-image', text: 'Nouveau projet excitant !', image: 'https://randomuser.me/api/portraits/men/32.jpg', userName: 'Thomas', timestamp: new Date(Date.now() - 30 * 60 * 1000), viewers: 87 },
+//   { id: 'sophie-1', type: 'text-image', text: 'En pleine réflexion...', image: 'https://randomuser.me/api/portraits/women/45.jpg', userName: 'Sophie', timestamp: new Date(Date.now() - 15 * 60 * 1000), viewers: 156 },
+// ];
 
 let selectedStoryImage = null;
 
@@ -1202,10 +1232,13 @@ function renderStories() {
 }
 
 function openStory(imageUrl, caption, viewers = 0, isUserStory = false) {
+  // Préfixe si l'URL ne contient pas déjà le dossier
+  if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('story/')) {
+    imageUrl = 'story/' + imageUrl;
+  }
   storyImage.src = imageUrl;
   storyCaption.textContent = caption || '';
   const viewersCountEl = document.getElementById('storyViewersCount');
-  // Afficher le compteur SEULEMENT pour les stories de l'utilisateur
   if (isUserStory && viewers > 0) {
     viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${viewers}`;
     viewersCountEl.style.display = 'flex';
@@ -1381,7 +1414,6 @@ const addImageBtn = document.getElementById('addImageBtn');
 const postImageInput = document.getElementById('postImageInput');
 const postImagesPreview = document.getElementById('postImagesPreview');
 const clearImagesBtn = document.getElementById('clearImagesBtn');
-let postImages = [];
 
 // Variables pour le carousel - KEEP THESE (utilisées par openImageViewer d'actus-complete.js)
 const imageCarouselModal = document.getElementById('imageCarouselModal');
@@ -1644,6 +1676,66 @@ async function loadUserPosts(userId) {
   }
 }
 
+
+function openPostDetailModal(post) {
+  const modal = document.getElementById('postDetailModal');
+  if (!modal) return;
+
+  document.getElementById('postDetailAuthor').textContent = post.author || 'Utilisateur';
+  document.getElementById('postDetailTime').textContent = formatTime(post.timestamp);
+  document.getElementById('postDetailText').textContent = post.content || '';
+  document.getElementById('postDetailLikes').textContent = post.likes || 0;
+  document.getElementById('postDetailComments').textContent = post.comments || 0;
+
+  const avatar = document.getElementById('postDetailAvatar');
+  if (post.avatar) {
+    avatar.style.backgroundImage = `url('${post.avatar}')`;
+    avatar.style.backgroundSize = 'cover';
+    avatar.style.backgroundPosition = 'center';
+    avatar.textContent = '';
+  } else {
+    avatar.style.backgroundImage = 'none';
+    avatar.textContent = (post.author || 'U').substring(0, 2).toUpperCase();
+  }
+
+  const imgEl = document.getElementById('postDetailImage');
+  if (post.images && post.images.length > 0) {
+    imgEl.src = post.images[0]; // première image
+    imgEl.style.display = 'block';
+  } else {
+    imgEl.style.display = 'none';
+  }
+
+  const deleteBtn = document.getElementById('postDetailDeleteBtn');
+  if (deleteBtn) {
+    if (currentUserId && parseInt(currentUserId) === parseInt(post.user_id)) {
+      deleteBtn.style.display = 'block';
+      deleteBtn.onclick = () => {
+        if (confirm('Supprimer cette publication ?')) {
+          ActusAPI.deletePost(post.id).then(res => {
+            if (res.success) {
+              modal.classList.add('hidden');
+              loadCurrentProfile().then(() => updateProfileUI());
+              showNotification('success', 'Supprimé', 'Publication supprimée');
+            } else {
+              showNotification('error', 'Erreur', res.message);
+            }
+          });
+        }
+      };
+    } else {
+      deleteBtn.style.display = 'none';
+    }
+  }
+
+  modal.classList.remove('hidden');
+}
+
+// Fermeture du modal
+document.querySelector('.post-detail-close')?.addEventListener('click', () => {
+  document.getElementById('postDetailModal').classList.add('hidden');
+});
+
 // currentUserProfile est déjà déclaré et initialisé plus haut dans le fichier
 
 function updateProfileUI() {
@@ -1745,8 +1837,7 @@ function updateProfileUI() {
         // Click handler
         postCard.style.cursor = 'pointer';
         postCard.addEventListener('click', () => {
-          console.log('Publication cliquée:', post.id);
-          // TODO: Ouvrir la publication en modal
+          openPostDetailModal(post);
         });
         
         grid.appendChild(postCard);
@@ -1826,15 +1917,15 @@ const editProfileModal = document.getElementById('editProfileModal');
 const editProfileForm = document.getElementById('editProfileForm');
 const editProfileClose = document.querySelector('.edit-profile-close');
 const editProfileCancel = document.querySelector('.edit-profile-cancel');
-const profilePhotoInput = document.getElementById('profilePhotoInput');
-const coverPhotoInput = document.getElementById('coverPhotoInput');
-const profilePhotoUpload = document.getElementById('profilePhotoUpload');
-const coverPhotoUpload = document.getElementById('coverPhotoUpload');
+const editProfilePhotoInput = document.getElementById('profilePhotoInput');
+const editCoverPhotoInput = document.getElementById('coverPhotoInput');
+const editProfilePhotoUpload = document.getElementById('profilePhotoUpload');
+const editCoverPhotoUpload = document.getElementById('coverPhotoUpload');
 const editBio = document.getElementById('editBio');
 const bioCharCount = document.getElementById('bioCharCount');
 
-let selectedProfilePhoto = null;
-let selectedCoverPhoto = null;
+let editSelectedProfilePhoto = null;
+let editSelectedCoverPhoto = null;
 
 // Ouvrir la modale d'édition
 document.querySelector(".edit-profile-btn")?.addEventListener("click", () => {
@@ -1866,8 +1957,8 @@ document.querySelector(".edit-profile-btn")?.addEventListener("click", () => {
   }
   
   // Réinitialiser les fichiers sélectionnés
-  selectedProfilePhoto = null;
-  selectedCoverPhoto = null;
+  editSelectedProfilePhoto = null;
+  editSelectedCoverPhoto = null;
   
   // Afficher la modale
   editProfileModal.classList.remove('hidden');
@@ -1890,15 +1981,15 @@ editBio.addEventListener('input', () => {
 });
 
 // Gestion upload photo de profil
-profilePhotoUpload.querySelector('.btn-secondary').addEventListener('click', (e) => {
+editProfilePhotoUpload.querySelector('.btn-secondary').addEventListener('click', (e) => {
   e.preventDefault();
-  profilePhotoInput.click();
+  editProfilePhotoInput.click();
 });
 
-profilePhotoInput.addEventListener('change', (e) => {
+editProfilePhotoInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
-    selectedProfilePhoto = file;
+    editSelectedProfilePhoto = file;
     const reader = new FileReader();
     reader.onload = (e) => {
       const preview = document.getElementById('profilePhotoPreview');
@@ -1912,15 +2003,15 @@ profilePhotoInput.addEventListener('change', (e) => {
 });
 
 // Gestion upload photo de couverture
-coverPhotoUpload.querySelector('.btn-secondary').addEventListener('click', (e) => {
+editCoverPhotoUpload.querySelector('.btn-secondary').addEventListener('click', (e) => {
   e.preventDefault();
-  coverPhotoInput.click();
+  editCoverPhotoInput.click();
 });
 
-coverPhotoInput.addEventListener('change', (e) => {
+editCoverPhotoInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
-    selectedCoverPhoto = file;
+    editSelectedCoverPhoto = file;
     const reader = new FileReader();
     reader.onload = (e) => {
       document.getElementById('coverPhotoPreview').src = e.target.result;
@@ -1945,11 +2036,11 @@ editProfileForm.addEventListener('submit', async (e) => {
     formData.append('user_username', document.getElementById('editUsername').value.trim());
     formData.append('user_bio', document.getElementById('editBio').value.trim());
     
-    if (selectedProfilePhoto) {
-      formData.append('user_photo', selectedProfilePhoto);
+    if (editSelectedProfilePhoto) {
+      formData.append('user_photo', editSelectedProfilePhoto);
     }
-    if (selectedCoverPhoto) {
-      formData.append('user_cover_photo', selectedCoverPhoto);
+    if (editSelectedCoverPhoto) {
+      formData.append('user_cover_photo', editSelectedCoverPhoto);
     }
     
     const response = await fetch(window.location.href, {
