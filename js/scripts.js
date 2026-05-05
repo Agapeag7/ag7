@@ -1304,7 +1304,12 @@ function openStory(story) {
       const timeEl = document.createElement('div');
       timeEl.className = 'story-time-left';
       timeEl.style.cssText = 'position:absolute; top:20px; left:50%; transform:translateX(-50%); color:white; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:20px; font-size:13px;';
-      timeEl.textContent = `⏳ ${timeText} restantes`;
+      
+      timeEl.style.display = 'flex';
+      timeEl.style.alignItems = 'center';
+      timeEl.style.gap = '5px';
+      timeEl.innerHTML = `<i class="fas fa-hourglass-half"></i> ${timeText} restantes`;
+
       document.querySelector('.story-modal-content').appendChild(timeEl);
     }
   }
