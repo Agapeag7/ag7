@@ -432,7 +432,7 @@ let currentUserProfile = {
       // Charger le feed Actus quand on accède à la section feed
       if (viewId === 'feed') {
         if (typeof loadActusFeed === 'function') loadActusFeed();
-        if (typeof loadStories === 'function') loadStories(); // ← recharge les stories
+        if (typeof loadStories === 'function') loadStories();
       }
     }
 
@@ -1055,6 +1055,18 @@ let currentUserProfile = {
 
 
   // ========== GESTION DES STORIES ==========
+function closeStoryModal() {
+  document.querySelector('.story-time-left')?.remove();
+  storyModal.classList.add('hidden');
+}
+
+function getStoryImageUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  if (url.startsWith('story/')) return url;
+  return 'story/' + url;
+}
+
 const storyModal = document.getElementById('storyModal');
 const storyImage = document.getElementById('storyImage');
 const storyCaption = document.querySelector('.story-caption');
@@ -1079,7 +1091,7 @@ let otherStories = [];
 async function loadStories() {
   const result = await StoriesAPI.getActiveStories();
   if (result.success && result.stories) {
-    const user_id = currentUserProfile.userid; // l'ID de l'utilisateur connecté
+    const user_id = currentUserProfile.userid;
     userStories = [];
     otherStories = [];
     result.stories.forEach(s => {
@@ -1087,13 +1099,14 @@ async function loadStories() {
         id: s.story_id,
         type: s.story_type,
         text: s.story_text || '',
-        image: s.story_image_url ? 'story/' + s.story_image_url : null,
+        image: s.story_image_url ? s.story_image_url : null,
         userName: s.user_name,
         timestamp: s.story_created_at,
         viewers: s.viewers_count,
         userId: s.story_user_id,
         isOwner: s.is_owner,
-        viewed: s.viewed
+        viewed: s.viewed,
+        expiresAt: s.story_expires_at   // ← ajouté
       };
       if (s.is_owner) userStories.push(storyObj);
       else otherStories.push(storyObj);
@@ -1153,7 +1166,10 @@ cancelStoryBtn.addEventListener('click', () => {
   uploadStoryImageBtn.style.opacity = '1';
   uploadStoryImageBtn.style.cursor = 'pointer';
 });
-storyClose.addEventListener('click', () => storyModal.classList.add('hidden'));
+storyClose.addEventListener('click', closeStoryModal);
+storyModal.addEventListener('click', (e) => {
+  if (e.target === storyModal) closeStoryModal();
+});
 
 createStoryModal.addEventListener('click', (e) => {
   if (e.target === createStoryModal) createStoryModal.classList.add('hidden');
@@ -1213,10 +1229,10 @@ function renderStories() {
     const storyEl = document.createElement('div');
     storyEl.className = 'story-item';
     storyEl.innerHTML = `
-      <div class="story-avatar" style="background-image: url('${story.image}');"></div>
+      <div class="story-avatar" style="background-image: url('${getStoryImageUrl(story.image)}');"></div>
       <span class="story-name">${story.userName}</span>
     `;
-    storyEl.addEventListener('click', () => openStory(story.image, story.text, story.viewers || 0, true));
+    storyEl.addEventListener('click', () => openStory(story));
     storiesContainer.appendChild(storyEl);
   });
   
@@ -1225,30 +1241,80 @@ function renderStories() {
     const storyEl = document.createElement('div');
     storyEl.className = 'story-item';
     storyEl.innerHTML = `
-      <div class="story-avatar" style="background-image: url('${story.image}');"></div>
+      <div class="story-avatar" style="background-image: url('${getStoryImageUrl(story.image)}');"></div>
       <span class="story-name">${story.userName}</span>
     `;
-    storyEl.addEventListener('click', () => openStory(story.image, story.text, 0, false));
+    storyEl.addEventListener('click', () => openStory(story));
     storiesContainer.appendChild(storyEl);
   });
 }
 
-function openStory(imageUrl, caption, viewers = 0, isUserStory = false) {
-  if (imageUrl && 
-      !imageUrl.startsWith('http') && 
-      !imageUrl.startsWith('story/') && 
-      !imageUrl.startsWith('data:')) {
+function openStory(story) {
+  // Préparer l'image
+  let imageUrl = story.image;
+  if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
     imageUrl = 'story/' + imageUrl;
   }
-  storyImage.src = imageUrl;
-  storyCaption.textContent = caption || '';
+  storyImage.src = getStoryImageUrl(story.image);
+  storyCaption.textContent = story.text || '';
+
+  // 1. Bouton de suppression (propriétaire uniquement)
+  const deleteBtn = document.getElementById('storyDeleteBtn');
+  if (deleteBtn) {
+    if (story.isOwner) {
+      deleteBtn.style.display = 'block';
+      deleteBtn.onclick = async () => {
+        if (confirm('Supprimer cette story ?')) {
+          const result = await StoriesAPI.deleteStory(story.id);
+          if (result.success) {
+            closeStoryModal();
+            await loadStories();
+            showNotification('success', 'Story supprimée', '');
+          } else {
+            showNotification('error', 'Erreur', result.message);
+          }
+        }
+      };
+    } else {
+      deleteBtn.style.display = 'none';
+    }
+  }
+
+  // 2. Compteur de vues (visible uniquement par le propriétaire)
   const viewersCountEl = document.getElementById('storyViewersCount');
-  if (isUserStory && viewers > 0) {
-    viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${viewers}`;
+  if (story.isOwner && story.viewers > 0) {
+    viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${story.viewers}`;
     viewersCountEl.style.display = 'flex';
   } else {
     viewersCountEl.style.display = 'none';
   }
+
+  // 3. Temps restant avant expiration
+  const oldTimeLeft = document.querySelector('.story-time-left');
+  if (oldTimeLeft) oldTimeLeft.remove();
+
+  if (story.expiresAt) {
+    const now = new Date();
+    const expires = new Date(story.expiresAt);
+    const diffMs = expires - now;
+    if (diffMs > 0) {
+      const hours = Math.floor(diffMs / 3600000);
+      const minutes = Math.floor((diffMs % 3600000) / 60000);
+      const timeText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+      const timeEl = document.createElement('div');
+      timeEl.className = 'story-time-left';
+      timeEl.style.cssText = 'position:absolute; top:20px; left:50%; transform:translateX(-50%); color:white; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:20px; font-size:13px;';
+      timeEl.textContent = `⏳ ${timeText} restantes`;
+      document.querySelector('.story-modal-content').appendChild(timeEl);
+    }
+  }
+
+  // 4. Enregistrer une vue si l'utilisateur n'est pas le propriétaire et n'a pas déjà vu
+  if (!story.isOwner && !story.viewed) {
+    StoriesAPI.viewStory(story.id);
+    story.viewed = true; // éviter les appels multiples
+  }
+
   storyModal.classList.remove('hidden');
 }
 
