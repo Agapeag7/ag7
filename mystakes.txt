@@ -2,118 +2,13 @@
 ✓ Ajout d'animation slide (Pour post avec plus d'une image)
 ✓ Ajout backend et button (button caché qui apparait quand on touche/survole le commentaire) pour supprimer de commentaire (seul l'utilisateur à qui appartient le commentaire et l'utilisateur à qui appartient le post peuvent supprimer le commentaire)
 ✓ Possibilités aux utilisateurs de likés des commentaires
+✓ Afficher le profil d'un utilisateur (pour juste le consulter) quand on clique sur : <div class="post-author"></div> et <div class="post-avatar" style="background-image: url('imgApp/image.jpg'); background-size: cover; background-position: center;"></div>
+✓ Pour publier un post (quand il clique sur publier que le bouton affiche "publication" et quand la publication est publier que le bouton revienne à afficher "Publier") : <button id="publishPostBtn" class="btn-primary">Publier</button>
 
 
 
 
 * A venir :
-- Affiche d'un Suivre quand on consulte le profil d'un autre utilisateur
-- Après si ou quand l'utilisateur est suivie le bouton "Message" apparait
-- Pour la suppression d'un commentaire : seul celui a qui appartient le post et celui a qui appartient le commentaire peuvent voir le petit bouton de suppression d'un commentaire après clic sur un commentaire
-- Fais en sorte que quand on vient de poster une story que l'image qu'on vient de poster n'apparaisse plus dans cette zone ici : 
-        <div class="create-story-image-upload">
-            <input type="file" id="storyImageInput" accept="image/*" style="display: none;">
-            <button type="button" id="uploadStoryImageBtn" class="btn-secondary" style="opacity: 1; cursor: pointer;">
-              <i class="fas fa-image"></i> Ajouter une image
-            </button>
-            <img id="storyImagePreview" src="">
-        </div>
 
 
 
-
-
-
-Erreur dans console : 
-VM171:88 TypeError: Failed to fetch
-    at wrapper.<computed> [as fetch] (28d16200-3ed0-45b0-9…55efbd9203c0:239:25)
-    at eval (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:88:2952419)
-    at A (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:83:314075)
-    at Generator.eval (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:83:315402)
-    at Generator.eval [as next] (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:83:314485)
-    at r (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:83:1164)
-    at s (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:83:1367)
-    at eval (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:83:1426)
-    at new Promise (<anonymous>)
-    at eval (eval at buildCode (28d16200-3ed0-45b0-9…55efbd9203c0:615:33), <anonymous>:83:1307)
-eval	@	VM171:88
-Promise.catch		
-eval	@	VM171:88
-A	@	VM171:83
-eval	@	VM171:83
-eval	@	VM171:83
-r	@	VM171:83
-s	@	VM171:83
-eval	@	VM171:83
-eval	@	VM171:83
-d	@	VM171:88
-l	@	VM171:88
-eval	@	VM171:88
-A	@	VM171:83
-eval	@	VM171:83
-eval	@	VM171:83
-r	@	VM171:83
-s	@	VM171:83
-Promise.then		
-r	@	VM171:83
-s	@	VM171:83
-Promise.then		
-r	@	VM171:83
-s	@	VM171:83
-eval	@	VM171:83
-eval	@	VM171:83
-eval	@	VM171:88
-getScriptList	@	VM171:88
-f	@	VM171:88
-setTimeout		
-wrapper.<computed>	@	28d16200-3ed0-45b0-9c6e-55efbd9203c0:239
-eval	@	VM171:88
-openPage	@	VM171:88
-eval	@	VM171:88
-Promise.then		
-fn.onMessage	@	VM171:88
-eval	@	VM171:88
-eval	@	VM171:88
-value	@	VM171:88
-value	@	VM171:88
-s.emit	@	VM171:86
-sendMessage	@	VM171:88
-value	@	VM171:88
-eval	@	VM171:88
-eval	@	VM171:88
-Promise.then		
-a	@	VM171:88
-149	@	VM171:88
-n	@	VM171:88
-eval	@	VM171:88
-e.contentScriptIndex	@	VM171:88
-eval	@	VM171:88
-value	@	VM171:88
-value	@	VM171:88
-eval	@	VM171:88
-eval	@	VM171:88
-value	@	VM171:88
-value	@	VM171:88
-value	@	VM171:88
-eval	@	VM171:88
-setTimeout		
-wrapper.<computed>	@	28d16200-3ed0-45b0-9c6e-55efbd9203c0:239
-eval	@	VM171:88
-eval	@	VM171:88
-value	@	VM171:88
-value	@	VM171:88
-value	@	VM171:88
-value	@	VM171:88
-t	@	VM171:88
-eval	@	VM171:88
-n	@	VM171:83
-eval	@	VM171:83
-eval	@	VM171:83
-eval	@	VM171:90
-eval	@	VM171:91
-runCode	@	28d16200-3ed0-45b0-9c6e-55efbd9203c0:119
-buildCode	@	28d16200-3ed0-45b0-9c6e-55efbd9203c0:620
-run	@	28d16200-3ed0-45b0-9c6e-55efbd9203c0:632
-comm.load	@	28d16200-3ed0-45b0-9c6e-55efbd9203c0:645
-(anonymous)	@	28d16200-3ed0-45b0-9c6e-55efbd9203c0:671
-﻿

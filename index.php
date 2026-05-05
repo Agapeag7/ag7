@@ -276,11 +276,8 @@ if (isset($_SESSION['user_id'])) {
           <div class="profile-avatar-large" id="profileAvatar">AG</div>
           <button class="change-profile-btn"><i class="fas fa-camera"></i></button>
         </div>
-        <div class="profile-actions" id="profileActionsContainer">
+        <div class="profile-actions">
           <button class="btn-primary edit-profile-btn"><i class="fas fa-pen"></i> Modifier le profil</button>
-          <!-- Boutons Suivre/Abonné et Message (affichés pour les autres profils) -->
-          <button class="btn-primary follow-profile-btn" id="followProfileBtn" style="display: none;"><i class="fas fa-user-plus"></i> Suivre</button>
-          <button class="btn-secondary message-profile-btn" id="messageProfileBtn" style="display: none;"><i class="fas fa-envelope"></i> Message</button>
         </div>
       </div>
       <div class="profile-bio">
@@ -630,6 +627,33 @@ if (isset($_SESSION['user_id'])) {
         <div class="delete-post-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
           <button type="button" id="cancelDeleteBtn" class="btn-secondary">Annuler</button>
           <button type="button" id="confirmDeleteBtn" class="btn-danger" style="background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">Supprimer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Vue Profil Utilisateur -->
+    <div id="userProfileModal" class="user-profile-modal hidden">
+      <div class="user-profile-card">
+        <button class="user-profile-close">&times;</button>
+        <div class="user-profile-header">
+          <div class="user-profile-cover" id="userProfileCover"></div>
+          <div class="user-profile-avatar" id="userProfileAvatar">AG</div>
+          <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: none; position: absolute; top: 12px; right: 12px; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; background: var(--emerald-500); color: white;">Suivre</button>
+        </div>
+        <div class="user-profile-info">
+          <h2 id="userProfileName">Nom utilisateur</h2>
+          <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@username</p>
+          <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;"></p>
+          <div class="user-profile-stats">
+            <div class="stat-item">
+              <span class="stat-number" id="userProfileFollowersCount">0</span>
+              <span class="stat-label">Abonnés</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="userProfileFollowingCount">0</span>
+              <span class="stat-label">Abonnements</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

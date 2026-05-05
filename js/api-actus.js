@@ -302,6 +302,36 @@ const ActusAPI = {
       console.error('Erreur deleteComment:', error);
       return { success: false, message: error.message };
     }
+  },
+
+  // ===== PROFIL UTILISATEUR =====
+
+  /**
+   * Récupérer le profil d'un utilisateur
+   * @param {number} user_id - ID de l'utilisateur
+   */
+  async getUserProfile(user_id) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('action', 'getUserProfile');
+      url.searchParams.set('user_id', user_id);
+
+      const response = await fetch(url.toString(), {
+          method: 'GET',
+          credentials: 'same-origin'
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Erreur lors du chargement du profil');
+      }
+
+      return { success: true, profile: data.profile };
+    } catch (error) {
+      console.error('Erreur getUserProfile:', error);
+      return { success: false, message: error.message };
+    }
   }
 };
 
