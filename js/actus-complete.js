@@ -15,27 +15,26 @@ let actusState = {
 // postImages et currentUserId sont déclarés globalement
 let currentUserId = null;
 
-let postImages = [];
-
 // ===== INITIALISATION AU CHARGEMENT =====
-async function initActus() {
-    // Toujours attacher les écouteurs, même si l'application est cachée
-    await fetchCurrentUser();      // échoue gracieusement si pas connecté
-    setupActusNavigation();
-    setupActusUI();                // ← indispensable pour le bouton Publier
-
-    // Ne charger le feed que si la section app est visible
-    if (!document.getElementById('app-section').classList.contains('hidden')) {
-        await loadActusFeed();
-    }
-    setTimeout(() => { setupDeleteModal(); }, 100);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initActus);
-} else {
-    initActus();
-}
+document.addEventListener('DOMContentLoaded', async () => {
+  
+  // Récupérer l'ID utilisateur et ATTENDRE
+  await fetchCurrentUser();
+  
+  // Ensuite configurer l'UI
+  setupActusNavigation();
+  
+  setupActusUI();
+  
+  // FORCE LOAD THE FEED
+  await loadActusFeed();
+  
+  // Double-check modal initialization
+  setTimeout(() => {
+    setupDeleteModal();
+  }, 100);
+  
+});
 
 // ===== CONFIGURATION NAVIGATION ACTUS =====
 function setupActusNavigation() {
@@ -67,12 +66,10 @@ function setupActusNavigation() {
 // ===== CONFIGURATION UI ACTUS =====
 function setupActusUI() {
   // Bouton publication
-  document.addEventListener('click', (e) => {
-    if (e.target.id === 'publishPostBtn' || e.target.closest('#publishPostBtn')) {
-      e.preventDefault();
-      handlePublishPost(e);
-    }
-  });
+  const publishBtn = document.getElementById('publishPostBtn');
+  if (publishBtn) {
+    publishBtn.addEventListener('click', handlePublishPost);
+  }
   
   // Bouton ajout image
   const addImageBtn = document.getElementById('addImageBtn');
@@ -105,8 +102,7 @@ function setupActusUI() {
 async function fetchCurrentUser() {
   try {
     const response = await fetch(`${window.location.href}?action=getCurrentProfile`, {
-        method: 'GET',
-        credentials: 'same-origin'    // à ajouter
+      method: 'GET'
     });
     
     // Vérifier le statut de la réponse
@@ -199,6 +195,7 @@ function createPostElement(post) {
   const postDiv = document.createElement('div');
   postDiv.className = 'post-card';
   postDiv.dataset.id = post.id;
+  postDiv.dataset.authorId = post.user_id;
   
   const canDelete = currentUserId && parseInt(currentUserId) === parseInt(post.user_id);
   
@@ -276,8 +273,6 @@ function createPostElement(post) {
     const commentsPreview = document.createElement('div');
     commentsPreview.className = 'post-comments-preview';
     commentsPreview.style.marginTop = '8px';
-    commentsPreview.style.marginLeft = '15px';
-    commentsPreview.style.marginRight = '15px';
     commentsPreview.style.padding = '0 0 12px';
     commentsPreview.style.borderTop = '1px solid var(--border-light)';
     
@@ -290,14 +285,7 @@ function createPostElement(post) {
       const authorDisplay = comment.isAnonymous 
         ? '<i class="fas fa-mask" style="margin-right: 4px;"></i><strong>Anonyme</strong>'
         : `<strong>${escapeHtml(comment.author)}</strong>`;
-      
-      // Tronquer le commentaire à 50 caractères
-      let commentText = comment.text;
-      if (commentText.length > 50) {
-        commentText = commentText.substring(0, 50) + '…';
-      }
-      
-      commentLine.innerHTML = `${authorDisplay} <span style="margin-left: 6px;">${escapeHtml(commentText)}</span>`;
+      commentLine.innerHTML = `${authorDisplay} <span style="margin-left: 6px;">${escapeHtml(comment.text)}</span>`;
       commentsPreview.appendChild(commentLine);
     });
     
@@ -320,39 +308,42 @@ function createPostElement(post) {
   // Gestion carousel images
   if (post.images && post.images.length > 1) {
     let currentImageIndex = 0;
-    const imgEl = postDiv.querySelector('.post-image');
+    
+    const updateCarousel = () => {
+      const img = postDiv.querySelector('.post-image');
+      const counter = postDiv.querySelector('.feed-image-counter');
+      const prevBtn = postDiv.querySelector('.feed-image-prev');
+      const nextBtn = postDiv.querySelector('.feed-image-next');
+      
+      img.src = post.images[currentImageIndex];
+      counter.textContent = `${currentImageIndex + 1} / ${post.images.length}`;
+      
+      prevBtn.style.opacity = currentImageIndex === 0 ? '0.3' : '1';
+      prevBtn.style.cursor = currentImageIndex === 0 ? 'default' : 'pointer';
+      nextBtn.style.opacity = currentImageIndex === post.images.length - 1 ? '0.3' : '1';
+      nextBtn.style.cursor = currentImageIndex === post.images.length - 1 ? 'default' : 'pointer';
+    };
+    
     const prevBtn = postDiv.querySelector('.feed-image-prev');
     const nextBtn = postDiv.querySelector('.feed-image-next');
-    const counter = postDiv.querySelector('.feed-image-counter');
-
-    const updateCarousel = () => {
-      // Trigger animation by removing and re-adding animation class
-      imgEl.style.animation = 'none';
-      // Force reflow
-      void imgEl.offsetWidth;
-      imgEl.style.animation = 'slideIn 0.5s ease-in-out';
-      
-      imgEl.src = post.images[currentImageIndex];
-      counter.textContent = `${currentImageIndex + 1} / ${post.images.length}`;
-      prevBtn.style.opacity = currentImageIndex === 0 ? '0.3' : '1';
-      nextBtn.style.opacity = currentImageIndex === post.images.length - 1 ? '0.3' : '1';
-    };
-
-    prevBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (currentImageIndex > 0) {
-        currentImageIndex--;
-        updateCarousel();
-      }
-    });
-
-    nextBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (currentImageIndex < post.images.length - 1) {
-        currentImageIndex++;
-        updateCarousel();
-      }
-    });
+    
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (currentImageIndex > 0) {
+          currentImageIndex--;
+          updateCarousel();
+        }
+      });
+    }
+    
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (currentImageIndex < post.images.length - 1) {
+          currentImageIndex++;
+          updateCarousel();
+        }
+      });
+    }
   }
   
   return postDiv;
@@ -377,34 +368,34 @@ function attachPostEvents() {
       });
     });
 
-    // Ajouter les event listeners pour les clics sur le profil utilisateur
+    // Ajouter les event listeners pour ouvrir le profil utilisateur
     const postAvatars = document.querySelectorAll('.post-avatar');
+    const postAuthors = document.querySelectorAll('.post-author');
+    
+    const openUserProfile = async (post) => {
+      if (!post || !post.user_id) return;
+      await displayUserProfile(post.user_id);
+    };
+    
     postAvatars.forEach(avatar => {
       avatar.style.cursor = 'pointer';
       avatar.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Récupérer l'ID utilisateur depuis le post
         const postCard = avatar.closest('.post-card');
         const postId = parseInt(postCard.dataset.id);
         const post = actusState.posts.find(p => p.id === postId);
-        if (post && post.user_id) {
-          openUserProfile(post.user_id);
-        }
+        openUserProfile(post);
       });
     });
-
-    const postAuthors = document.querySelectorAll('.post-author');
+    
     postAuthors.forEach(author => {
       author.style.cursor = 'pointer';
       author.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Récupérer l'ID utilisateur depuis le post
         const postCard = author.closest('.post-card');
         const postId = parseInt(postCard.dataset.id);
         const post = actusState.posts.find(p => p.id === postId);
-        if (post && post.user_id) {
-          openUserProfile(post.user_id);
-        }
+        openUserProfile(post);
       });
     });
     
@@ -527,7 +518,6 @@ function createCommentElement(comment, postId, isReply = false) {
   wrapper.style.padding = '12px';
   wrapper.style.marginBottom = '8px';
   wrapper.style.borderRadius = '12px';
-  wrapper.style.position = 'relative';
   
   const authorHtml = comment.isAnonymous
     ? `<i class="fas fa-mask" style="margin-right: 6px;"></i><strong>Anonyme</strong>`
@@ -536,15 +526,22 @@ function createCommentElement(comment, postId, isReply = false) {
   const date = new Date(comment.timestamp);
   const timeStr = date.toLocaleString('fr-FR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
 
+  // Déterminer si l'utilisateur actuel peut supprimer le commentaire
+  const isCommentAuthor = currentUserId && comment.user_id && currentUserId === comment.user_id;
+  const postCard = document.querySelector(`.post-card[data-id="${postId}"]`);
+  const postAuthorId = postCard ? parseInt(postCard.dataset.authorId) : null;
+  const isPostAuthor = currentUserId && postAuthorId && currentUserId === postAuthorId;
+  const canDeleteComment = isCommentAuthor || isPostAuthor;
+
   wrapper.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
       <div>${authorHtml} <span style="font-size:12px; color:var(--text-secondary);">• ${timeStr}</span></div>
-      <div style="display: flex; gap: 4px; align-items: center;">
+      <div style="display: flex; gap: 8px; align-items: center;">
         <button class="comment-like-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px;">
           <i class="fas fa-heart"></i> <span class="like-count">${comment.likes}</span>
         </button>
-        <button class="comment-delete-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s;">
-          <i class="fas fa-trash"></i>
+        <button class="comment-delete-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); padding: 4px 8px; transition: 0.2s; ${canDeleteComment ? 'display:block;' : 'display:none;'}" title="Supprimer le commentaire">
+          <i class="fas fa-trash-alt"></i>
         </button>
       </div>
     </div>
@@ -582,36 +579,16 @@ function createCommentElement(comment, postId, isReply = false) {
     });
   }
 
-  // Gestion du bouton de suppression
   const deleteBtn = wrapper.querySelector('.comment-delete-btn');
-  if (deleteBtn) {
-    // Afficher/masquer le bouton au survol
-    wrapper.addEventListener('mouseenter', () => {
-      deleteBtn.style.opacity = '1';
-      deleteBtn.style.visibility = 'visible';
-      deleteBtn.style.color = '#ef4444';
-    });
-    wrapper.addEventListener('mouseleave', () => {
-      deleteBtn.style.opacity = '0';
-      deleteBtn.style.visibility = 'hidden';
-      deleteBtn.style.color = 'var(--text-secondary)';
-    });
-
-    // Afficher le bouton au toucher (mobile)
-    wrapper.addEventListener('touchstart', () => {
-      deleteBtn.style.opacity = '1';
-      deleteBtn.style.visibility = 'visible';
-      deleteBtn.style.color = '#ef4444';
-    });
-
+  if (deleteBtn && canDeleteComment) {
     deleteBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      const commentId = parseInt(deleteBtn.dataset.commentId);
       if (confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
+        const commentId = parseInt(deleteBtn.dataset.commentId);
         const result = await ActusAPI.deleteComment(commentId);
         if (result.success) {
           showNotification('success', 'Succès', 'Commentaire supprimé');
-          wrapper.remove();
+          // Recharger les commentaires
           await openCommentsModal(postId);
           updatePostCommentCount(postId);
         } else {
@@ -619,6 +596,15 @@ function createCommentElement(comment, postId, isReply = false) {
         }
       }
     });
+
+    // Afficher/masquer le bouton au survol
+    wrapper.addEventListener('mouseenter', () => {
+      deleteBtn.style.opacity = '1';
+    });
+    wrapper.addEventListener('mouseleave', () => {
+      deleteBtn.style.opacity = '0.7';
+    });
+    deleteBtn.style.opacity = '0.7';
   }
 
   return wrapper;
@@ -751,47 +737,139 @@ function setupDeleteModal() {
   }
 }
 
+// ===== AFFICHER PROFIL UTILISATEUR =====
+async function displayUserProfile(userId) {
+  try {
+    const modal = document.getElementById('userProfileModal');
+    if (!modal) {
+      console.warn('Profile modal NOT FOUND');
+      return;
+    }
+
+    // Afficher le loading
+    modal.classList.remove('hidden');
+
+    // Récupérer les infos utilisateur
+    const response = await fetch(`${window.location.href}?action=getUserProfile&user_id=${userId}`, {
+      method: 'GET'
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      showNotification('error', 'Erreur', 'Impossible de charger le profil');
+      modal.classList.add('hidden');
+      return;
+    }
+
+    const profile = data.profile;
+
+    // Remplir le modal avec les données
+    document.getElementById('userProfileName').textContent = profile.user_name || 'Utilisateur';
+    document.getElementById('userProfileUsername').textContent = '@' + (profile.user_username || 'user');
+    document.getElementById('userProfileBio').textContent = profile.user_bio || '';
+    document.getElementById('userProfileLocation').textContent = profile.user_location || 'Localisation inconnue';
+    document.getElementById('userProfileMemberSince').textContent = 'Membre depuis ' + (profile.member_since || 'Janvier 2024');
+    document.getElementById('userProfileFollowersCount').textContent = profile.followers_count || 0;
+    document.getElementById('userProfileFollowingCount').textContent = profile.following_count || 0;
+
+    // Définir les images
+    const avatarEl = document.getElementById('userProfileAvatar');
+    const coverEl = document.getElementById('userProfileCover');
+
+    if (profile.user_photo_url) {
+      avatarEl.style.backgroundImage = `url('imgApp/${profile.user_photo_url}')`;
+      avatarEl.style.backgroundSize = 'cover';
+      avatarEl.style.backgroundPosition = 'center';
+      avatarEl.textContent = '';
+    } else {
+      avatarEl.style.backgroundImage = '';
+      avatarEl.textContent = profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    if (profile.user_cover_photo_url) {
+      coverEl.style.backgroundImage = `url('imgApp/${profile.user_cover_photo_url}')`;
+    }
+
+    // Gérer le bouton Suivre
+    const followBtn = document.getElementById('userProfileFollowBtn');
+    if (followBtn) {
+      if (currentUserId && parseInt(currentUserId) === parseInt(userId)) {
+        // C'est le profil de l'utilisateur courant - masquer le bouton
+        followBtn.style.display = 'none';
+      } else {
+        // Montrer le bouton Suivre
+        followBtn.style.display = 'block';
+        followBtn.onclick = async (e) => {
+          e.preventDefault();
+          // TODO: Implémenter la logique de suivi
+          showNotification('info', 'Info', 'La fonction de suivi sera bientôt disponible');
+        };
+      }
+    }
+
+    // Gérer la fermeture du modal
+    const closeBtn = document.querySelector('.user-profile-close');
+    if (closeBtn) {
+      closeBtn.onclick = () => modal.classList.add('hidden');
+    }
+
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.classList.add('hidden');
+    };
+
+  } catch (error) {
+    console.error('Erreur displayUserProfile:', error);
+    showNotification('error', 'Erreur', 'Une erreur est survenue');
+    document.getElementById('userProfileModal').classList.add('hidden');
+  }
+}
+
 // ===== PUBLIER UN POST =====
 async function handlePublishPost(e) {
   const content = document.getElementById('postContent').value.trim();
+  
   if (!content && postImages.length === 0) {
     showNotification('warning', 'Champs vides', 'Écrivez du texte ou ajoutez une image');
     return;
   }
-
+  
   const btn = e.currentTarget;
   btn.disabled = true;
-  btn.textContent = 'Publication';
-
-  const imageFiles = postImages.filter(img => img.file).map(img => img.file);
-
+  btn.textContent = 'Publication en cours...';
+  
+  // Collecteur les fichiers images
+  const imageFiles = postImages
+    .filter(img => img.file)
+    .map(img => img.file);
+  
+  
   const result = await ActusAPI.createPost(content, 'public', imageFiles);
-
+  
   btn.disabled = false;
   btn.textContent = 'Publier';
-
+  
   if (result.success) {
     showNotification('success', 'Publié', result.message);
     document.getElementById('postContent').value = '';
     postImages = [];
     renderImagePreview();
-    await loadActusFeed(); // recharge le feed
+    
+    
+    // SIMPLE: Recharger le feed complètement pour éviter les duplicatas
+    await loadActusFeed();
+    
   } else {
     showNotification('error', 'Erreur', result.message);
   }
 }
 
+
 // ===== SÉLECTIONNER IMAGES =====
 function handleImageSelect(e) {
   const files = Array.from(e.target.files);
-  if (!files.length) return;
-
+  
   files.forEach(file => {
-    // Vérifier que c'est bien une image
-    if (!file.type.startsWith('image/')) {
-      showNotification('warning', 'Format non supporté', 'Seules les images sont autorisées');
-      return;
-    }
     const reader = new FileReader();
     reader.onload = (event) => {
       postImages.push({
@@ -802,35 +880,39 @@ function handleImageSelect(e) {
     };
     reader.readAsDataURL(file);
   });
-  e.target.value = ''; // permit re-upload
+  
+  e.target.value = '';
 }
 
 // ===== AFFICHER APERÇU IMAGES =====
 function renderImagePreview() {
   const preview = document.getElementById('postImagesPreview');
-  const grid = preview?.querySelector('.preview-grid');
-  if (!grid) return;
-
+  const grid = preview.querySelector('.preview-grid');
+  
   if (postImages.length === 0) {
     preview.style.display = 'none';
     return;
   }
-
+  
   preview.style.display = 'block';
   grid.innerHTML = '';
-
+  
   postImages.forEach((img, idx) => {
     const div = document.createElement('div');
     div.style.cssText = 'position: relative; border-radius: 8px; overflow: hidden;';
     div.innerHTML = `
       <img src="${img.src}" style="width: 100%; height: 150px; object-fit: cover;">
-      <button data-index="${idx}" class="remove-img-btn" style="position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.7); color: white; border: none; cursor: pointer;">✕</button>
+      <button data-index="${idx}" style="position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.7); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        ✕
+      </button>
     `;
-    div.querySelector('.remove-img-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
+    
+    const removeBtn = div.querySelector('button');
+    removeBtn.addEventListener('click', () => {
       postImages.splice(idx, 1);
       renderImagePreview();
     });
+    
     grid.appendChild(div);
   });
 }
@@ -902,130 +984,4 @@ function escapeHtml(text) {
 
 function getUserId() {
   return currentUserId || 0;
-}
-
-// ===== OUVRIR PROFIL UTILISATEUR =====
-async function openUserProfile(userId) {
-  const modal = document.getElementById('userProfileModal');
-  if (!modal) {
-    console.error('User profile modal NOT FOUND');
-    return;
-  }
-
-  // Charger le profil utilisateur
-  const result = await ActusAPI.getUserProfile(userId);
-  if (!result.success) {
-    showNotification('error', 'Erreur', result.message || 'Impossible de charger le profil');
-    return;
-  }
-
-  const profile = result.profile;
-
-  // Mettre à jour la modal avec les infos du profil
-  document.getElementById('userProfileName').textContent = profile.user_name || 'Utilisateur';
-  document.getElementById('userProfileUsername').textContent = `@${profile.user_username || 'user'}`;
-  document.getElementById('userProfileBio').textContent = profile.user_bio || 'Pas de biographie';
-  document.getElementById('userProfileFollowersCount').textContent = profile.followers_count || 0;
-  document.getElementById('userProfileFollowingCount').textContent = profile.following_count || 0;
-
-  // Mettre à jour l'avatar
-  const avatar = document.getElementById('userProfileAvatar');
-  if (profile.user_photo_url) {
-    avatar.style.backgroundImage = `url('imgApp/${profile.user_photo_url}')`;
-    avatar.textContent = '';
-  } else {
-    avatar.style.backgroundImage = 'none';
-    avatar.textContent = (profile.user_name || 'User').substring(0, 2).toUpperCase();
-  }
-
-  // Mettre à jour la photo de couverture si elle existe
-  const cover = document.getElementById('userProfileCover');
-  if (profile.user_cover_url) {
-    cover.style.backgroundImage = `url('imgApp/${profile.user_cover_url}')`;
-  }
-
-  // Gérer le bouton Suivre
-  const followBtn = document.getElementById('userProfileFollowBtn');
-  if (parseInt(userId) === parseInt(currentUserId)) {
-    // C'est le profil de l'utilisateur courant
-    followBtn.style.display = 'none';
-  } else {
-    // C'est un autre utilisateur
-    followBtn.style.display = 'block';
-    followBtn.textContent = profile.is_following ? 'Ne plus suivre' : 'Suivre';
-    followBtn.classList.toggle('following', profile.is_following);
-    followBtn.onclick = async () => {
-      const followResult = profile.is_following 
-        ? await unfollowUser(userId)
-        : await followUser(userId);
-      if (followResult.success) {
-        profile.is_following = !profile.is_following;
-        followBtn.textContent = profile.is_following ? 'Ne plus suivre' : 'Suivre';
-        followBtn.classList.toggle('following', profile.is_following);
-        showNotification('success', '', profile.is_following ? 'Vous suivez cet utilisateur' : 'Vous ne suivez plus cet utilisateur');
-      }
-    };
-  }
-
-  // Afficher la modal
-  modal.classList.remove('hidden');
-
-  // Gérer la fermeture
-  const closeBtn = modal.querySelector('.user-profile-close');
-  const closeModal = () => modal.classList.add('hidden');
-  if (closeBtn) closeBtn.onclick = closeModal;
-  modal.onclick = (e) => {
-    if (e.target === modal) closeModal();
-  };
-}
-
-// ===== SUIVRE/NE PLUS SUIVRE UN UTILISATEUR =====
-async function followUser(userId) {
-  try {
-    const formData = new FormData();
-    formData.append('action', 'follow');
-    formData.append('followed_id', userId);
-
-    const response = await fetch(window.location.href, {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: formData
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Erreur lors du suivi');
-    }
-
-    return { success: true, message: data.message };
-  } catch (error) {
-    console.error('Erreur followUser:', error);
-    return { success: false, message: error.message };
-  }
-}
-
-async function unfollowUser(userId) {
-  try {
-    const formData = new FormData();
-    formData.append('action', 'unfollow');
-    formData.append('followed_id', userId);
-
-    const response = await fetch(window.location.href, {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: formData
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Erreur lors du désabonnement');
-    }
-
-    return { success: true, message: data.message };
-  } catch (error) {
-    console.error('Erreur unfollowUser:', error);
-    return { success: false, message: error.message };
-  }
 }

@@ -8,7 +8,33 @@
 
 
 
-* A venir :
+* A Realiser :
+- on refais ce modale sur base du style et forme des images de reference :
+<div id="userProfileModal" class="user-profile-modal">
+      <div class="user-profile-card">
+        <button class="user-profile-close">×</button>
+        <div class="user-profile-header">
+          <div class="user-profile-cover" id="userProfileCover"></div>
+          <div class="user-profile-avatar" id="userProfileAvatar" style="background-image: url(&quot;imgApp/profile_1777810313_69f73b89bf235.jpg&quot;);"></div>
+          <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: block; position: absolute; top: 12px; right: 12px; padding: 8px 16px; border-radius: 20px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; font-weight: 600; transition: 0.2s; background: var(--emerald-500); color: white;">Suivre</button>
+        </div>
+        <div class="user-profile-info">
+          <h2 id="userProfileName">Thanks Muhongya</h2>
+          <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@ThanksCode</p>
+          <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;">Seul l'avenir nous dira qui nous sommes</p>
+          <div class="user-profile-stats">
+            <div class="stat-item">
+              <span class="stat-number" id="userProfileFollowersCount">0</span>
+              <span class="stat-label">Abonnés</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="userProfileFollowingCount">0</span>
+              <span class="stat-label">Abonnements</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-
-
+- Les seuls qui peuvent voir afficher l'icone de suppression de commentaire : la personne à qui appartient le commentaire et la personne à qui appartient la publication
+- A corriger (le bouton : <button id="publishPostBtn" class="btn-primary">Publier</button>) quand on publie il faut que le texte du bouton change pour afficher a l'utilisateur que la publication est en cours

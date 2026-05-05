@@ -199,7 +199,6 @@ let currentUserProfile = {
       // Envoyer au backend
       fetch(window.location.href, {
         method: 'POST',
-        credentials: 'same-origin',
         body: formData
       })
       .then(response => {
@@ -252,6 +251,7 @@ let currentUserProfile = {
             
             // Charger les données réelles du profil depuis le serveur
             await loadCurrentProfile();
+            updateProfileUI();
             
             authForm.reset();
             setAuthMode(true);
@@ -422,20 +422,18 @@ let currentUserProfile = {
       
       // Charger le profil réel quand on accède à la section profil
       if (viewId === 'profile') {
-        loadCurrentProfile();
+        loadCurrentProfile().then(() => {
+          updateProfileUI();
+        });
       }
       
       // Charger le feed Actus quand on accède à la section feed
       if (viewId === 'feed') {
-        // Charger les publications
+        // Attendre que loadActusFeed soit disponible
         if (typeof loadActusFeed === 'function') {
           loadActusFeed();
         } else {
           console.warn('loadActusFeed non disponible');
-        }
-        // Charger les stories
-        if (typeof loadAndRenderStories === 'function') {
-          loadAndRenderStories();
         }
       }
     }
@@ -1059,7 +1057,6 @@ let currentUserProfile = {
 
 
   // ========== GESTION DES STORIES ==========
-// ========== GESTION DES STORIES ==========
 const storyModal = document.getElementById('storyModal');
 const storyImage = document.getElementById('storyImage');
 const storyCaption = document.querySelector('.story-caption');
@@ -1076,8 +1073,16 @@ const publishStoryBtn = document.getElementById('publishStoryBtn');
 const cancelStoryBtn = document.getElementById('cancelStoryBtn');
 const storiesContainer = document.getElementById('storiesContainer');
 
-let selectedStoryImageFile = null; // Stocke le fichier File pour l'upload
-let currentDisplayedStories = [];   // Stories actuellement affichées dans le carousel
+// Données simulées des stories
+let userStories = [];
+
+let otherStories = [
+  { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), viewers: 124 },
+  { id: 'thomas-1', type: 'text-image', text: 'Nouveau projet excitant !', image: 'https://randomuser.me/api/portraits/men/32.jpg', userName: 'Thomas', timestamp: new Date(Date.now() - 30 * 60 * 1000), viewers: 87 },
+  { id: 'sophie-1', type: 'text-image', text: 'En pleine réflexion...', image: 'https://randomuser.me/api/portraits/women/45.jpg', userName: 'Sophie', timestamp: new Date(Date.now() - 15 * 60 * 1000), viewers: 156 },
+];
+
+let selectedStoryImage = null;
 
 // Upload image pour story
 uploadStoryImageBtn.addEventListener('click', () => storyImageInput.click());
@@ -1085,10 +1090,10 @@ uploadStoryImageBtn.addEventListener('click', () => storyImageInput.click());
 storyImageInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
-    selectedStoryImageFile = file;
     const reader = new FileReader();
     reader.onload = (event) => {
-      storyImagePreview.src = event.target.result;
+      selectedStoryImage = event.target.result;
+      storyImagePreview.src = selectedStoryImage;
       storyImagePreview.style.display = 'block';
       uploadStoryImageBtn.disabled = true;
       uploadStoryImageBtn.style.opacity = '0.5';
@@ -1102,7 +1107,7 @@ storyImageInput.addEventListener('change', (e) => {
 addStoryBtn.addEventListener('click', () => {
   createStoryModal.classList.remove('hidden');
   storyTextInput.value = '';
-  selectedStoryImageFile = null;
+  selectedStoryImage = null;
   storyImagePreview.style.display = 'none';
   storyImageInput.value = '';
   uploadStoryImageBtn.disabled = false;
@@ -1118,7 +1123,6 @@ createStoryClose.addEventListener('click', () => {
   uploadStoryImageBtn.style.opacity = '1';
   uploadStoryImageBtn.style.cursor = 'pointer';
 });
-
 cancelStoryBtn.addEventListener('click', () => {
   createStoryModal.classList.add('hidden');
   storyImageInput.value = '';
@@ -1126,27 +1130,7 @@ cancelStoryBtn.addEventListener('click', () => {
   uploadStoryImageBtn.style.opacity = '1';
   uploadStoryImageBtn.style.cursor = 'pointer';
 });
-
 storyClose.addEventListener('click', () => storyModal.classList.add('hidden'));
-
-// Bouton suppression story
-const storyDeleteBtn = document.getElementById('storyDeleteBtn');
-if (storyDeleteBtn) {
-  storyDeleteBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette story ?')) {
-      const storyId = storyDeleteBtn.dataset.storyId;
-      const result = await StoriesAPI.deleteStory(storyId);
-      if (result.success) {
-        showNotification('success', 'Succès', 'Story supprimée');
-        storyModal.classList.add('hidden');
-        await loadAndRenderStories();
-      } else {
-        showNotification('error', 'Erreur', result.message || 'Impossible de supprimer la story');
-      }
-    }
-  });
-}
 
 createStoryModal.addEventListener('click', (e) => {
   if (e.target === createStoryModal) createStoryModal.classList.add('hidden');
@@ -1156,183 +1140,83 @@ storyModal.addEventListener('click', (e) => {
   if (e.target === storyModal) storyModal.classList.add('hidden');
 });
 
-// Publier une story (appel API)
-publishStoryBtn.addEventListener('click', async () => {
+// Publier une story
+publishStoryBtn.addEventListener('click', () => {
   const text = storyTextInput.value.trim();
+  const image = selectedStoryImage || 'https://picsum.photos/id/50/600/800';
   
-  if (!text && !selectedStoryImageFile) {
-    showNotification('warning', 'Contenu vide', 'Ajoutez du texte ou une image');
-    return;
-  }
+  const newStory = {
+    id: 'user-story-' + Date.now(),
+    type: 'text-image',
+    text: text || 'Nouvelle story !',
+    image: image,
+    userName: 'Vous',
+    timestamp: new Date()
+  };
   
-  publishStoryBtn.disabled = true;
-  publishStoryBtn.textContent = 'Publication...';
-  
-  const result = await StoriesAPI.createStory(text, selectedStoryImageFile);
-  
-  publishStoryBtn.disabled = false;
-  publishStoryBtn.textContent = 'Publier la story';
-  
-  if (result.success) {
-    showNotification('success', 'Story publiée', 'Votre story est en ligne pour 24h');
-    createStoryModal.classList.add('hidden');
-    // Recharger le flux des stories
-    await loadAndRenderStories();
-  } else {
-    showNotification('error', 'Erreur', result.message || 'Impossible de publier la story');
-  }
+  userStories.push(newStory);
+  renderStories();
+  createStoryModal.classList.add('hidden');
 });
 
-/**
- * Charge les stories depuis l'API et les affiche
- */
-async function loadAndRenderStories() {
-  const result = await StoriesAPI.getActiveStories();
-  if (!result.success) return;
-
-  const allStories = result.stories || [];
-  const storiesByUser = {};
-  allStories.forEach(story => {
-    const uid = story.story_user_id;
-    if (!storiesByUser[uid]) storiesByUser[uid] = [];
-    storiesByUser[uid].push(story);
-  });
-
-  // Trier : utilisateur courant en premier, puis par date de dernière story
-  const sortedUserIds = Object.keys(storiesByUser).sort((a, b) => {
-    if (a == currentUserId) return -1;
-    if (b == currentUserId) return 1;
-    const lastA = storiesByUser[a][0];
-    const lastB = storiesByUser[b][0];
-    return new Date(lastB.story_created_at) - new Date(lastA.story_created_at);
-  });
-
-  // Reconstruire l'interface
+// Afficher les stories
+function renderStories() {
   storiesContainer.innerHTML = '';
+  
+  // Bouton ajouter story
   const addBtn = document.createElement('div');
   addBtn.className = 'story-item';
   addBtn.id = 'addStoryBtn';
-  addBtn.innerHTML = `<div class="story-avatar add-story"><i class="fas fa-plus"></i></div><span class="story-name">Votre story</span>`;
+  addBtn.innerHTML = `
+    <div class="story-avatar add-story">
+      <i class="fas fa-plus"></i>
+    </div>
+    <span class="story-name">Votre story</span>
+  `;
   addBtn.addEventListener('click', () => createStoryModal.classList.remove('hidden'));
   storiesContainer.appendChild(addBtn);
-
-  for (const uid of sortedUserIds) {
-    const userStories = storiesByUser[uid];
-    const first = userStories[0];
-    const userName = first.user_name || 'Utilisateur';
-    const userPhoto = first.user_photo_url 
-      ? (first.user_photo_url.startsWith('http') ? first.user_photo_url : 'imgApp/' + first.user_photo_url)
-      : '';
+  
+  // Stories de l'utilisateur - avec compteur de vues
+  userStories.forEach(story => {
     const storyEl = document.createElement('div');
     storyEl.className = 'story-item';
     storyEl.innerHTML = `
-      <div class="story-avatar" style="${userPhoto ? `background-image: url('${userPhoto}');` : ''}">
-        ${!userPhoto ? userName.substring(0,2).toUpperCase() : ''}
-      </div>
-      <span class="story-name">${userName}</span>
+      <div class="story-avatar" style="background-image: url('${story.image}');"></div>
+      <span class="story-name">${story.userName}</span>
     `;
-    storyEl.addEventListener('click', async () => {
-      if (userStories.length > 0) await StoriesAPI.viewStory(userStories[0].story_id);
-      openStoryCarousel(userStories);
-    });
+    storyEl.addEventListener('click', () => openStory(story.image, story.text, story.viewers || 0, true));
     storiesContainer.appendChild(storyEl);
-  }
+  });
+  
+  // Stories des autres - pas de compteur de vues
+  otherStories.forEach(story => {
+    const storyEl = document.createElement('div');
+    storyEl.className = 'story-item';
+    storyEl.innerHTML = `
+      <div class="story-avatar" style="background-image: url('${story.image}');"></div>
+      <span class="story-name">${story.userName}</span>
+    `;
+    storyEl.addEventListener('click', () => openStory(story.image, story.text, 0, false));
+    storiesContainer.appendChild(storyEl);
+  });
 }
 
-/**
- * Ouvre le modal et affiche un carousel des stories d'un utilisateur
- */
-let currentStoryIndex = 0;
-let currentStoryList = [];
-
-function openStoryCarousel(stories) {
-  if (!stories || stories.length === 0) return;
-  
-  currentStoryList = stories;
-  currentStoryIndex = 0;
-  
-  displayCurrentStory();
+function openStory(imageUrl, caption, viewers = 0, isUserStory = false) {
+  storyImage.src = imageUrl;
+  storyCaption.textContent = caption || '';
+  const viewersCountEl = document.getElementById('storyViewersCount');
+  // Afficher le compteur SEULEMENT pour les stories de l'utilisateur
+  if (isUserStory && viewers > 0) {
+    viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${viewers}`;
+    viewersCountEl.style.display = 'flex';
+  } else {
+    viewersCountEl.style.display = 'none';
+  }
   storyModal.classList.remove('hidden');
 }
 
-function displayCurrentStory() {
-  const story = currentStoryList[currentStoryIndex];
-  if (!story) return;
-  
-  // Construire l'URL de l'image
-  let imageUrl = story.story_image_url;
-  if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
-    imageUrl = 'story/' + imageUrl;
-  } else if (!imageUrl) {
-    imageUrl = 'https://picsum.photos/id/50/600/800'; // fallback
-  }
-  
-  // Trigger animation
-  storyImage.style.animation = 'none';
-  // Force reflow
-  void storyImage.offsetWidth;
-  storyImage.style.animation = 'slideIn 0.5s ease-in-out';
-  
-  storyImage.src = imageUrl;
-  storyCaption.textContent = story.story_text || '';
-  
-  // Affichage du temps restant
-  const expiresAt = new Date(story.story_expires_at);
-  const now = new Date();
-  const diffHours = Math.max(0, (expiresAt - now) / (1000 * 60 * 60));
-  const remainingHours = Math.floor(diffHours);
-  const remainingMinutes = Math.floor((diffHours % 1) * 60);
-  let remainingText = '';
-  if (remainingHours > 0) {
-    remainingText = `${remainingHours}h ${remainingMinutes}m`;
-  } else {
-    remainingText = `${remainingMinutes}m`;
-  }
-  
-  // Afficher ou masquer le compteur de vues selon le propriétaire
-  const viewersCountEl = document.getElementById('storyViewersCount');
-  if (viewersCountEl) {
-    if (story.is_owner && story.viewers_count !== null) {
-      viewersCountEl.innerHTML = `<i class="fas fa-eye"></i> ${story.viewers_count} · expire dans ${remainingText}`;
-      viewersCountEl.style.display = 'flex';
-    } else {
-      viewersCountEl.innerHTML = `<i class="fas fa-hourglass-half"></i> expire dans ${remainingText}`;
-      viewersCountEl.style.display = 'flex';
-    }
-  }
-  
-  // Afficher/masquer le bouton de suppression selon le propriétaire
-  const deleteBtn = document.getElementById('storyDeleteBtn');
-  if (deleteBtn) {
-    if (story.is_owner) {
-      deleteBtn.style.display = 'block';
-      deleteBtn.dataset.storyId = story.story_id;
-    } else {
-      deleteBtn.style.display = 'none';
-    }
-  }
-}
-
-// Navigation entre les stories avec les touches du clavier
-document.addEventListener('keydown', (e) => {
-  if (storyModal.classList.contains('hidden')) return;
-  
-  if (e.key === 'ArrowRight' && currentStoryIndex < currentStoryList.length - 1) {
-    currentStoryIndex++;
-    displayCurrentStory();
-    // Enregistrer la vue pour cette story
-    StoriesAPI.viewStory(currentStoryList[currentStoryIndex].story_id);
-  } else if (e.key === 'ArrowLeft' && currentStoryIndex > 0) {
-    currentStoryIndex--;
-    displayCurrentStory();
-  } else if (e.key === 'Escape') {
-    storyModal.classList.add('hidden');
-  }
-});
-
-// On peut aussi ajouter des boutons de navigation dans le modal (optionnel)
-
-// ========== FIN GESTION DES STORIES ==========
+// Initialisation
+renderStories();
 
 // ========== GESTION DÉCOUVRIR (UTILISATEURS) ==========
 let followingUsers = new Set();
@@ -1400,9 +1284,104 @@ if (searchUsersInput) {
   });
 }
 
+// ========== GESTION DU FEED (PUBLICATIONS) ==========
+// ENTIÈREMENT GÉRÉE PAR actus-complete.js - NE RIEN MODIFIER ICI
+// Les commentaires sont maintenant persistants via ActusAPI.addComment()
+
+// Charger le feed depuis le backend
+// DISABLED - USE actus-complete.js INSTEAD
+/*
+async function loadFeed() {
+  try {
+    const response = await fetch(window.location.href + '?action=getFeed&limit=50&offset=0', {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      console.error('Erreur HTTP lors du chargement du feed:', response.status);
+      showNotification('error', 'Erreur', 'Impossible de charger le feed');
+      return false;
+    }
+
+    const text = await response.text();
+    
+    // Vérifier si la réponse est du HTML d'erreur
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+      console.error('Le serveur a retourné du HTML au lieu de JSON:');
+      console.error(text.substring(0, 500)); // Afficher les 500 premiers caractères
+      showNotification('error', 'Erreur serveur', 'Le serveur a retourné une erreur PHP');
+      return false;
+    }
+
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('Erreur JSON parsing:', parseErr);
+      console.error('Réponse reçue:', text.substring(0, 200));
+      showNotification('error', 'Erreur', 'Réponse invalide du serveur');
+      return false;
+    }
+    
+    if (!result.success) {
+      console.error('Erreur serveur:', result.message);
+      showNotification('error', 'Erreur', result.message || 'Impossible de charger le feed');
+      return false;
+    }
+
+    // Transformer les données du backend au format attendu par le frontend
+    posts = result.posts.map(post => ({
+      id: post.id,
+      author: post.author || 'Utilisateur',
+      username: post.username,
+      avatar: post.avatar,
+      content: post.content,
+      images: post.images || [],
+      time: new Date(post.timestamp).toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      likes: post.likes || 0,
+      liked: post.userHasLiked || false,
+      comments: post.commentsList || [],
+      user_id: post.user_id,
+      visibility: post.visibility
+    }));
+
+    // renderFeed(); // DISABLED
+    return true;
+  } catch (e) {
+    console.error('Erreur au chargement du feed:', e);
+    showNotification('error', 'Erreur', 'Une erreur est survenue');
+    return false;
+  }
+}
+*/
+
+// Charger le feed quand on arrive sur la page
+// DISABLED - actus-complete.js le fait maintenant au DOMContentLoaded
+/*
+document.addEventListener('DOMContentLoaded', () => {
+  // S'assurer que le profil est chargé avant de charger le feed
+  if (document.getElementById('view-feed')?.style.display !== 'none') {
+    loadFeed();
+  }
+});
+*/
+
 const feedContainer = document.getElementById('feedContainer');
 const publishBtn = document.getElementById('publishPostBtn');
 const postContentInput = document.getElementById('postContent');
+
+// Variables pour les images de post - DISABLED, utiliser actus-complete.js
+const addImageBtn = document.getElementById('addImageBtn');
+const postImageInput = document.getElementById('postImageInput');
+const postImagesPreview = document.getElementById('postImagesPreview');
+const clearImagesBtn = document.getElementById('clearImagesBtn');
+let postImages = [];
 
 // Variables pour le carousel - KEEP THESE (utilisées par openImageViewer d'actus-complete.js)
 const imageCarouselModal = document.getElementById('imageCarouselModal');
@@ -1418,6 +1397,44 @@ let currentImageIndex = 0;
 // Track carousel state per post
 let postImageIndices = {};
 let lastSlideDirection = 'next';  // 'next' or 'prev' to track slide direction
+
+
+
+function renderPostImagesPreview() {
+  const previewGrid = postImagesPreview.querySelector('.preview-grid');
+  previewGrid.innerHTML = '';
+  
+  if (postImages.length === 0) {
+    postImagesPreview.style.display = 'none';
+  } else {
+    postImagesPreview.style.display = 'block';
+    postImages.forEach((img, index) => {
+      const previewItem = document.createElement('div');
+      previewItem.className = 'preview-image';
+      previewItem.innerHTML = `
+        <img src="${img.src}" alt="preview" loading="lazy">
+        <button type="button" class="remove-image-btn" data-index="${index}">×</button>
+      `;
+      previewItem.querySelector('.remove-image-btn').addEventListener('click', () => {
+        postImages.splice(index, 1);
+        renderPostImagesPreview();
+      });
+      previewGrid.appendChild(previewItem);
+    });
+  }
+}
+
+// Publier un nouveau post
+// ===== DÉSACTIVÉ: Le handler pour le bouton Publier est maintenant dans actus-complete.js =====
+// Le handler dans actus-complete.js utilise ActusAPI pour la création de publication
+// Ce code ancien est conservé comme référence mais ne doit pas s'exécuter
+/*
+if (publishBtn) {
+  publishBtn.addEventListener('click', () => {
+    // OLD CODE - DISABLED - USE actus-complete.js INSTEAD
+  });
+}
+*/
 
 // ========== GESTION DU CAROUSEL D'IMAGES ==========
 
@@ -1530,7 +1547,6 @@ async function loadCurrentProfile() {
     
     const response = await fetch(window.location.href, {
       method: 'POST',
-      credentials: 'same-origin',
       body: formData
     });
     
@@ -1547,38 +1563,39 @@ async function loadCurrentProfile() {
     
     const profile = result.profile;
     
-    // Réinitialiser les données
+    // IMPORTANT : Réinitialiser TOUS les champs pour éviter les données fantômes lors d'un changement de compte
     currentUserProfile.profilePhoto = null;
     currentUserProfile.coverPhoto = null;
-    currentUserProfile.posts = [];
+    currentUserProfile.posts = []; // Réinitialiser les posts
     
-    // Remplir le profil
+    // Mettre à jour currentUserProfile avec les vraies données
     currentUserProfile.name = profile.user_name || "User";
     currentUserProfile.username = '@' + (profile.user_username || "user");
     currentUserProfile.bio = profile.user_bio || "Pas de bio";
     currentUserProfile.location = profile.user_location || "Localisation inconnue";
     currentUserProfile.memberSince = profile.member_since || "Janvier 2024";
-    currentUserProfile.userid = profile.user_id;
+    currentUserProfile.userid = profile.user_id; // Stocker l'ID utilisateur
     currentUserProfile.avatarInitials = profile.user_name
       ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
       : 'U';
     
+    // Définir la photo de profil
     if (profile.user_photo_url) {
       currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
     }
+    
+    // Définir la photo de couverture
     if (profile.user_cover_photo_url) {
       currentUserProfile.coverPhoto = getPhotoURL(profile.user_cover_photo_url);
     }
     
+    // Mettre à jour les stats RÉELLES de la base de données
     currentUserProfile.postsCount = profile.posts_count || 0;
     currentUserProfile.followers_count = profile.followers_count || 0;
     currentUserProfile.following_count = profile.following_count || 0;
     
-    // Charger les publications
+    // Charger les publications de l'utilisateur
     await loadUserPosts(profile.user_id);
-    
-    // METTRE À JOUR L'INTERFACE
-    updateProfileUI();
     
     return true;
   } catch (e) {
@@ -1586,28 +1603,26 @@ async function loadCurrentProfile() {
     return false;
   }
 }
+
 async function loadUserPosts(userId) {
   try {
-    // Construire l'URL absolue pour éviter les problèmes de chemin
-    const url = new URL(window.location.href);
-    url.searchParams.set('action', 'getUserPosts');
-    url.searchParams.set('user_id', userId);
-    url.searchParams.set('limit', 50);
-
-    const response = await fetch(url.toString());
+    const response = await fetch(`?action=getUserPosts&user_id=${userId}&limit=50`);
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const result = await response.json();
-
-    if (!result.success) {
-      console.error('Erreur getUserPosts:', result.message);
+      console.error('Erreur HTTP lors du chargement des posts:', response.status);
       currentUserProfile.posts = [];
       return;
     }
-
-    // Mapper les données reçues
-    currentUserProfile.posts = (result.posts || []).map(post => ({
+    
+    const result = await response.json();
+    if (!result.success) {
+      console.error('Erreur serveur:', result.message);
+      currentUserProfile.posts = [];
+      return;
+    }
+    
+    // Convertir les posts au format utilisé par la grille
+    currentUserProfile.posts = result.posts.map(post => ({
       id: post.id,
       author: post.author,
       username: post.username,
@@ -1615,16 +1630,16 @@ async function loadUserPosts(userId) {
       content: post.content,
       image: post.images && post.images.length > 0 ? post.images[0] : null,
       images: post.images || [],
-      likes: post.likes || 0,
-      comments: post.comments || 0,
-      userHasLiked: post.userHasLiked || false,
+      likes: post.likes,
+      comments: post.comments,
+      userHasLiked: post.userHasLiked,
       timestamp: post.timestamp,
       user_id: post.user_id,
       visibility: post.visibility
-    }));
-
+    })) || [];
+    
   } catch (e) {
-    console.error('Erreur loadUserPosts:', e);
+    console.error('Erreur au chargement des posts du profil:', e);
     currentUserProfile.posts = [];
   }
 }
@@ -1730,114 +1745,14 @@ function updateProfileUI() {
         // Click handler
         postCard.style.cursor = 'pointer';
         postCard.addEventListener('click', () => {
-          openPostDetailModal(post);
+          console.log('Publication cliquée:', post.id);
+          // TODO: Ouvrir la publication en modal
         });
         
         grid.appendChild(postCard);
       });
     }
   }
-}
-
-// ========== MODALE DÉTAILS POST (PROFIL) ==========
-const postDetailModal = document.getElementById('postDetailModal');
-const postDetailClose = document.querySelector('.post-detail-close');
-const postDetailDeleteBtn = document.getElementById('postDetailDeleteBtn');
-let currentDetailPost = null;
-
-function openPostDetailModal(post) {
-  currentDetailPost = post;
-  
-  // Remplir les données du post
-  document.getElementById('postDetailAuthor').textContent = post.author || 'Utilisateur';
-  document.getElementById('postDetailText').textContent = post.content || '';
-  document.getElementById('postDetailTime').textContent = formatTime(post.timestamp) || 'À l\'instant';
-  document.getElementById('postDetailLikes').textContent = post.likes || 0;
-  document.getElementById('postDetailComments').textContent = post.comments || 0;
-  
-  // Afficher/masquer l'image
-  const imageEl = document.getElementById('postDetailImage');
-  if (post.image || (post.images && post.images.length > 0)) {
-    imageEl.src = post.image || post.images[0];
-    imageEl.style.display = 'block';
-  } else {
-    imageEl.style.display = 'none';
-  }
-  
-  // Avatar
-  const avatarEl = document.getElementById('postDetailAvatar');
-  if (post.avatar && post.avatar.startsWith('http')) {
-    avatarEl.style.backgroundImage = `url('${post.avatar}')`;
-    avatarEl.textContent = '';
-  } else if (post.avatar && post.avatar.startsWith('imgApp')) {
-    avatarEl.style.backgroundImage = `url('${post.avatar}')`;
-    avatarEl.textContent = '';
-  } else {
-    avatarEl.style.backgroundImage = 'none';
-    avatarEl.textContent = (post.author || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  }
-  
-  // Afficher/masquer le bouton de suppression seulement si l'utilisateur est le propriétaire
-  if (currentUserId && parseInt(currentUserId) === parseInt(post.user_id)) {
-    postDetailDeleteBtn.style.display = 'block';
-  } else {
-    postDetailDeleteBtn.style.display = 'none';
-  }
-  
-  postDetailModal.classList.remove('hidden');
-}
-
-function formatTime(timestamp) {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-  
-  if (diffMins < 1) return 'À l\'instant';
-  if (diffMins < 60) return `${diffMins}m`;
-  if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}j`;
-  
-  return date.toLocaleDateString('fr-FR');
-}
-
-// Fermer la modale des détails du post
-if (postDetailClose) {
-  postDetailClose.addEventListener('click', () => {
-    postDetailModal.classList.add('hidden');
-    currentDetailPost = null;
-  });
-}
-
-// Fermer en cliquant en dehors
-postDetailModal.addEventListener('click', (e) => {
-  if (e.target === postDetailModal) {
-    postDetailModal.classList.add('hidden');
-    currentDetailPost = null;
-  }
-});
-
-// Bouton de suppression du post
-if (postDetailDeleteBtn) {
-  postDetailDeleteBtn.addEventListener('click', () => {
-    if (!currentDetailPost) return;
-    
-    // Créer un événement synthétique pour utiliser handleDeletePost
-    const syntheticEvent = {
-      currentTarget: {
-        dataset: { postId: currentDetailPost.id }
-      }
-    };
-    
-    // Fermer la modale du détail
-    postDetailModal.classList.add('hidden');
-    
-    // Appeler la fonction de suppression
-    handleDeletePost(syntheticEvent);
-  });
 }
 
 // Modale followers/following
@@ -2045,9 +1960,23 @@ editProfileForm.addEventListener('submit', async (e) => {
     const result = await response.json();
     
     if (result.success && result.profile) {
-      // Recharger toutes les données depuis le serveur (profil + publications)
-      await loadCurrentProfile();
+    // Mettre à jour le profil local AVEC la photo de couverture
+    currentUserProfile.name = result.profile.user_name;
+    currentUserProfile.username = '@' + result.profile.user_username;
+    currentUserProfile.bio = result.profile.user_bio || 'Pas de bio';
+    if (result.profile.user_photo_url) {
+      currentUserProfile.profilePhoto = getPhotoURL(result.profile.user_photo_url);
+    }
+    if (result.profile.user_cover_photo_url) {
+      currentUserProfile.coverPhoto = getPhotoURL(result.profile.user_cover_photo_url);
+    }
+    currentUserProfile.avatarInitials = result.profile.user_name
+      ? result.profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      : 'U';
+      
+      // Fermer la modale et mettre à jour l'UI
       editProfileModal.classList.add('hidden');
+      updateProfileUI();
       showNotification('success', 'Succès', 'Profil mis à jour avec succès');
     } else {
       showNotification('error', 'Erreur', result.message || 'Impossible de mettre à jour le profil');
@@ -2063,9 +1992,12 @@ editProfileForm.addEventListener('submit', async (e) => {
 
 // Initialisation - Charger le profil réel d'abord
 if (typeof loadCurrentProfile === 'function') {
-  loadCurrentProfile().catch(err => {
+  loadCurrentProfile().then(() => {
+    updateProfileUI();
+  }).catch(err => {
     console.error('Impossible de charger le profil:', err);
-    updateProfileUI(); // fallback avec données par défaut
+    // Mettre à jour quand même avec les données par défaut
+    updateProfileUI();
   });
 } else {
   updateProfileUI();

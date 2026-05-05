@@ -28,9 +28,8 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        credentials: 'same-origin',   // ← indispensable
         body: formData
-    });
+      });
 
       const data = await response.json();
       
@@ -58,8 +57,7 @@ const ActusAPI = {
       url.searchParams.set('offset', offset);
 
       const response = await fetch(url.toString(), {
-          method: 'GET',
-          credentials: 'same-origin'
+        method: 'GET'
       });
 
       const data = await response.json();
@@ -87,7 +85,6 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        credentials: 'same-origin',
         body: formData
       });
 
@@ -115,8 +112,7 @@ const ActusAPI = {
       url.searchParams.set('post_id', post_id);
 
       const response = await fetch(url.toString(), {
-          method: 'GET',
-          credentials: 'same-origin'
+        method: 'GET'
       });
 
       const data = await response.json();
@@ -146,7 +142,6 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        credentials: 'same-origin',
         body: formData
       });
 
@@ -180,7 +175,6 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        credentials: 'same-origin',
         body: formData
       });
 
@@ -227,7 +221,6 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        credentials: 'same-origin',
         body: formData
       });
 
@@ -258,8 +251,7 @@ const ActusAPI = {
       
 
       const response = await fetch(url.toString(), {
-          method: 'GET',
-          credentials: 'same-origin'
+        method: 'GET'
       });
 
       const data = await response.json();
@@ -287,7 +279,6 @@ const ActusAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        credentials: 'same-origin',
         body: formData
       });
 
@@ -300,36 +291,6 @@ const ActusAPI = {
       return { success: true, message: data.message };
     } catch (error) {
       console.error('Erreur deleteComment:', error);
-      return { success: false, message: error.message };
-    }
-  },
-
-  // ===== PROFIL UTILISATEUR =====
-
-  /**
-   * Récupérer le profil d'un utilisateur
-   * @param {number} user_id - ID de l'utilisateur
-   */
-  async getUserProfile(user_id) {
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('action', 'getUserProfile');
-      url.searchParams.set('user_id', user_id);
-
-      const response = await fetch(url.toString(), {
-          method: 'GET',
-          credentials: 'same-origin'
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Erreur lors du chargement du profil');
-      }
-
-      return { success: true, profile: data.profile };
-    } catch (error) {
-      console.error('Erreur getUserProfile:', error);
       return { success: false, message: error.message };
     }
   }

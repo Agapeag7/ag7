@@ -644,6 +644,16 @@ if (isset($_SESSION['user_id'])) {
           <h2 id="userProfileName">Nom utilisateur</h2>
           <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@username</p>
           <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;"></p>
+          <div class="user-profile-meta">
+            <div class="meta-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span id="userProfileLocation">Localisation</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              <span id="userProfileMemberSince">Membre depuis Avril 2026</span>
+            </div>
+          </div>
           <div class="user-profile-stats">
             <div class="stat-item">
               <span class="stat-number" id="userProfileFollowersCount">0</span>
