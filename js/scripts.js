@@ -252,6 +252,8 @@ let currentUserProfile = {
             // Charger les données réelles du profil depuis le serveur
             await loadCurrentProfile();
             updateProfileUI();
+
+            await loadStories();
             
             authForm.reset();
             setAuthMode(true);
@@ -429,12 +431,8 @@ let currentUserProfile = {
       
       // Charger le feed Actus quand on accède à la section feed
       if (viewId === 'feed') {
-        // Attendre que loadActusFeed soit disponible
-        if (typeof loadActusFeed === 'function') {
-          loadActusFeed();
-        } else {
-          console.warn('loadActusFeed non disponible');
-        }
+        if (typeof loadActusFeed === 'function') loadActusFeed();
+        if (typeof loadStories === 'function') loadStories(); // ← recharge les stories
       }
     }
 
@@ -1104,15 +1102,8 @@ async function loadStories() {
   renderStories();
 }
 
-loadStories();
-
-// let otherStories = [
-//   { id: 'marie-1', type: 'text-image', text: 'Bonjour à tous ! ☀️', image: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Marie', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), viewers: 124 },
-//   { id: 'thomas-1', type: 'text-image', text: 'Nouveau projet excitant !', image: 'https://randomuser.me/api/portraits/men/32.jpg', userName: 'Thomas', timestamp: new Date(Date.now() - 30 * 60 * 1000), viewers: 87 },
-//   { id: 'sophie-1', type: 'text-image', text: 'En pleine réflexion...', image: 'https://randomuser.me/api/portraits/women/45.jpg', userName: 'Sophie', timestamp: new Date(Date.now() - 15 * 60 * 1000), viewers: 156 },
-// ];
-
 let selectedStoryImage = null;
+let selectedStoryFile = null;
 
 // Upload image pour story
 uploadStoryImageBtn.addEventListener('click', () => storyImageInput.click());
@@ -1120,6 +1111,7 @@ uploadStoryImageBtn.addEventListener('click', () => storyImageInput.click());
 storyImageInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
+    selectedStoryFile = file;
     const reader = new FileReader();
     reader.onload = (event) => {
       selectedStoryImage = event.target.result;
@@ -1138,6 +1130,7 @@ addStoryBtn.addEventListener('click', () => {
   createStoryModal.classList.remove('hidden');
   storyTextInput.value = '';
   selectedStoryImage = null;
+  selectedStoryFile = null;
   storyImagePreview.style.display = 'none';
   storyImageInput.value = '';
   uploadStoryImageBtn.disabled = false;
@@ -1171,22 +1164,31 @@ storyModal.addEventListener('click', (e) => {
 });
 
 // Publier une story
-publishStoryBtn.addEventListener('click', () => {
+publishStoryBtn.addEventListener('click', async () => {
   const text = storyTextInput.value.trim();
-  const image = selectedStoryImage || 'https://picsum.photos/id/50/600/800';
-  
-  const newStory = {
-    id: 'user-story-' + Date.now(),
-    type: 'text-image',
-    text: text || 'Nouvelle story !',
-    image: image,
-    userName: 'Vous',
-    timestamp: new Date()
-  };
-  
-  userStories.push(newStory);
-  renderStories();
-  createStoryModal.classList.add('hidden');
+  const imageFile = selectedStoryFile; // le fichier réel, pas le base64
+
+  if (!text && !imageFile) {
+    showNotification('warning', 'Vide', 'Ajoutez un texte ou une image');
+    return;
+  }
+
+  publishStoryBtn.disabled = true;
+  publishStoryBtn.textContent = 'Publication...';
+
+  const result = await StoriesAPI.createStory(text, imageFile);
+
+  publishStoryBtn.disabled = false;
+  publishStoryBtn.textContent = 'Publier la story';
+
+  if (result.success) {
+    showNotification('success', 'Story', 'Story publiée !');
+    createStoryModal.classList.add('hidden');
+    // Recharger les stories depuis le serveur (dynamique)
+    await loadStories();
+  } else {
+    showNotification('error', 'Erreur', result.message || 'Échec de la publication');
+  }
 });
 
 // Afficher les stories
@@ -1232,8 +1234,10 @@ function renderStories() {
 }
 
 function openStory(imageUrl, caption, viewers = 0, isUserStory = false) {
-  // Préfixe si l'URL ne contient pas déjà le dossier
-  if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('story/')) {
+  if (imageUrl && 
+      !imageUrl.startsWith('http') && 
+      !imageUrl.startsWith('story/') && 
+      !imageUrl.startsWith('data:')) {
     imageUrl = 'story/' + imageUrl;
   }
   storyImage.src = imageUrl;
