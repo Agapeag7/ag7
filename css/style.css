@@ -2975,6 +2975,256 @@ body.dark .modal-comment-input::placeholder,
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* ========== COMMENTAIRES VOCAUX ========== */
+
+/* Onglets de commentaires (Texte/Vocal) */
+.comment-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.comment-tab {
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.comment-tab:hover {
+  color: var(--text-primary);
+}
+
+.comment-tab.active {
+  color: var(--emerald-500);
+  border-bottom-color: var(--emerald-500);
+}
+
+/* Contenu des onglets */
+.comment-content {
+  display: none;
+}
+
+.comment-content.active {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Interface d'enregistrement vocal */
+.vocal-recorder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recorder-status {
+  display: none;
+  padding: 12px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.recorder-status.active {
+  display: block;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: #dc3545;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+
+.recorder-timer {
+  font-size: 20px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  color: #dc3545;
+  margin-top: 8px;
+}
+
+.recorder-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-record {
+  flex: 1;
+  min-width: 140px;
+  padding: 10px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-record:hover {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+.btn-record:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-record.recording {
+  background: #dc3545;
+}
+
+.btn-record.recording:hover {
+  background: #c82333;
+}
+
+.preview-section {
+  display: none;
+  padding: 12px;
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 8px;
+}
+
+.preview-section.active {
+  display: block;
+}
+
+.preview-audio {
+  width: 100%;
+  margin-bottom: 12px;
+  border-radius: 4px;
+}
+
+.preview-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.audio-duration {
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.anonym-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.anonym-option input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+/* Affichage des commentaires vocaux */
+.comment-item-full.vocal {
+  background: linear-gradient(135deg, #f0f8ff 0%, #e7f3ff 100%);
+  border-left: 4px solid #17a2b8;
+}
+
+.comment-vocal-content {
+  margin: 8px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+}
+
+.comment-vocal-content audio {
+  width: 100%;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.comment-vocal-duration {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comment-vocal-duration::before {
+  content: '⏱️';
+}
+
+.comment-vocal-badge {
+  display: inline-block;
+  background: #17a2b8;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .recorder-controls {
+    flex-direction: column;
+  }
+
+  .btn-record,
+  .btn-secondary {
+    min-width: 100%;
+  }
+
+  .comment-tabs {
+    gap: 0;
+  }
+
+  .comment-tab {
+    flex: 1;
+    text-align: center;
+    border-radius: 0;
+  }
+}
+
 /* ========== PERSONNALISATION DU THEME ========== */
 .customize-theme {
   background: rgba(0, 0, 0, 0.6);

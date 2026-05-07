@@ -442,13 +442,192 @@ async function handleLike(e) {
   }
 }
 
+// ===== ENREGISTREUR VOCAL POUR MODAL =====
+function setupVocalRecorderInModal(postId, modal) {
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordingStartTime = null;
+  let timerInterval = null;
+  let recordedDuration = 0;
+  let isRecording = false;
+  let recordedFile = null;
+
+  const recordBtn = modal.querySelector('#modal-record-btn');
+  const cancelBtn = modal.querySelector('#modal-cancel-btn');
+  const submitBtn = modal.querySelector('#modal-submit-vocal-btn');
+  const rerecordBtn = modal.querySelector('#modal-rerecord-btn');
+  const recorderStatus = modal.querySelector('#recorder-status-modal');
+  const recorderTimer = modal.querySelector('#recorder-timer-modal');
+  const previewSection = modal.querySelector('#modal-preview-section');
+  const audioPreview = modal.querySelector('#modal-audio-preview');
+  const previewDuration = modal.querySelector('#modal-preview-duration');
+  const anonCheck = modal.querySelector('.modal-vocal-anonym-checkbox');
+
+  // Démarrer l'enregistrement
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      recordingStartTime = Date.now();
+      recordedDuration = 0;
+      isRecording = true;
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        recordedDuration = Math.round((Date.now() - recordingStartTime) / 1000);
+      };
+
+      mediaRecorder.start();
+
+      // Update UI
+      recordBtn.classList.add('recording');
+      recordBtn.innerHTML = '<i class="fas fa-stop-circle"></i> <span id="record-btn-text">Arrêter</span>';
+      recorderStatus.classList.add('active');
+      previewSection.classList.remove('active');
+
+      // Start timer
+      timerInterval = setInterval(() => {
+        const elapsed = Math.round((Date.now() - recordingStartTime) / 1000);
+        const mins = Math.floor(elapsed / 60);
+        const secs = elapsed % 60;
+        recorderTimer.textContent = 
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }, 100);
+
+      console.log('🎙️ Enregistrement commencé...');
+    } catch (error) {
+      console.error('❌ Erreur microphone:', error);
+      showNotification('error', 'Erreur', 'Accès au microphone refusé');
+    }
+  };
+
+  // Arrêter l'enregistrement
+  const stopRecording = () => {
+    if (!mediaRecorder || !isRecording) return;
+
+    mediaRecorder.stop();
+    isRecording = false;
+    clearInterval(timerInterval);
+
+    // Update UI
+    recordBtn.classList.remove('recording');
+    recordBtn.innerHTML = '<i class="fas fa-microphone"></i> <span id="record-btn-text">Recommencer</span>';
+    recorderStatus.classList.remove('active');
+
+    // Wait for onstop to complete
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      audioPreview.src = audioUrl;
+      previewDuration.textContent = formatDuration(recordedDuration);
+      previewSection.classList.add('active');
+
+      recordedFile = new File(
+        [audioBlob],
+        `vocal_comment_${Date.now()}.wav`,
+        { type: 'audio/wav' }
+      );
+
+      console.log('🎙️ Enregistrement arrêté - Durée:', recordedDuration, 'sec');
+    };
+  };
+
+  // Annuler l'enregistrement
+  const cancelRecording = () => {
+    if (isRecording) {
+      mediaRecorder.stop();
+      isRecording = false;
+      clearInterval(timerInterval);
+    }
+    resetUI();
+  };
+
+  // Réenregistrer
+  const resetRecorder = () => {
+    audioChunks = [];
+    recordedFile = null;
+    previewSection.classList.remove('active');
+    recordBtn.innerHTML = '<i class="fas fa-microphone"></i> <span id="record-btn-text">Commencer</span>';
+  };
+
+  const resetUI = () => {
+    resetRecorder();
+    recorderStatus.classList.remove('active');
+    recordBtn.classList.remove('recording');
+  };
+
+  // Soumettre le commentaire vocal
+  const submitVocalComment = async () => {
+    if (!recordedFile) {
+      showNotification('warning', 'Aucun enregistrement', 'Veuillez enregistrer un commentaire');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+
+    try {
+      const result = await ActusAPI.addVocalComment(
+        postId,
+        recordedFile,
+        recordedDuration,
+        null,
+        anonCheck.checked
+      );
+
+      if (result.success) {
+        console.log('✅ Commentaire vocal envoyé!');
+        resetUI();
+        resetRecorder();
+        showNotification('success', 'Succès', 'Commentaire vocal posté');
+        
+        // Recharger les commentaires
+        await openCommentsModal(postId);
+        updatePostCommentCount(postId);
+      } else {
+        showNotification('error', 'Erreur', result.message);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la soumission:', error);
+      showNotification('error', 'Erreur', 'Erreur lors de l\'envoi du commentaire');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-check"></i> Poster';
+    }
+  };
+
+  // Attacher les événements
+  recordBtn.addEventListener('click', () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  });
+
+  cancelBtn.addEventListener('click', cancelRecording);
+  rerecordBtn.addEventListener('click', resetRecorder);
+  submitBtn.addEventListener('click', submitVocalComment);
+}
+
+// Fonction utilitaire pour formater la durée
+function formatDuration(seconds) {
+  if (!seconds) return '0 sec';
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins === 0) return `${secs} sec`;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 // ===== MODAL COMMENTAIRES =====
 async function openCommentsModal(postId) {
   const modal = document.getElementById('commentsModal');
   const listContainer = modal.querySelector('.all-comments-list') || modal.querySelector('.comments-list') || modal;
-  const commentInput = modal.querySelector('.modal-comment-input') || modal.querySelector('input[type="text"]');
-  const anonCheckbox = modal.querySelector('.modal-anonymous-checkbox') || modal.querySelector('input[type="checkbox"]');
-  const submitBtn = modal.querySelector('.modal-submit-comment') || modal.querySelector('button');
   const closeBtn = modal.querySelector('.comments-modal-close');
 
   // Afficher l'état de chargement
@@ -472,18 +651,101 @@ async function openCommentsModal(postId) {
   }
 
   const comments = result.comments;
-  listContainer.innerHTML = '';
+  
+  // Créer le HTML du formulaire d'ajout avec onglets
+  const formHTML = `
+    <div style="border-bottom: 1px solid var(--border-light); margin-bottom: 12px; padding-bottom: 12px;">
+      <div class="comment-tabs">
+        <button class="comment-tab active" data-tab="text-comment" style="flex: 1;">
+          <i class="fas fa-pen"></i> Texte
+        </button>
+        <button class="comment-tab" data-tab="vocal-comment" style="flex: 1;">
+          <i class="fas fa-microphone"></i> Vocal
+        </button>
+      </div>
 
-  if (!comments.length) {
-    listContainer.innerHTML = '<div style="text-align:center; padding:20px; color: var(--text-secondary);">Aucun commentaire pour le moment.</div>';
-  } else {
+      <!-- TAB TEXTE -->
+      <div id="text-comment" class="comment-content active">
+        <div style="display: flex; gap: 8px; align-items: flex-end;">
+          <input type="text" class="modal-comment-input" placeholder="Écrivez un commentaire..." style="flex: 1; padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 13px;">
+          <button class="modal-submit-comment" style="padding: 10px 20px; background: var(--emerald-500); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        <div class="anonym-option">
+          <input type="checkbox" class="modal-anonymous-checkbox">
+          <label>Anonyme</label>
+        </div>
+      </div>
+
+      <!-- TAB VOCAL -->
+      <div id="vocal-comment" class="comment-content">
+        <div class="vocal-recorder">
+          <!-- Recording Status -->
+          <div class="recorder-status" id="recorder-status-modal">
+            <div>
+              <span class="status-indicator"></span>
+              <span>Enregistrement...</span>
+            </div>
+            <div class="recorder-timer" id="recorder-timer-modal">00:00</div>
+          </div>
+
+          <!-- Recording Controls -->
+          <div class="recorder-controls">
+            <button type="button" class="btn-record modal-record-btn" id="modal-record-btn">
+              <i class="fas fa-microphone"></i>
+              <span id="record-btn-text">Commencer</span>
+            </button>
+            <button type="button" class="btn-secondary" id="modal-cancel-btn" style="padding: 10px 16px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+          </div>
+
+          <!-- Preview Section -->
+          <div class="preview-section" id="modal-preview-section">
+            <p style="margin-top: 0; margin-bottom: 8px;"><strong>Aperçu :</strong></p>
+            <audio id="modal-audio-preview" class="preview-audio" controls></audio>
+            <div class="preview-info">
+              <span>Durée :</span>
+              <span class="audio-duration" id="modal-preview-duration">0 sec</span>
+            </div>
+            <div class="recorder-controls">
+              <button type="button" class="btn-record" id="modal-submit-vocal-btn" style="background: #28a745;">
+                <i class="fas fa-check"></i> Poster
+              </button>
+              <button type="button" class="btn-secondary" id="modal-rerecord-btn">
+                <i class="fas fa-redo"></i> Réenregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="anonym-option">
+          <input type="checkbox" class="modal-vocal-anonym-checkbox">
+          <label>Commentaire anonyme</label>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Afficher les commentaires avec le formulaire
+  listContainer.innerHTML = formHTML + (comments.length ? '' : '<div style="text-align:center; padding:20px; color: var(--text-secondary);">Aucun commentaire pour le moment.</div>');
+  
+  if (comments.length) {
     comments.forEach(comment => {
       const commentEl = createCommentElement(comment, postId);
       listContainer.appendChild(commentEl);
     });
   }
 
-  // Gérer l'envoi d'un nouveau commentaire
+  // Initialiser l'interface d'enregistrement vocal
+  setupVocalRecorderInModal(postId, modal);
+
+  // Gérer l'envoi d'un commentaire texte
+  const commentInput = modal.querySelector('.modal-comment-input');
+  const anonCheckbox = modal.querySelector('.modal-anonymous-checkbox');
+  const submitBtn = modal.querySelector('.modal-submit-comment');
+
   const sendComment = async () => {
     const text = commentInput.value.trim();
     if (!text) {
@@ -511,12 +773,27 @@ async function openCommentsModal(postId) {
       sendComment();
     }
   };
+
+  // Gérer les onglets
+  const tabs = modal.querySelectorAll('.comment-tab');
+  const contents = modal.querySelectorAll('.comment-content');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      const tabName = e.currentTarget.dataset.tab;
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+      e.currentTarget.classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+    });
+  });
 }
 
 // ===== CRÉER ÉLÉMENT COMMENTAIRE =====
 function createCommentElement(comment, postId, isReply = false) {
   const wrapper = document.createElement('div');
-  wrapper.className = `comment-item-full ${isReply ? 'reply-item' : ''}`;
+  const isVocal = comment.audio_url && !comment.text;
+  
+  wrapper.className = `comment-item-full ${isVocal ? 'vocal' : ''} ${isReply ? 'reply-item' : ''}`;
   wrapper.style.background = isReply ? 'var(--hover-bg)' : 'var(--card-bg)';
   wrapper.style.borderBottom = isReply ? 'none' : '1px solid var(--border-light)';
   wrapper.style.padding = '12px';
@@ -537,9 +814,36 @@ function createCommentElement(comment, postId, isReply = false) {
   const isPostAuthor = currentUserId && postAuthorId && currentUserId === postAuthorId;
   const canDeleteComment = isCommentAuthor || isPostAuthor;
 
+  // Contenu du commentaire (texte ou audio)
+  let contentHtml;
+  if (isVocal) {
+    // Formatage de la durée
+    const durationStr = comment.duration ? `${Math.floor(comment.duration / 60)}:${(comment.duration % 60).toString().padStart(2, '0')}` : 'Durée inconnue';
+    
+    contentHtml = `
+      <div class="comment-vocal-content">
+        <audio controls class="comment-vocal-audio" preload="metadata">
+          <source src="${escapeHtml(comment.audio_url)}" type="audio/wav">
+          Votre navigateur ne supporte pas l'élément audio.
+        </audio>
+        <div class="comment-vocal-duration">${durationStr}</div>
+      </div>
+    `;
+  } else {
+    contentHtml = `
+      <div style="margin: 0 0 4px 24px; padding: 8px; background: ${isReply ? 'var(--card-bg)' : 'var(--hover-bg)'}; border-radius: 12px;">
+        ${escapeHtml(comment.text || 'Commentaire vide')}
+      </div>
+    `;
+  }
+
   wrapper.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-      <div>${authorHtml} <span style="font-size:12px; color:var(--text-secondary);">• ${timeStr}</span></div>
+      <div>
+        ${authorHtml}
+        ${isVocal ? '<span class="comment-vocal-badge"><i class="fas fa-microphone"></i> Vocal</span>' : ''}
+        <span style="font-size:12px; color:var(--text-secondary);">• ${timeStr}</span>
+      </div>
       <div style="display: flex; gap: 8px; align-items: center;">
         <button class="comment-like-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px;">
           <i class="fas fa-heart"></i> <span class="like-count">${comment.likes}</span>
@@ -549,9 +853,7 @@ function createCommentElement(comment, postId, isReply = false) {
         </button>
       </div>
     </div>
-    <div style="margin: 0 0 4px 24px; padding: 8px; background: ${isReply ? 'var(--card-bg)' : 'var(--hover-bg)'}; border-radius: 12px;">
-      ${escapeHtml(comment.text)}
-    </div>
+    ${contentHtml}
   `;
 
   if (comment.replies && comment.replies.length) {

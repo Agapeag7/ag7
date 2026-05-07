@@ -1,0 +1,31 @@
+• Story collaborative pour un événement :
+
+Plusieurs amis peuvent contribuer à une même story publique 
+(un anniversaire, un concert). Chaque participant ajoute sa 
+photo ou vidéo ; la story est visible par les invités.
+
+
+• Sondages enrichis dans les publications
+
+Créer un sondage avec image, GIF ou chronomètre intégré. 
+Résultats affichés en direct sur la publication.
+
+
+• COMMENTAIRES VOCALES 
+
+Implémentation technique (résumé)
+
+Côté frontend (JavaScript)
+
+· Utiliser l'API MediaRecorder pour capturer le micro.
+· Stocker le blob audio dans un FormData et l'envoyer au serveur via un appel AJAX (comme vous le faites pour les images).
+· À la réception, le serveur sauvegarde le fichier (ex. dossier audio/comments/) et retourne l'URL.
+· Dans l'interface, créer un élément <audio> avec les contrôles de lecture.
+
+Côté backend (PHP)
+
+· Nouvelle table commentaires_vocaux ou extension de la table commentaires avec une colonne comment_audio_url et comment_duration.
+· L'upload est géré comme les images : déplacement du fichier temporaire vers le dossier public.
+· Action AJAX dédiée : addVocalComment (POST) et getComments modifiée pour renvoyer également les commentaires vocaux avec leur URL.
+
+

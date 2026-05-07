@@ -1,0 +1,612 @@
+<!-- 
+  VOCAL COMMENTS DEMO - QUICK START
+  ==================================
+  
+  Fichier de démonstration montrant comment les commentaires vocaux
+  sont intégrés dans l'application AG7.
+  
+  Les commentaires vocaux sont activés automatiquement dans:
+  - Modal commentaires (onglets)
+  - Affichage des posts existants
+  - Enregistrement/upload audio
+-->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocal Comments Demo - AG7</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #28a745;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .section {
+      background: white;
+      padding: 30px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 20px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .section h3 {
+      color: #555;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .demo-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .demo-card {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .demo-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .demo-card h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .demo-card p {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .code-block {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin-top: 15px;
+    }
+
+    .feature-list li {
+      padding: 8px 0;
+      padding-left: 30px;
+      position: relative;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .feature-list li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 15px;
+      color: #856404;
+      font-size: 13px;
+    }
+
+    .success {
+      background: #d4edda;
+      border: 1px solid #28a745;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 15px;
+      color: #155724;
+      font-size: 13px;
+    }
+
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #2196F3;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 4px;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #1976D2;
+    }
+
+    .info-box p {
+      color: #555;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .flow-diagram {
+      background: #f0f0f0;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 13px;
+      line-height: 1.8;
+      font-family: monospace;
+    }
+
+    .button-example {
+      display: inline-block;
+      margin: 10px 10px 10px 0;
+      padding: 10px 16px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .button-example:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+    }
+
+    .tab-demo {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .tab.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .tab:hover:not(.active) {
+      border-color: #667eea;
+    }
+
+    .footer {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      color: #666;
+      font-size: 13px;
+      margin-top: 30px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #28a745;
+      color: white;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🎙️ Commentaires Vocaux AG7
+      <span class="badge">v1.0.0 PROD</span>
+    </h1>
+    <p>Guide rapide d'utilisation et démonstration des commentaires vocaux</p>
+  </div>
+
+  <!-- SECTION: WHAT ARE VOCAL COMMENTS -->
+  <div class="section">
+    <h2>🎯 Qu'est-ce que les commentaires vocaux ?</h2>
+    <p>Les commentaires vocaux permettent aux utilisateurs d'<strong>enregistrer et partager des messages audio</strong> directement en réaction à un post.</p>
+    
+    <div class="feature-list">
+      <li>Enregistrement audio via microphone</li>
+      <li>Aperçu avant envoi</li>
+      <li>Stockage sécurisé sur serveur</li>
+      <li>Lecteur intégré dans l'interface</li>
+      <li>Support anonyme</li>
+      <li>Like et suppression comme commentaires texte</li>
+      <li>Réponses vocales possibles</li>
+    </div>
+
+    <div class="info-box">
+      <strong>💡 Astuce:</strong>
+      <p>Parfait pour partager des avis rapidement sans taper, envoyer des réactions vocales, ou pour l'accessibilité.</p>
+    </div>
+  </div>
+
+  <!-- SECTION: HOW TO USE -->
+  <div class="section">
+    <h2>📖 Comment utiliser</h2>
+
+    <h3>Pour enregistrer un commentaire vocal:</h3>
+    <div class="flow-diagram">
+1. Ouvrir le modal de commentaires sur un post
+2. Cliquer l'onglet "🎙️ Vocal"
+3. Cliquer "Commencer"
+4. Accorder l'accès au microphone (pop-up navigateur)
+5. Enregistrer votre message
+6. Cliquer "Arrêter"
+7. Écouter l'aperçu
+8. Options: "Réenregistrer" ou "Poster"
+9. Cliquer "Poster" pour envoyer
+    </div>
+
+    <h3>Pour écouter un commentaire vocal:</h3>
+    <p>Les commentaires vocaux s'affichent avec un lecteur audio. Cliquer sur "Play" pour écouter.</p>
+
+    <div class="tab-demo">
+      <button class="tab active">📝 Texte</button>
+      <button class="tab">🎙️ Vocal</button>
+    </div>
+  </div>
+
+  <!-- SECTION: INTERFACE DEMO -->
+  <div class="section">
+    <h2>🖥️ Interface</h2>
+
+    <h3>Modal avec onglets Texte/Vocal:</h3>
+    <p style="margin-bottom: 15px; color: #666; font-size: 14px;">
+      Le modal de commentaires affiche deux onglets permettant de basculer entre commentaires texte et vocaux.
+    </p>
+
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h4>📝 ONGLET TEXTE (DÉFAUT)</h4>
+        <p>Contient:</p>
+        <ul style="margin-left: 15px; margin-top: 10px; font-size: 13px; color: #666;">
+          <li>Input texte pour écrire</li>
+          <li>Bouton "Poster"</li>
+          <li>Checkbox "Anonyme"</li>
+        </ul>
+      </div>
+
+      <div class="demo-card">
+        <h4>🎙️ ONGLET VOCAL</h4>
+        <p>Contient:</p>
+        <ul style="margin-left: 15px; margin-top: 10px; font-size: 13px; color: #666;">
+          <li>Bouton "Commencer"</li>
+          <li>Timer visible lors enregistrement</li>
+          <li>Aperçu audio après arrêt</li>
+          <li>Boutons "Poster" et "Réenregistrer"</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Affichage des commentaires vocaux:</h3>
+    <div class="info-box">
+      <strong>Exemple de commentaire vocal:</strong>
+      <p style="margin-top: 10px;">
+        <strong>User123</strong> <span style="background: #17a2b8; color: white; padding: 2px 6px; border-radius: 12px; font-size: 11px; font-weight: 600;">🎙️ Vocal</span> • 14:30
+        <br>
+        [Lecteur audio avec contrôles de lecture]
+        <br>
+        ⏱️ Durée: 0:45
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION: TECHNICAL DETAILS -->
+  <div class="section">
+    <h2>⚙️ Détails techniques</h2>
+
+    <h3>Fichiers impliqués:</h3>
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h4>Backend PHP</h4>
+        <p><strong>ag.class.php</strong></p>
+        <ul style="font-size: 12px; margin-left: 15px; margin-top: 8px;">
+          <li>Utils::uploadVocalComment()</li>
+          <li>actionAddVocalComment()</li>
+          <li>actionGetComments() modifiée</li>
+        </ul>
+      </div>
+
+      <div class="demo-card">
+        <h4>Frontend JavaScript</h4>
+        <p><strong>actus-complete.js</strong></p>
+        <ul style="font-size: 12px; margin-left: 15px; margin-top: 8px;">
+          <li>setupVocalRecorderInModal()</li>
+          <li>createCommentElement() modifiée</li>
+          <li>openCommentsModal() modifiée</li>
+        </ul>
+      </div>
+
+      <div class="demo-card">
+        <h4>CSS Styles</h4>
+        <p><strong>style.css</strong></p>
+        <ul style="font-size: 12px; margin-left: 15px; margin-top: 8px;">
+          <li>.comment-tabs</li>
+          <li>.vocal-recorder</li>
+          <li>.comment-item-full.vocal</li>
+        </ul>
+      </div>
+
+      <div class="demo-card">
+        <h4>API JavaScript</h4>
+        <p><strong>api-actus.js</strong></p>
+        <ul style="font-size: 12px; margin-left: 15px; margin-top: 8px;">
+          <li>ActusAPI.addVocalComment()</li>
+          <li>ActusAPI.getComments() modifiée</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Formats audio supportés:</h3>
+    <p style="color: #666; font-size: 13px; margin-top: 10px;">
+      <strong>Enregistrement:</strong> WAV (standard)
+      <br>
+      <strong>Acceptés:</strong> MP3, WAV, OGG, WebM, M4A
+    </p>
+
+    <div class="warning">
+      ⚠️ <strong>Note:</strong> Nous utilisons WAV pour l'enregistrement car c'est nativement supporté par tous les navigateurs via MediaRecorder API.
+    </div>
+  </div>
+
+  <!-- SECTION: API USAGE -->
+  <div class="section">
+    <h2>🔌 Utilisation API</h2>
+
+    <h3>Envoyer un commentaire vocal:</h3>
+    <div class="code-block">const result = await ActusAPI.addVocalComment(
+  postId,           // ID du post (number)
+  audioFile,        // File object (File)
+  duration,         // Durée en secondes (number)
+  parentId,         // Optionnel: ID du commentaire parent
+  isAnonymous       // Optionnel: booléen
+);
+
+if (result.success) {
+  console.log('✅ Commentaire vocal posté!');
+  console.log(result.comment); // Affiche les données du commentaire
+}
+    </div>
+
+    <h3>Récupérer les commentaires (avec audio):</h3>
+    <div class="code-block">const result = await ActusAPI.getComments(postId);
+
+result.comments.forEach(comment => {
+  if (comment.audio_url) {
+    console.log('Commentaire vocal:', comment.audio_url);
+  } else {
+    console.log('Commentaire texte:', comment.text);
+  }
+});
+    </div>
+  </div>
+
+  <!-- SECTION: FEATURES -->
+  <div class="section">
+    <h2>✨ Fonctionnalités</h2>
+
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h4>Enregistrement</h4>
+        <div class="feature-list">
+          <li>Accès microphone sécurisé</li>
+          <li>Timer visible</li>
+          <li>Aperçu avant envoi</li>
+          <li>Réenregistrement possible</li>
+        </div>
+      </div>
+
+      <div class="demo-card">
+        <h4>Stockage</h4>
+        <div class="feature-list">
+          <li>Fichiers dans audio/comments/</li>
+          <li>Nommage unique par timestamp</li>
+          <li>Permissions sécurisées</li>
+          <li>Métadonnées en base de données</li>
+        </div>
+      </div>
+
+      <div class="demo-card">
+        <h4>Interactivité</h4>
+        <div class="feature-list">
+          <li>Like les commentaires vocaux</li>
+          <li>Supprimer (auteur/propriétaire)</li>
+          <li>Répondre vocalement</li>
+          <li>Vue hiérarchique</li>
+        </div>
+      </div>
+
+      <div class="demo-card">
+        <h4>Accessibilité</h4>
+        <div class="feature-list">
+          <li>Commentaires anonymes</li>
+          <li>Alternative au texte</li>
+          <li>Lecteur audio intégré</li>
+          <li>Badge visuel "Vocal"</li>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: BROWSER SUPPORT -->
+  <div class="section">
+    <h2>🌐 Compatibilité navigateur</h2>
+
+    <h3>Enregistrement audio:</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+      <div style="padding: 10px; background: #d4edda; border-radius: 6px;">
+        <strong style="color: #155724;">✓ Chrome</strong><br>
+        <small style="color: #666;">Full support</small>
+      </div>
+      <div style="padding: 10px; background: #d4edda; border-radius: 6px;">
+        <strong style="color: #155724;">✓ Firefox</strong><br>
+        <small style="color: #666;">Full support</small>
+      </div>
+      <div style="padding: 10px; background: #d4edda; border-radius: 6px;">
+        <strong style="color: #155724;">✓ Edge</strong><br>
+        <small style="color: #666;">Full support</small>
+      </div>
+      <div style="padding: 10px; background: #fff3cd; border-radius: 6px;">
+        <strong style="color: #856404;">⚠️ Safari</strong><br>
+        <small style="color: #666;">HTTPS required</small>
+      </div>
+    </div>
+
+    <h3>Lecture audio:</h3>
+    <p style="color: #666; font-size: 13px; margin-top: 15px;">
+      <strong>✓ Tous les navigateurs modernes</strong> supportent l'élément HTML5 audio.
+    </p>
+  </div>
+
+  <!-- SECTION: TROUBLESHOOTING -->
+  <div class="section">
+    <h2>🔧 Dépannage</h2>
+
+    <h3>❌ "Accès microphone refusé"</h3>
+    <p style="color: #666; font-size: 13px; margin: 10px 0;">
+      1. Vérifier les permissions navigateur pour le microphone<br>
+      2. Autoriser le site pour accéder au microphone<br>
+      3. Sur Safari, utiliser HTTPS<br>
+      4. Redémarrer le navigateur si nécessaire
+    </p>
+
+    <h3>❌ "Fichier audio non trouvé"</h3>
+    <p style="color: #666; font-size: 13px; margin: 10px 0;">
+      1. Vérifier que le répertoire audio/comments/ existe<br>
+      2. Vérifier les permissions (chmod 0777)<br>
+      3. Vérifier l'espace disque disponible
+    </p>
+
+    <h3>❌ "Onglets ne changent pas"</h3>
+    <p style="color: #666; font-size: 13px; margin: 10px 0;">
+      1. Ouvrir la console développeur (F12)<br>
+      2. Vérifier l'absence d'erreurs JavaScript<br>
+      3. Vérifier que actus-complete.js est chargé
+    </p>
+  </div>
+
+  <!-- SECTION: NEXT STEPS -->
+  <div class="section">
+    <h2>🚀 Prochaines étapes</h2>
+
+    <h3>Pour utiliser les commentaires vocaux:</h3>
+    <ol style="margin-left: 20px; color: #666; font-size: 13px; line-height: 1.8;">
+      <li>Vérifier que tous les fichiers sont déployés</li>
+      <li>Vérifier que le répertoire audio/comments/ existe</li>
+      <li>Ouvrir un post dans AG7</li>
+      <li>Cliquer "Commentaires"</li>
+      <li>Essayer l'onglet "🎙️ Vocal"</li>
+      <li>Enregistrer et envoyer un commentaire vocal</li>
+    </ol>
+
+    <div class="success">
+      ✅ Si tout fonctionne, vous devriez voir votre commentaire vocal avec un lecteur audio intégré!
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>
+      Documentation complète disponible dans:<br>
+      <strong>VOCAL_COMMENTS_README.md</strong> | 
+      <strong>documentation/VOCAL_COMMENTS.md</strong> | 
+      <strong>js/VOCAL_COMMENTS_FRONTEND.md</strong>
+    </p>
+    <p style="margin-top: 15px; font-size: 12px; color: #999;">
+      AG7 • Vocal Comments v1.0.0 • May 7, 2026
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

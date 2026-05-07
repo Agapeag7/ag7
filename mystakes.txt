@@ -4,37 +4,39 @@
 ✓ Possibilités aux utilisateurs de likés des commentaires
 ✓ Afficher le profil d'un utilisateur (pour juste le consulter) quand on clique sur : <div class="post-author"></div> et <div class="post-avatar" style="background-image: url('imgApp/image.jpg'); background-size: cover; background-position: center;"></div>
 ✓ Pour publier un post (quand il clique sur publier que le bouton affiche "publication" et quand la publication est publier que le bouton revienne à afficher "Publier") : <button id="publishPostBtn" class="btn-primary">Publier</button>
-
-
+✓ COMMENTAIRES VOCALES - COMPLÉTÉ ✅
+  ✓ Backend (PHP):
+    · Utils::uploadVocalComment() pour gestion fichiers audio
+    · actionAddVocalComment() pour POST des commentaires vocaux
+    · actionGetComments() modifiée pour retourner audio_url et duration
+    · CommentaireModel::create() modifiée pour colonnes audio
+    · Table commentaires étendue (comment_audio_url, comment_duration)
+  ✓ Frontend (JavaScript):
+    · setupVocalRecorderInModal() pour enregistrement et contrôles
+    · createCommentElement() modifiée pour affichage commentaires vocaux
+    · openCommentsModal() modifiée avec onglets Texte/Vocal
+    · formatDuration() pour affichage durée
+    · ActusAPI.addVocalComment() pour upload audio
+  ✓ Interface (CSS + HTML):
+    · Onglets commutables (Texte ↔ Vocal)
+    · Enregistreur avec timer visible
+    · Boutons Commencer/Arrêter/Réenregistrer/Poster
+    · Aperçu audio avant envoi
+    · Lecteur HTML5 pour affichage commentaires vocaux
+    · Badge visuel "🎙️ Vocal" pour commentaires audio
+    · Styles responsive (desktop + mobile)
+  ✓ Stockage:
+    · Répertoire audio/comments/ créé
+    · Nommage unique: comment_{TIMESTAMP}_{UNIQID}.{EXT}
+    · Formats supportés: mp3, wav, ogg, webm, m4a
+    · Permissions 0777 pour upload
+  ✓ Documentation:
+    · VOCAL_COMMENTS_README.md (guide complet)
+    · documentation/VOCAL_COMMENTS.md (backend)
+    · js/VOCAL_COMMENTS_FRONTEND.md (frontend)
+    · VOCAL_COMMENTS_DEMO.html (démo interactive)
+    · vocal_comments_ui_example.html (exemple HTML standalone)
 
 
 * A Realiser :
-- on refais ce modale sur base du style et forme des images de reference :
-<div id="userProfileModal" class="user-profile-modal">
-      <div class="user-profile-card">
-        <button class="user-profile-close">×</button>
-        <div class="user-profile-header">
-          <div class="user-profile-cover" id="userProfileCover"></div>
-          <div class="user-profile-avatar" id="userProfileAvatar" style="background-image: url(&quot;imgApp/profile_1777810313_69f73b89bf235.jpg&quot;);"></div>
-          <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: block; position: absolute; top: 12px; right: 12px; padding: 8px 16px; border-radius: 20px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; font-weight: 600; transition: 0.2s; background: var(--emerald-500); color: white;">Suivre</button>
-        </div>
-        <div class="user-profile-info">
-          <h2 id="userProfileName">Thanks Muhongya</h2>
-          <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@ThanksCode</p>
-          <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;">Seul l'avenir nous dira qui nous sommes</p>
-          <div class="user-profile-stats">
-            <div class="stat-item">
-              <span class="stat-number" id="userProfileFollowersCount">0</span>
-              <span class="stat-label">Abonnés</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number" id="userProfileFollowingCount">0</span>
-              <span class="stat-label">Abonnements</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-- Les seuls qui peuvent voir afficher l'icone de suppression de commentaire : la personne à qui appartient le commentaire et la personne à qui appartient la publication
-- A corriger (le bouton : <button id="publishPostBtn" class="btn-primary">Publier</button>) quand on publie il faut que le texte du bouton change pour afficher a l'utilisateur que la publication est en cours

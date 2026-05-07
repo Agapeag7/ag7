@@ -205,6 +205,54 @@ class Utils {
         error_log("move_uploaded_file échoué pour story: tmp=" . $tmpName . ", dest=" . $uploadPath);
         return false;
     }
+
+    public static function uploadVocalComment($tmpName, $fileName) {
+        $allowedExt = ['mp3', 'wav', 'ogg', 'webm', 'm4a'];
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        
+        if (!in_array($ext, $allowedExt)) {
+            error_log("Upload commentaire vocal échoué: Extension .{$ext} non autorisée");
+            return false;
+        }
+        
+        // Vérifier le type MIME
+        $allowedMimes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4'];
+        $fileMime = mime_content_type($tmpName);
+        if (!in_array($fileMime, $allowedMimes)) {
+            error_log("Warning: MIME type {$fileMime} pour audio, mais extension .{$ext} acceptée");
+        }
+        
+        // Créer le dossier audio/comments/ s'il n'existe pas
+        $uploadDir = __DIR__ . '/audio/comments';
+        if (!is_dir($uploadDir)) {
+            if (!@mkdir($uploadDir, 0777, true)) {
+                error_log("Impossible de créer dossier audio/comments");
+                return false;
+            }
+        }
+        
+        // Vérifier permissions d'écriture
+        if (!is_writable($uploadDir)) {
+            chmod($uploadDir, 0777);
+            if (!is_writable($uploadDir)) {
+                error_log("Dossier audio/comments n'est pas writable");
+                return false;
+            }
+        }
+        
+        // Générer nom unique - prefix "comment_" pour les commentaires vocaux
+        $audioName = 'comment_' . time() . '_' . uniqid() . '.' . $ext;
+        $uploadPath = $uploadDir . '/' . $audioName;
+        
+        // Sauvegarder le fichier
+        if (@move_uploaded_file($tmpName, $uploadPath)) {
+            error_log("Commentaire vocal uploadé: $audioName");
+            return $audioName; // Retourner juste le nom du fichier
+        }
+        
+        error_log("move_uploaded_file échoué pour commentaire vocal: tmp=" . $tmpName . ", dest=" . $uploadPath);
+        return false;
+    }
 }
 
 abstract class BaseModel {
@@ -459,13 +507,15 @@ class ImagePublicationModel extends BaseModel {
 class CommentaireModel extends BaseModel {
     
     public function create(array $data) {
-        $sql = 'INSERT INTO commentaires (comment_post_id, comment_user_id, comment_text, comment_anonym, comment_parent_id, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, ?, NOW(), NOW())';
+        $sql = 'INSERT INTO commentaires (comment_post_id, comment_user_id, comment_text, comment_audio_url, comment_duration, comment_anonym, comment_parent_id, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             $data['comment_post_id'],
             $data['comment_user_id'],
-            $data['comment_text'],
+            $data['comment_text'] ?? null,
+            $data['comment_audio_url'] ?? null,
+            $data['comment_duration'] ?? null,
             $data['comment_anonym'] ?? false,
             $data['comment_parent_id'] ?? null
         ]);
@@ -1497,6 +1547,8 @@ class Router {
             $commentData = [
                 'id' => $comment['comment_id'],
                 'text' => $comment['comment_text'],
+                'audio_url' => $comment['comment_audio_url'] ? 'audio/comments/' . $comment['comment_audio_url'] : null,
+                'duration' => $comment['comment_duration'] ? (int)$comment['comment_duration'] : null,
                 'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
                 'username' => $comment['user_username'] ?? 'unknown',
                 'avatar' => $comment['user_photo_url'] ? 'imgApp/' . $comment['user_photo_url'] : null,
@@ -1529,6 +1581,68 @@ class Router {
             'comments' => array_values($mainComments),
             'total' => count($allComments)
         ]);
+    }
+
+    private function actionAddVocalComment() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        
+        $post_id = $_POST['post_id'] ?? null;
+        $comment_parent_id = $_POST['comment_parent_id'] ?? null;
+        $comment_anonym = $_POST['comment_anonym'] ?? false;
+        $duration = $_POST['duration'] ?? null;
+        
+        if (!$post_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Post ID manquant'], 400);
+        }
+        
+        if (!isset($_FILES['audio_file']) || $_FILES['audio_file']['error'] !== UPLOAD_ERR_OK) {
+            error_log("Upload audio error: " . ($_FILES['audio_file']['error'] ?? 'unknown'));
+            Utils::jsonResponse(['success' => false, 'message' => 'Fichier audio manquant ou erreur d\'upload'], 400);
+        }
+        
+        // Upload le fichier audio
+        $audioPath = Utils::uploadVocalComment($_FILES['audio_file']['tmp_name'], $_FILES['audio_file']['name']);
+        if (!$audioPath) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'upload du fichier audio'], 400);
+        }
+        
+        $com = new CommentaireModel($this->db);
+        $comment_id = $com->create([
+            'comment_post_id' => $post_id,
+            'comment_user_id' => $_SESSION['user_id'],
+            'comment_text' => null, // Pas de texte pour commentaire vocal
+            'comment_audio_url' => $audioPath,
+            'comment_duration' => (int)$duration, // Durée en secondes
+            'comment_anonym' => $comment_anonym ? 1 : 0,
+            'comment_parent_id' => $comment_parent_id
+        ]);
+        
+        // Incrémenter le compteur seulement si c'est un commentaire principal
+        if (!$comment_parent_id) {
+            (new PublicationModel($this->db))->incrementComments($post_id);
+        }
+        
+        // Récupérer le commentaire créé
+        $comment = $com->getById($comment_id);
+        
+        $response = [
+            'success' => true,
+            'message' => 'Commentaire vocal ajouté',
+            'comment' => [
+                'id' => $comment['comment_id'],
+                'audio_url' => 'audio/comments/' . $comment['comment_audio_url'],
+                'duration' => (int)$duration,
+                'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
+                'isAnonymous' => (bool)($comment['comment_anonym'] ?? false),
+                'likes' => 0,
+                'parent_id' => $comment['comment_parent_id'],
+                'timestamp' => $comment['created_at']
+            ]
+        ];
+        
+        Utils::jsonResponse($response, 201);
     }
     
     private function actionToggleCommentLike() {

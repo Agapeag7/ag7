@@ -268,6 +268,46 @@ const ActusAPI = {
   },
 
   /**
+   * Ajouter un commentaire vocal
+   * @param {number} post_id - ID de la publication
+   * @param {File} audioFile - Fichier audio uploadé
+   * @param {number} duration - Durée de l'audio en secondes
+   * @param {number} comment_parent_id - ID du commentaire parent (optionnel, pour les réponses)
+   * @param {boolean} comment_anonym - Commentaire anonyme
+   */
+  async addVocalComment(post_id, audioFile, duration, comment_parent_id = null, comment_anonym = false) {
+    try {
+      const formData = new FormData();
+      formData.append('action', 'addVocalComment');
+      formData.append('post_id', post_id);
+      formData.append('audio_file', audioFile);
+      formData.append('duration', duration);
+      if (comment_parent_id) {
+        formData.append('comment_parent_id', comment_parent_id);
+      }
+      if (comment_anonym) {
+        formData.append('comment_anonym', 1);
+      }
+
+      const response = await fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Erreur lors de l\'ajout du commentaire vocal');
+      }
+
+      return { success: true, comment: data.comment, message: data.message };
+    } catch (error) {
+      console.error('❌ Erreur addVocalComment:', error.message);
+      return { success: false, message: error.message };
+    }
+  },
+
+  /**
    * Supprimer un commentaire
    * @param {number} comment_id - ID du commentaire
    */
