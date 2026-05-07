@@ -289,7 +289,7 @@ function createPostElement(post) {
       const authorDisplay = comment.isAnonymous 
         ? '<i class="fas fa-mask" style="margin-right: 4px;"></i><strong>Anonyme</strong>'
         : `<strong>${escapeHtml(comment.author)}</strong>`;
-      commentLine.innerHTML = `${authorDisplay} <span style="margin-left: 6px;">${escapeHtml(comment.text)}</span>`;
+      commentLine.innerHTML = `${authorDisplay} <span style="margin-left: 6px;">${escapeHtml(comment.text || '')}</span>`;
       commentsPreview.appendChild(commentLine);
     });
     
@@ -448,13 +448,19 @@ function setupVocalRecorderInModal(postId, modal) {
   let audioChunks = [];
   let recordingStartTime = null;
   let timerInterval = null;
+  let maxDurationTimeout = null;
   let recordedDuration = 0;
   let isRecording = false;
   let recordedFile = null;
+  const MAX_DURATION = 30; // 30 secondes
 
   const recordBtn = modal.querySelector('#modal-record-btn');
   const cancelBtn = modal.querySelector('#modal-cancel-btn');
+  
   const submitBtn = modal.querySelector('#modal-submit-vocal-btn');
+  submitBtn.disabled = true;
+  submitBtn.style.background = '#ccc';
+
   const rerecordBtn = modal.querySelector('#modal-rerecord-btn');
   const recorderStatus = modal.querySelector('#recorder-status-modal');
   const recorderTimer = modal.querySelector('#recorder-timer-modal');
@@ -498,9 +504,16 @@ function setupVocalRecorderInModal(postId, modal) {
           `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
       }, 100);
 
-      console.log('🎙️ Enregistrement commencé...');
+      // Arrêter automatiquement après 30 secondes
+      maxDurationTimeout = setTimeout(() => {
+        console.log('Durée maximale atteinte (30s)');
+        showNotification('info', 'Temps limite', 'Enregistrement limité à 30 secondes');
+        stopRecording();
+      }, MAX_DURATION * 1000);
+
+      console.log('Enregistrement commencé...');
     } catch (error) {
-      console.error('❌ Erreur microphone:', error);
+      console.error('Erreur microphone:', error);
       showNotification('error', 'Erreur', 'Accès au microphone refusé');
     }
   };
@@ -512,6 +525,7 @@ function setupVocalRecorderInModal(postId, modal) {
     mediaRecorder.stop();
     isRecording = false;
     clearInterval(timerInterval);
+    if (maxDurationTimeout) clearTimeout(maxDurationTimeout);
 
     // Update UI
     recordBtn.classList.remove('recording');
@@ -533,7 +547,10 @@ function setupVocalRecorderInModal(postId, modal) {
         { type: 'audio/wav' }
       );
 
-      console.log('🎙️ Enregistrement arrêté - Durée:', recordedDuration, 'sec');
+      // Activer le bouton d'envoi
+      submitBtn.disabled = false;
+      submitBtn.style.background = '#28a745';
+
     };
   };
 
@@ -543,16 +560,19 @@ function setupVocalRecorderInModal(postId, modal) {
       mediaRecorder.stop();
       isRecording = false;
       clearInterval(timerInterval);
+      if (maxDurationTimeout) clearTimeout(maxDurationTimeout);
     }
     resetUI();
   };
 
-  // Réenregistrer
   const resetRecorder = () => {
     audioChunks = [];
     recordedFile = null;
     previewSection.classList.remove('active');
-    recordBtn.innerHTML = '<i class="fas fa-microphone"></i> <span id="record-btn-text">Commencer</span>';
+    recordBtn.innerHTML = '<i class="fas fa-microphone"></i><span id="record-btn-text">Commencer</span>';
+    // Désactiver le bouton d'envoi
+    submitBtn.disabled = true;
+    submitBtn.style.background = '#ccc';
   };
 
   const resetUI = () => {
@@ -666,15 +686,15 @@ async function openCommentsModal(postId) {
 
       <!-- TAB TEXTE -->
       <div id="text-comment" class="comment-content active">
-        <div style="display: flex; gap: 8px; align-items: flex-end;">
-          <input type="text" class="modal-comment-input" placeholder="Écrivez un commentaire..." style="flex: 1; padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 13px;">
-          <button class="modal-submit-comment" style="padding: 10px 20px; background: var(--emerald-500); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
-            <i class="fas fa-paper-plane"></i>
+        <input type="text" class="modal-comment-input" placeholder="Écrivez un commentaire..." style="display: block; width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 13px; margin-bottom: 8px; box-sizing: border-box;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="modal-submit-comment" style="padding: 10px 20px; background: var(--emerald-500); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; flex: 1;">
+            <i class="fas fa-paper-plane"></i> Envoyer
           </button>
-        </div>
-        <div class="anonym-option">
-          <input type="checkbox" class="modal-anonymous-checkbox">
-          <label>Anonyme</label>
+          <label style="display: flex; align-items: center; gap: 6px; padding: 10px; cursor: pointer;">
+            <input type="checkbox" class="modal-anonymous-checkbox">
+            <span style="font-size: 13px;">Anonyme</span>
+          </label>
         </div>
       </div>
 
@@ -683,47 +703,54 @@ async function openCommentsModal(postId) {
         <div class="vocal-recorder">
           <!-- Recording Status -->
           <div class="recorder-status" id="recorder-status-modal">
-            <div>
-              <span class="status-indicator"></span>
-              <span>Enregistrement...</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span class="status-indicator"></span>
+                <span>Enregistrement en cours (max 30s)...</span>
+              </div>
+              <div class="recorder-timer" id="recorder-timer-modal">00:00</div>
             </div>
-            <div class="recorder-timer" id="recorder-timer-modal">00:00</div>
           </div>
 
           <!-- Recording Controls -->
-          <div class="recorder-controls">
-            <button type="button" class="btn-record modal-record-btn" id="modal-record-btn">
+          <div class="recorder-controls" style="display: flex; gap: 8px;">
+            <button type="button" class="btn-record modal-record-btn" id="modal-record-btn" style="flex: 1;">
               <i class="fas fa-microphone"></i>
               <span id="record-btn-text">Commencer</span>
             </button>
             <button type="button" class="btn-secondary" id="modal-cancel-btn" style="padding: 10px 16px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
               <i class="fas fa-times"></i> Annuler
             </button>
+
           </div>
 
           <!-- Preview Section -->
-          <div class="preview-section" id="modal-preview-section">
-            <p style="margin-top: 0; margin-bottom: 8px;"><strong>Aperçu :</strong></p>
-            <audio id="modal-audio-preview" class="preview-audio" controls></audio>
-            <div class="preview-info">
-              <span>Durée :</span>
+          <div class="preview-section" id="modal-preview-section" style="display: none;">
+            <p><strong>Aperçu :</strong></p>
+            <audio id="modal-audio-preview" class="preview-audio" controls style="width: 100%; margin-bottom: 8px;"></audio>
+            <div class="preview-info" style="margin-bottom: 12px;">
+              <span>Durée : </span>
               <span class="audio-duration" id="modal-preview-duration">0 sec</span>
             </div>
-            <div class="recorder-controls">
-              <button type="button" class="btn-record" id="modal-submit-vocal-btn" style="background: #28a745;">
-                <i class="fas fa-check"></i> Poster
-              </button>
-              <button type="button" class="btn-secondary" id="modal-rerecord-btn">
+            <div class="recorder-controls" style="display: flex; gap: 8px;">
+              <button type="button" class="btn-secondary" id="modal-rerecord-btn" style="flex: 1;">
                 <i class="fas fa-redo"></i> Réenregistrer
               </button>
             </div>
           </div>
+
+          <div style="margin-top: 12px;">
+            <button type="button" class="btn-record" id="modal-submit-vocal-btn" 
+                    style="background: #ccc; flex: 1; width: 100%;" disabled>
+              <i class="fas fa-check"></i> Poster
+            </button>
+          </div>
         </div>
 
-        <div class="anonym-option">
+        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 0; cursor: pointer;">
           <input type="checkbox" class="modal-vocal-anonym-checkbox">
-          <label>Commentaire anonyme</label>
-        </div>
+          <span>Commentaire anonyme</span>
+        </label>
       </div>
     </div>
   `;
@@ -774,16 +801,21 @@ async function openCommentsModal(postId) {
     }
   };
 
-  // Gérer les onglets
+  // Gérer les onglets - masquer/afficher le contenu
   const tabs = modal.querySelectorAll('.comment-tab');
   const contents = modal.querySelectorAll('.comment-content');
   tabs.forEach(tab => {
     tab.addEventListener('click', (e) => {
       const tabName = e.currentTarget.dataset.tab;
       tabs.forEach(t => t.classList.remove('active'));
-      contents.forEach(c => c.classList.remove('active'));
+      contents.forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+      });
       e.currentTarget.classList.add('active');
-      document.getElementById(tabName).classList.add('active');
+      const activeContent = document.getElementById(tabName);
+      activeContent.classList.add('active');
+      activeContent.style.display = 'block';
     });
   });
 }

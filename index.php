@@ -550,14 +550,14 @@ if (isset($_SESSION['user_id'])) {
         <button class="comments-modal-close">&times;</button>
         <h3>Tous les commentaires</h3>
         <div class="all-comments-list"></div>
-        <div class="add-comment-form">
+        <!-- <div class="add-comment-form">
           <input type="text" class="modal-comment-input" placeholder="Ajouter un commentaire...">
           <label class="modal-anonymous-toggle">
             <input type="checkbox" class="modal-anonymous-checkbox">
             <i class="fas fa-mask"></i>
           </label>
           <button class="modal-submit-comment">Envoyer</button>
-        </div>
+        </div> -->
       </div>
     </div>
 
