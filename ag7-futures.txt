@@ -11,7 +11,14 @@ Résultats affichés en direct sur la publication.
 
 
 a corriger :
-* la durée d'un commentaire vocale doit durée au maximum 30 secondes
-* le design des commentaires sur les posts :
-	- quand on bascule sur le côté
-- et le design a des doublons d'input
+Sur le modal de visualisation d'un profil rend dynamique cette date qui affiche "Membre depuis Janvier 2024" :
+<div class="user-profile-meta">
+            <div class="meta-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span id="userProfileLocation">Localisation inconnue</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              <span id="userProfileMemberSince">Membre depuis Janvier 2024</span>
+            </div>
+          </div>

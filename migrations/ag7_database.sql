@@ -529,38 +529,6 @@ CALL sp_add_user_photo(1, 'cover', 'data:image/png;base64,...', 'image/png', 512
 CALL sp_add_user_photo(2, 'profile', 'data:image/jpeg;base64,...', 'image/jpeg', 30720);
 CALL sp_add_user_photo(2, 'cover', 'data:image/jpeg;base64,...', 'image/jpeg', 61440);
 
--- Insérer les paramètres de thème par défaut pour chaque utilisateur
-INSERT INTO parametres_theme (settings_user_id, settings_hue, settings_bg_theme, settings_fontSize, settings_dark_mode)
-SELECT user_id, 160, 'light', 'medium', FALSE FROM utilisateurs;
-
--- Insérer quelques abonnements
-INSERT INTO abonnements (follower_id, followed_id) VALUES
-(2, 1), (3, 1), (4, 1), (5, 1),
-(1, 2), (1, 3), (1, 4);
-
--- Insérer une publication de test
-INSERT INTO publications (post_user_id, post_content, post_visibility) VALUES
-(1, 'Les nouvelles maquettes de l\'application Ag7 sont disponibles ! Support multi-images comme Instagram 🎨', 'public');
-
--- Insérer un commentaire de test
-INSERT INTO commentaires (comment_post_id, comment_user_id, comment_text, comment_anonym) VALUES
-(1, 2, 'Super boulot !', FALSE);
-
--- Insérer une story de test
-INSERT INTO stories (story_user_id, story_type, story_text, story_created_at, story_expires_at) VALUES
-(1, 'text-image', 'Bonjour à tous ! ☀️', NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR));
-
--- Insérer une conversation de test
-INSERT INTO conversations (conv_user1_id, conv_user2_id) VALUES
-(1, 2);
-
--- Insérer un message de test
-INSERT INTO messages (msg_conv_id, msg_sender_id, msg_recipient_id, msg_content) VALUES
-(1, 1, 2, 'Salut Marie ! Comment ça va ?');
-
--- Insérer des notifications de test
-INSERT INTO notifications (notif_user_id, notif_type, notif_icon, notif_color, notif_bg_color, notif_title, notif_text) VALUES
-(1, 'follow', 'fas fa-user-check', '#2668f1', '#0c4a6e', 'Nouveau suivi', 'Thomas Dubois suit votre profil.');
 
 
 -- ==============================================================================

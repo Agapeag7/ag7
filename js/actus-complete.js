@@ -277,6 +277,7 @@ function createPostElement(post) {
     const commentsPreview = document.createElement('div');
     commentsPreview.className = 'post-comments-preview';
     commentsPreview.style.marginTop = '8px';
+    commentsPreview.style.marginLeft = '15px';
     commentsPreview.style.padding = '0 0 12px';
     commentsPreview.style.borderTop = '1px solid var(--border-light)';
     
@@ -506,7 +507,6 @@ function setupVocalRecorderInModal(postId, modal) {
 
       // Arrêter automatiquement après 30 secondes
       maxDurationTimeout = setTimeout(() => {
-        console.log('Durée maximale atteinte (30s)');
         showNotification('info', 'Temps limite', 'Enregistrement limité à 30 secondes');
         stopRecording();
       }, MAX_DURATION * 1000);

@@ -527,7 +527,7 @@ if (isset($_SESSION['user_id'])) {
       </div>
     </div>
 
-    <!-- Modale Carousel Images (Instagram-like) -->
+    <!-- Modale Carousel Images -->
     <div id="imageCarouselModal" class="image-carousel-modal hidden">
       <div class="carousel-container">
         <button class="carousel-close">&times;</button>
