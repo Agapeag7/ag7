@@ -511,7 +511,6 @@ function setupVocalRecorderInModal(postId, modal) {
         stopRecording();
       }, MAX_DURATION * 1000);
 
-      console.log('Enregistrement commencé...');
     } catch (error) {
       console.error('Erreur microphone:', error);
       showNotification('error', 'Erreur', 'Accès au microphone refusé');
@@ -601,7 +600,6 @@ function setupVocalRecorderInModal(postId, modal) {
       );
 
       if (result.success) {
-        console.log('✅ Commentaire vocal envoyé!');
         resetUI();
         resetRecorder();
         showNotification('success', 'Succès', 'Commentaire vocal posté');
