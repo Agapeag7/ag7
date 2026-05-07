@@ -756,7 +756,20 @@ async function openCommentsModal(postId) {
   `;
 
   // Afficher les commentaires avec le formulaire
-  listContainer.innerHTML = formHTML + (comments.length ? '' : '<div style="text-align:center; padding:20px; color: var(--text-secondary);">Aucun commentaire pour le moment.</div>');
+  const existingForm = modal.querySelector('.comment-form-sticky');
+  if (existingForm) existingForm.remove();
+
+  // Créer le conteneur sticky pour le formulaire
+  const formSticky = document.createElement('div');
+  formSticky.className = 'comment-form-sticky';
+  formSticky.style.cssText = 'position: sticky; top: 0; background: var(--card-bg); z-index: 10; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); margin-bottom: 12px;';
+  formSticky.innerHTML = formHTML;
+
+  // Insérer le formulaire avant la liste des commentaires
+  modal.querySelector('.comments-modal-content').insertBefore(formSticky, listContainer);
+
+  // Vider la liste des commentaires et y injecter les commentaires
+  listContainer.innerHTML = comments.length ? '' : '<div style="text-align:center; padding:20px; color: var(--text-secondary);">Aucun commentaire pour le moment.</div>';
   
   if (comments.length) {
     comments.forEach(comment => {
