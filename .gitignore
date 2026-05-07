@@ -7,6 +7,8 @@ pub/*
 
 story/*
 
+audio/*
+
 # Dépendances
 node_modules/
 vendor/

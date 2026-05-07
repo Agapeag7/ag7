@@ -1083,7 +1083,9 @@ const publishStoryBtn = document.getElementById('publishStoryBtn');
 const cancelStoryBtn = document.getElementById('cancelStoryBtn');
 const storiesContainer = document.getElementById('storiesContainer');
 
+storyTextInput.addEventListener('input', updateCreateStoryButtons);
 // Données des stories
+
 let userStories = [];
 
 let otherStories = [];
@@ -1115,6 +1117,21 @@ async function loadStories() {
   renderStories();
 }
 
+function updateCreateStoryButtons() {
+  const actionsDiv = document.querySelector('.create-story-actions');
+  if (!actionsDiv) return;
+
+  const text = storyTextInput.value.trim();
+  const hasImage = (selectedStoryFile !== null); // fichier sélectionné
+
+  if (text.length > 0 || hasImage) {
+    actionsDiv.style.display = 'flex'; // ou 'block'
+  } else {
+    actionsDiv.style.display = 'none';
+  }
+}
+
+
 let selectedStoryImage = null;
 let selectedStoryFile = null;
 
@@ -1125,6 +1142,7 @@ storyImageInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
     selectedStoryFile = file;
+    updateCreateStoryButtons();
     const reader = new FileReader();
     reader.onload = (event) => {
       selectedStoryImage = event.target.result;
@@ -1150,6 +1168,10 @@ addStoryBtn.addEventListener('click', () => {
   uploadStoryImageBtn.style.opacity = '1';
   uploadStoryImageBtn.style.cursor = 'pointer';
 });
+
+// Masquer les boutons d'action tant qu'il n'y a pas de contenu
+const actionsDiv = document.querySelector('.create-story-actions');
+if (actionsDiv) actionsDiv.style.display = 'none';
 
 // Fermer modales
 createStoryClose.addEventListener('click', () => {
