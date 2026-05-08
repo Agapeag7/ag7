@@ -2309,7 +2309,16 @@ publishPollBtn.addEventListener('click', async () => {
     }
 
     const postResponse = await fetch(window.location.href, { method: 'POST', body: postFormData });
-    const postData = await postResponse.json();
+    const postText = await postResponse.text();
+    let postData;
+    try {
+      postData = JSON.parse(postText);
+    } catch (e) {
+      showNotification('error', 'Erreur', 'Réponse inattendue du serveur (voir console)');
+      publishPollBtn.disabled = false;
+      publishPollBtn.textContent = 'Créer le sondage';
+      return;
+    }
 
     if (!postData.success || !postData.post_id) {
       throw new Error(postData.message || 'Erreur création publication');
@@ -2326,10 +2335,15 @@ publishPollBtn.addEventListener('click', async () => {
     const url = new URL(window.location.href);
     url.searchParams.set('action', 'createPoll');
     const pollResponse = await fetch(url.toString(), { method: 'POST', body: pollFormData });
-    const pollData = await pollResponse.json();
-
-    if (!pollData.success) {
-      throw new Error(pollData.message || 'Erreur création sondage');
+    const pollText = await pollResponse.text();
+    let pollData;
+    try {
+      pollData = JSON.parse(pollText);
+    } catch (e) {
+      showNotification('error', 'Erreur', 'Réponse inattendue du serveur (voir console)');
+      publishPollBtn.disabled = false;
+      publishPollBtn.textContent = 'Créer le sondage';
+      return;
     }
 
     // Succès

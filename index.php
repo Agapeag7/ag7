@@ -596,7 +596,7 @@ if (isset($_SESSION['user_id'])) {
             <textarea id="pollQuestion" rows="2" placeholder="Posez votre question..." maxlength="255"></textarea>
           </div>
           
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label for="pollImage">Image (optionnel)</label>
             <div class="poll-image-upload">
               <input type="file" id="pollImageInput" accept="image/*" style="display: none;">
@@ -605,7 +605,7 @@ if (isset($_SESSION['user_id'])) {
               </button>
               <img id="pollImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 150px; margin-top: 12px; border-radius: 12px;" loading="lazy">
             </div>
-          </div>
+          </div> -->
           
           <div class="form-group">
             <label>Options du sondage (2-5)</label>

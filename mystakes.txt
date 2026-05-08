@@ -45,48 +45,17 @@
 
 
 * A Realiser :
+- Sur Publication de sondage J'ai selectionner une phtoto pour cette zone : 
+<div class="poll-image-upload">
+              <input type="file" id="pollImageInput" accept="image/*" style="display: none;">
+              <button type="button" id="uploadPollImageBtn" class="btn-secondary">
+                <i class="fas fa-image"></i> Ajouter une image
+              </button>
+              <img id="pollImagePreview" src="" alt="Preview">
+            </div>
 
-    --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
-    --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
-    --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
-    --white: #ffffff;
-    --slate-300: #cbd5e1;
-    --slate-400: #94a3b8;
-    --slate-500: #64748b;
-    --slate-600: #475569;
-    --slate-700: #334155;
-    --toggle-thumb-bg: #ffffff;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --transition: all 0.2s ease;
-    --emerald-500: hsl(217, 84%, 60%);
-    --emerald-600: hsl(217, 84%, 50%);
-    --emerald-700: hsl(217, 84%, 40%);
-    --bg-page: #f1f5f9;
-    --bg-container: #ffffff;
-    --card-bg: #ffffff;
-    --sidebar-bg: #ffffff;
-    --hover-bg: #f8fafc;
-    --emerald-50: #d1fae5;
-    --emerald-100: hsl(217, 84%, 97%);
-    --slate-50: #f8fafc;
-    --slate-100: #f1f5f9;
-    --slate-200: #e2e8f0;
-    --slate-800: #334155;
-    --text-primary: #334155;
-    --text-secondary: #64748b;
-    --border-light: #e2e8f0;
-    --active-bg: hsl(217, 50%, 88%);
-    --active-text-color: hsl(217, 50%, 25%);
-    font-size: 14px;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: var(--text-primary);
-    line-height: 1.5;
-    box-sizing: border-box;
-    background: var(--bg-hover);
-    border-radius: 12px;
-    border-left: 4px solid var(--emerald-500);
-    margin: 12px 20px;
-    padding: 12px 0;
-    border-top: 1px solid var(--border-light);
+- en voulant le poster j'ai eu cette erreur :
+scripts.js:2370 Erreur: SyntaxError: Unexpected token '<', "<br />
+<b>"... is not valid JSON
+(anonymous)	@	scripts.js:2370
+  
