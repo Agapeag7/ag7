@@ -281,6 +281,7 @@ function createPostElement(post) {
     commentsPreview.className = 'post-comments-preview';
     commentsPreview.style.marginTop = '8px';
     commentsPreview.style.marginLeft = '15px';
+    commentsPreview.style.marginRight = '15px';
     commentsPreview.style.padding = '0 0 12px';
     commentsPreview.style.borderTop = '1px solid var(--border-light)';
     

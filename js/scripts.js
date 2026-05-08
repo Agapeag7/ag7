@@ -2198,9 +2198,6 @@ const cancelPollBtn = document.getElementById('cancelPollBtn');
 const createPollClose = createPollModal.querySelector('.create-poll-close');
 const publishPollBtn = document.getElementById('publishPollBtn');
 const pollQuestion = document.getElementById('pollQuestion');
-const pollImageInput = document.getElementById('pollImageInput');
-const uploadPollImageBtn = document.getElementById('uploadPollImageBtn');
-const pollImagePreview = document.getElementById('pollImagePreview');
 const pollOptionsContainer = document.getElementById('pollOptionsContainer');
 const addPollOptionBtn = document.getElementById('addPollOptionBtn');
 
@@ -2234,25 +2231,6 @@ cancelPollBtn.addEventListener('click', () => createPollModal.classList.add('hid
 createPollModal.addEventListener('click', (e) => {
   if (e.target === createPollModal) {
     createPollModal.classList.add('hidden');
-  }
-});
-
-// Upload image pour le sondage
-uploadPollImageBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  pollImageInput.click();
-});
-
-pollImageInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    selectedPollImage = file;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      pollImagePreview.src = event.target.result;
-      pollImagePreview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
   }
 });
 
@@ -2366,10 +2344,7 @@ publishPollBtn.addEventListener('click', async () => {
     // Réinitialiser aussi les inputs file (on recrée les groupes avec leurs images)
     document.querySelectorAll('.poll-option-image').forEach(inp => inp.value = '');
     addPollOptionBtn.style.display = 'block';
-    pollImagePreview.style.display = 'none';
-    pollImagePreview.src = '';
     selectedPollImage = null;
-    pollImageInput.value = '';
 
     createPollModal.classList.add('hidden');
 

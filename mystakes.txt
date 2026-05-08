@@ -45,17 +45,8 @@
 
 
 * A Realiser :
-- Sur Publication de sondage J'ai selectionner une phtoto pour cette zone : 
-<div class="poll-image-upload">
-              <input type="file" id="pollImageInput" accept="image/*" style="display: none;">
-              <button type="button" id="uploadPollImageBtn" class="btn-secondary">
-                <i class="fas fa-image"></i> Ajouter une image
-              </button>
-              <img id="pollImagePreview" src="" alt="Preview">
-            </div>
 
-- en voulant le poster j'ai eu cette erreur :
-scripts.js:2370 Erreur: SyntaxError: Unexpected token '<', "<br />
-<b>"... is not valid JSON
-(anonymous)	@	scripts.js:2370
+scripts.js:2241 Uncaught TypeError: Cannot read properties of null (reading 'addEventListener')
+    at scripts.js:2241:20
+(anonymous)	@	scripts.js:2241
   
