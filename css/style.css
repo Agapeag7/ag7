@@ -3698,6 +3698,232 @@ body.dark .modal-comment-input::placeholder,
   animation: slideInLeft 0.5s ease-in-out;
 }
 
+/* ===== POLLS / SONDAGES ===== */
+
+.create-poll-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.create-poll-modal.hidden {
+  display: none;
+}
+
+.create-poll-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.create-poll-card h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.create-poll-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.create-poll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.form-group textarea,
+.poll-option-input {
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.form-group textarea:focus,
+.poll-option-input:focus {
+  outline: none;
+  border-color: var(--emerald-500);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+#pollOptionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poll-option-input {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.poll-image-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.create-poll-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.post-poll {
+  background: var(--bg-hover);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  border-left: 4px solid var(--emerald-500);
+}
+
+.post-poll-question {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.post-poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poll-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.poll-option:hover {
+  background: var(--hover-bg);
+  border-color: var(--emerald-500);
+}
+
+.poll-option.voted {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--emerald-500);
+}
+
+.poll-option-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.poll-option:hover .poll-option-radio {
+  border-color: var(--emerald-500);
+}
+
+.poll-option.voted .poll-option-radio {
+  background: var(--emerald-500);
+  border-color: var(--emerald-500);
+}
+
+.poll-option.voted .poll-option-radio::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.poll-option-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.poll-option-text {
+  color: var(--text-primary);
+  font-size: 14px;
+  flex: 1;
+}
+
+.poll-option-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  min-width: 60px;
+  text-align: right;
+}
+
+.poll-result-bar {
+  width: 40px;
+  height: 4px;
+  background: var(--border-light);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.poll-result-fill {
+  height: 100%;
+  background: var(--emerald-500);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.poll-total-votes {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+}
+
  /* Responsive */
  
 /* Optimisation du LOGIN sur mobile (720x1612px) */

@@ -1129,6 +1129,122 @@ class StoryViewsModel extends BaseModel {
     }
 }
 
+/* ================== POLL MODEL ================== */
+class PollModel extends BaseModel {
+    
+    public function createPoll($post_id, $user_id, $question, $image_url = null, $options = []) {
+        $sql = 'INSERT INTO polls (poll_post_id, poll_user_id, poll_question, poll_image_url, poll_total_votes) 
+                VALUES (?, ?, ?, ?, 0)';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$post_id, $user_id, $question, $image_url]);
+        
+        $poll_id = $this->pdo->lastInsertId();
+        
+        // Insérer les options (2-5 options)
+        foreach ($options as $order => $option) {
+            $this->addOption($poll_id, $option['text'], $order + 1, $option['description'] ?? null);
+        }
+        
+        return $poll_id;
+    }
+    
+    public function addOption($poll_id, $text, $order = 1, $description = null) {
+        $sql = 'INSERT INTO poll_options (option_poll_id, option_text, option_order, option_description, option_votes) 
+                VALUES (?, ?, ?, ?, 0)';
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$poll_id, $text, $order, $description]);
+    }
+    
+    public function getPoll($poll_id) {
+        $stmt = $this->pdo->prepare('SELECT * FROM polls WHERE poll_id = ? LIMIT 1');
+        $stmt->execute([$poll_id]);
+        return $stmt->fetch();
+    }
+    
+    public function getPollByPost($post_id) {
+        $stmt = $this->pdo->prepare('SELECT * FROM polls WHERE poll_post_id = ? LIMIT 1');
+        $stmt->execute([$post_id]);
+        return $stmt->fetch();
+    }
+    
+    public function getPollOptions($poll_id) {
+        $sql = 'SELECT * FROM poll_options WHERE option_poll_id = ? ORDER BY option_order ASC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$poll_id]);
+        return $stmt->fetchAll();
+    }
+    
+    public function castVote($poll_id, $option_id, $user_id) {
+        // Vérifier si l'utilisateur a déjà voté pour ce sondage
+        $check = $this->hasVoted($poll_id, $user_id);
+        if ($check) {
+            // Supprimer le vote précédent
+            $this->removeVote($poll_id, $user_id);
+        }
+        
+        $sql = 'INSERT INTO poll_votes (vote_poll_id, vote_option_id, vote_user_id) 
+                VALUES (?, ?, ?)';
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$poll_id, $option_id, $user_id]);
+    }
+    
+    public function hasVoted($poll_id, $user_id) {
+        $stmt = $this->pdo->prepare('SELECT 1 FROM poll_votes WHERE vote_poll_id = ? AND vote_user_id = ? LIMIT 1');
+        $stmt->execute([$poll_id, $user_id]);
+        return $stmt->fetch() !== false;
+    }
+    
+    public function getUserVote($poll_id, $user_id) {
+        $stmt = $this->pdo->prepare('SELECT vote_option_id FROM poll_votes WHERE vote_poll_id = ? AND vote_user_id = ? LIMIT 1');
+        $stmt->execute([$poll_id, $user_id]);
+        $result = $stmt->fetch();
+        return $result ? $result['vote_option_id'] : null;
+    }
+    
+    public function removeVote($poll_id, $user_id) {
+        $sql = 'DELETE FROM poll_votes WHERE vote_poll_id = ? AND vote_user_id = ?';
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$poll_id, $user_id]);
+    }
+    
+    public function getPollResults($poll_id) {
+        $poll = $this->getPoll($poll_id);
+        if (!$poll) return null;
+        
+        $options = $this->getPollOptions($poll_id);
+        
+        $results = [
+            'poll_id' => $poll['poll_id'],
+            'poll_question' => $poll['poll_question'],
+            'poll_image_url' => $poll['poll_image_url'],
+            'poll_total_votes' => $poll['poll_total_votes'],
+            'poll_created_at' => $poll['poll_created_at'],
+            'options' => []
+        ];
+        
+        foreach ($options as $option) {
+            $percentage = $poll['poll_total_votes'] > 0 
+                ? round(($option['option_votes'] / $poll['poll_total_votes']) * 100, 1) 
+                : 0;
+            
+            $results['options'][] = [
+                'option_id' => $option['option_id'],
+                'option_text' => $option['option_text'],
+                'option_votes' => $option['option_votes'],
+                'option_percentage' => $percentage,
+                'option_order' => $option['option_order']
+            ];
+        }
+        
+        return $results;
+    }
+    
+    public function delete($poll_id) {
+        $stmt = $this->pdo->prepare('DELETE FROM polls WHERE poll_id = ?');
+        return $stmt->execute([$poll_id]);
+    }
+}
+
 /* ================== UTILISATEUR FACADE ================== */
 class Utilisateur extends BaseModel {
     private $um;
@@ -1873,6 +1989,20 @@ class Router {
             $profile['is_following'] = $follow->isFollowing($current_user_id, $user_id);
         }
         
+        // Formater la date de création (Janvier 2024 en français)
+        if (!empty($profile['created_at'])) {
+            $dateObj = new DateTime($profile['created_at']);
+            $profile['member_since'] = $dateObj->format('F Y');
+            // Traduire en français
+            $enToFr = [
+                'January' => 'Janvier', 'February' => 'Février', 'March' => 'Mars',
+                'April' => 'Avril', 'May' => 'Mai', 'June' => 'Juin',
+                'July' => 'Juillet', 'August' => 'Août', 'September' => 'Septembre',
+                'October' => 'Octobre', 'November' => 'Novembre', 'December' => 'Décembre'
+            ];
+            $profile['member_since'] = strtr($profile['member_since'], $enToFr);
+        }
+        
         Utils::jsonResponse(['success' => true, 'profile' => $profile]);
     }
     
@@ -2389,6 +2519,159 @@ class Router {
         ];
         
         Utils::jsonResponse(['success' => true, 'stats' => $stats]);
+    }
+    
+    private function actionCreatePoll() {
+        // Vérifier l'authentification
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        $post_id = $data['post_id'] ?? null;
+        $question = $data['question'] ?? null;
+        $options = $data['options'] ?? [];
+        $image_url = $data['image_url'] ?? null;
+        
+        // Valider les données
+        if (!$post_id || !$question || count($options) < 2 || count($options) > 5) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Données invalides. 2-5 options requises'], 400);
+        }
+        
+        try {
+            $poll = new PollModel($this->db);
+            $poll_id = $poll->createPoll($post_id, $_SESSION['user_id'], $question, $image_url, $options);
+            
+            Utils::jsonResponse(['success' => true, 'poll_id' => $poll_id, 'message' => 'Sondage créé avec succès']);
+        } catch (Exception $e) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de la création du sondage'], 500);
+        }
+    }
+    
+    private function actionGetPoll() {
+        $poll_id = $_GET['poll_id'] ?? null;
+        
+        if (!$poll_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Poll ID manquant'], 400);
+        }
+        
+        try {
+            $poll = new PollModel($this->db);
+            $results = $poll->getPollResults($poll_id);
+            
+            if (!$results) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Sondage non trouvé'], 404);
+            }
+            
+            // Vérifier si l'utilisateur a voté
+            $user_vote = null;
+            if (isset($_SESSION['user_id'])) {
+                $user_vote = $poll->getUserVote($poll_id, $_SESSION['user_id']);
+            }
+            
+            $results['user_vote'] = $user_vote;
+            
+            Utils::jsonResponse(['success' => true, 'poll' => $results]);
+        } catch (Exception $e) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de la récupération du sondage'], 500);
+        }
+    }
+    
+    private function actionGetPollByPost() {
+        $post_id = $_GET['post_id'] ?? null;
+        
+        if (!$post_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Post ID manquant'], 400);
+        }
+        
+        try {
+            $poll = new PollModel($this->db);
+            $pollData = $poll->getPollByPost($post_id);
+            
+            if (!$pollData) {
+                Utils::jsonResponse(['success' => true, 'poll' => null]);
+            }
+            
+            $results = $poll->getPollResults($pollData['poll_id']);
+            
+            // Vérifier si l'utilisateur a voté
+            $user_vote = null;
+            if (isset($_SESSION['user_id'])) {
+                $user_vote = $poll->getUserVote($pollData['poll_id'], $_SESSION['user_id']);
+            }
+            
+            $results['user_vote'] = $user_vote;
+            
+            Utils::jsonResponse(['success' => true, 'poll' => $results]);
+        } catch (Exception $e) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de la récupération du sondage'], 500);
+        }
+    }
+    
+    private function actionVotePoll() {
+        // Vérifier l'authentification
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        $poll_id = $data['poll_id'] ?? null;
+        $option_id = $data['option_id'] ?? null;
+        
+        if (!$poll_id || !$option_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Poll ID ou Option ID manquant'], 400);
+        }
+        
+        try {
+            $poll = new PollModel($this->db);
+            
+            // Vérifier que l'option appartient au sondage
+            $pollData = $poll->getPoll($poll_id);
+            if (!$pollData) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Sondage non trouvé'], 404);
+            }
+            
+            $poll->castVote($poll_id, $option_id, $_SESSION['user_id']);
+            
+            // Retourner les résultats mis à jour
+            $results = $poll->getPollResults($poll_id);
+            $results['user_vote'] = $option_id;
+            
+            Utils::jsonResponse(['success' => true, 'poll' => $results, 'message' => 'Vote enregistré']);
+        } catch (Exception $e) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors du vote'], 500);
+        }
+    }
+    
+    private function actionGetPollResults() {
+        $poll_id = $_GET['poll_id'] ?? null;
+        
+        if (!$poll_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Poll ID manquant'], 400);
+        }
+        
+        try {
+            $poll = new PollModel($this->db);
+            $results = $poll->getPollResults($poll_id);
+            
+            if (!$results) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Sondage non trouvé'], 404);
+            }
+            
+            // Vérifier si l'utilisateur a voté
+            $user_vote = null;
+            if (isset($_SESSION['user_id'])) {
+                $user_vote = $poll->getUserVote($poll_id, $_SESSION['user_id']);
+            }
+            
+            $results['user_vote'] = $user_vote;
+            
+            Utils::jsonResponse(['success' => true, 'poll' => $results]);
+        } catch (Exception $e) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de la récupération des résultats'], 500);
+        }
     }
 }
 

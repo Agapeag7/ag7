@@ -4,7 +4,7 @@
 ✓ Possibilités aux utilisateurs de likés des commentaires
 ✓ Afficher le profil d'un utilisateur (pour juste le consulter) quand on clique sur : <div class="post-author"></div> et <div class="post-avatar" style="background-image: url('imgApp/image.jpg'); background-size: cover; background-position: center;"></div>
 ✓ Pour publier un post (quand il clique sur publier que le bouton affiche "publication" et quand la publication est publier que le bouton revienne à afficher "Publier") : <button id="publishPostBtn" class="btn-primary">Publier</button>
-✓ COMMENTAIRES VOCALES - COMPLÉTÉ ✅
+✓ COMMENTAIRES VOCALES - COMPLÉTÉ
   ✓ Backend (PHP):
     · Utils::uploadVocalComment() pour gestion fichiers audio
     · actionAddVocalComment() pour POST des commentaires vocaux
@@ -23,7 +23,7 @@
     · Boutons Commencer/Arrêter/Réenregistrer/Poster
     · Aperçu audio avant envoi
     · Lecteur HTML5 pour affichage commentaires vocaux
-    · Badge visuel "🎙️ Vocal" pour commentaires audio
+    · Badge visuel "Vocal" pour commentaires audio
     · Styles responsive (desktop + mobile)
   ✓ Stockage:
     · Répertoire audio/comments/ créé
@@ -38,11 +38,25 @@
     · vocal_comments_ui_example.html (exemple HTML standalone)
 
 
-✓ CORRECTIFS COMMENTAIRES VOCALES ✅
+✓ CORRECTIFS COMMENTAIRES VOCALES
   ✓ Limit\u00e9 la dur\u00e9e d'enregistrement \u00e0 30 secondes (auto-arr\u00eat aprèsmax)
   ✓ Nettoyé la structure HTML du formulaire (suppression des doublons)
   ✓ Input texte masqué automatiquement quand bascule sur onglet Vocal
 
 
 * A Realiser :
-
+• Ajout des publications sondages
+Fonctionnement d’une publication sondage 
+une question ; entre 2 et 5 réponses possibles ; une image avec à sa droite une petite description;
+les résultats directement visibles après le vote
+1. Le créateur publie une question
+Exemple :
+Quel type de contenu voulez-vous voir ensuite ?
+2. Les abonnés choisissent une option
+Exemple :
+Tutoriel IA
+Gaming
+Vlog
+Développement web
+3. Les votes sont comptabilisés en temps réel
+Chaque réponse affiche un pourcentage basé sur les votes reçus

@@ -238,6 +238,9 @@ function createPostElement(post) {
   
   contentHTML += `</div>`;
   
+  // Poll placeholder (will be filled if post has a poll)
+  let pollHTML = `<div class="post-poll-container" data-post-id="${post.id}" style="display: none;"></div>`;
+  
   // Stats
   let statsHTML = `
     <div class="post-stats">
@@ -270,7 +273,7 @@ function createPostElement(post) {
       </div>
     </div>`;
   
-  postDiv.innerHTML = headerHTML + contentHTML + statsHTML + actionsHTML;
+  postDiv.innerHTML = headerHTML + contentHTML + pollHTML + statsHTML + actionsHTML;
   
   // Afficher l'aperçu des commentaires pré-chargés
   if (post.commentsList && post.commentsList.length > 0) {
@@ -350,6 +353,23 @@ function createPostElement(post) {
       });
     }
   }
+  
+  // Load poll if post has one
+  (async () => {
+    try {
+      const pollData = await loadPollForPost(post.id);
+      if (pollData) {
+        const pollContainer = postDiv.querySelector('.post-poll-container');
+        if (pollContainer) {
+          pollContainer.innerHTML = renderPollHTML(pollData);
+          pollContainer.style.display = 'block';
+          attachPollEvents(postDiv);
+        }
+      }
+    } catch (err) {
+      console.error('Erreur chargement sondage:', err);
+    }
+  })();
   
   return postDiv;
 }
@@ -1333,4 +1353,113 @@ function escapeHtml(text) {
 
 function getUserId() {
   return currentUserId || 0;
+}
+
+// ===== POLLS MANAGEMENT =====
+
+async function loadPollForPost(postId) {
+  try {
+    // Get poll by post_id
+    const response = await fetch(`?action=getPollByPost&post_id=${postId}`, {
+      method: 'GET'
+    });
+    const data = await response.json();
+    return data.success && data.poll ? data.poll : null;
+  } catch (err) {
+    console.error('Erreur au chargement du sondage:', err);
+    return null;
+  }
+}
+
+function renderPollHTML(poll, pollData) {
+  if (!poll) return '';
+  
+  const options = poll.options || [];
+  const userVote = poll.user_vote;
+  let optionsHTML = '';
+  
+  options.forEach(option => {
+    const isVoted = userVote === option.option_id;
+    const percentage = option.option_percentage || 0;
+    
+    optionsHTML += `
+      <div class="poll-option ${isVoted ? 'voted' : ''}" data-option-id="${option.option_id}">
+        <div class="poll-option-radio"></div>
+        <div class="poll-option-content">
+          <span class="poll-option-text">${escapeHtml(option.option_text)}</span>
+          <div class="poll-option-result">
+            <div class="poll-result-bar">
+              <div class="poll-result-fill" style="width: ${percentage}%"></div>
+            </div>
+            <span>${percentage}%</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  const pollHTML = `
+    <div class="post-poll" data-poll-id="${poll.poll_id}">
+      <div class="post-poll-question">📊 ${escapeHtml(poll.poll_question)}</div>
+      <div class="post-poll-options">
+        ${optionsHTML}
+      </div>
+      <div class="poll-total-votes">${poll.poll_total_votes} vote${poll.poll_total_votes !== 1 ? 's' : ''}</div>
+    </div>
+  `;
+  
+  return pollHTML;
+}
+
+async function handlePollVote(postElement, optionId, pollId) {
+  if (!currentUserId) {
+    showNotification('error', 'Erreur', 'Veuillez vous connecter pour voter');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`?action=votePoll`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        poll_id: pollId,
+        option_id: optionId
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success && data.poll) {
+      // Update poll display
+      const pollElement = postElement.querySelector('.post-poll');
+      if (pollElement) {
+        const newPollHTML = renderPollHTML(data.poll);
+        pollElement.outerHTML = newPollHTML;
+        attachPollEvents(postElement);
+      }
+      showNotification('success', 'Succès', 'Votre vote a été enregistré');
+    } else {
+      showNotification('error', 'Erreur', data.message || 'Erreur au vote');
+    }
+  } catch (err) {
+    console.error('Erreur au vote:', err);
+    showNotification('error', 'Erreur', 'Une erreur s\'est produite');
+  }
+}
+
+function attachPollEvents(postElement) {
+  const pollOptions = postElement.querySelectorAll('.poll-option');
+  const pollDiv = postElement.querySelector('.post-poll');
+  
+  if (!pollDiv) return;
+  
+  const pollId = pollDiv.dataset.pollId;
+  const postId = postElement.dataset.id;
+  
+  pollOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      const optionId = parseInt(option.dataset.optionId);
+      handlePollVote(postElement, optionId, pollId);
+    });
+  });
 }

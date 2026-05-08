@@ -2190,3 +2190,161 @@ if (typeof loadCurrentProfile === 'function') {
 } else {
   updateProfileUI();
 }
+
+// ===== GESTION DES SONDAGES =====
+const createPollModal = document.getElementById('createPollModal');
+const createPollBtn = document.getElementById('createPollBtn');
+const cancelPollBtn = document.getElementById('cancelPollBtn');
+const createPollClose = createPollModal.querySelector('.create-poll-close');
+const publishPollBtn = document.getElementById('publishPollBtn');
+const pollQuestion = document.getElementById('pollQuestion');
+const pollImageInput = document.getElementById('pollImageInput');
+const uploadPollImageBtn = document.getElementById('uploadPollImageBtn');
+const pollImagePreview = document.getElementById('pollImagePreview');
+const pollOptionsContainer = document.getElementById('pollOptionsContainer');
+const addPollOptionBtn = document.getElementById('addPollOptionBtn');
+
+let selectedPollImage = null;
+
+// Ouvrir la modale de sondage
+createPollBtn.addEventListener('click', () => {
+  createPollModal.classList.remove('hidden');
+});
+
+// Fermer la modale
+createPollClose.addEventListener('click', () => createPollModal.classList.add('hidden'));
+cancelPollBtn.addEventListener('click', () => createPollModal.classList.add('hidden'));
+
+createPollModal.addEventListener('click', (e) => {
+  if (e.target === createPollModal) {
+    createPollModal.classList.add('hidden');
+  }
+});
+
+// Upload image pour le sondage
+uploadPollImageBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  pollImageInput.click();
+});
+
+pollImageInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    selectedPollImage = file;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      pollImagePreview.src = event.target.result;
+      pollImagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Ajouter une option au sondage
+addPollOptionBtn.addEventListener('click', () => {
+  const optionCount = pollOptionsContainer.querySelectorAll('.poll-option-input').length;
+  if (optionCount < 5) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'poll-option-input';
+    input.placeholder = `Option ${optionCount + 1}`;
+    input.maxLength = 255;
+    pollOptionsContainer.appendChild(input);
+    
+    if (optionCount === 4) {
+      addPollOptionBtn.style.display = 'none';
+    }
+  }
+});
+
+// Publier le sondage
+publishPollBtn.addEventListener('click', async () => {
+  const question = pollQuestion.value.trim();
+  const options = Array.from(pollOptionsContainer.querySelectorAll('.poll-option-input'))
+    .map(input => ({text: input.value.trim()}))
+    .filter(opt => opt.text.length > 0);
+  
+  // Valider
+  if (!question) {
+    showNotification('error', 'Erreur', 'Veuillez entrer une question');
+    return;
+  }
+  
+  if (options.length < 2 || options.length > 5) {
+    showNotification('error', 'Erreur', 'Le sondage doit avoir entre 2 et 5 options');
+    return;
+  }
+  
+  // Créer d'abord la publication contenant le sondage
+  try {
+    publishPollBtn.disabled = true;
+    publishPollBtn.textContent = 'Création...';
+    
+    // Créer la publication
+    const formData = new FormData();
+    formData.append('action', 'createPost');
+    formData.append('post_content', `Sondage: ${question}`);
+    formData.append('post_visibility', 'public');
+    
+    if (selectedPollImage) {
+      formData.append('post_images', selectedPollImage);
+    }
+    
+    const postResponse = await fetch(window.location.href, {
+      method: 'POST',
+      body: formData
+    });
+    
+    const postData = await postResponse.json();
+    
+    if (!postData.success || !postData.post_id) {
+      throw new Error('Erreur lors de la création de la publication');
+    }
+    
+    // Créer le sondage lié à la publication
+    const pollResponse = await fetch(window.location.href + '?action=createPoll', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        post_id: postData.post_id,
+        question: question,
+        options: options,
+        image_url: postData.images ? postData.images[0] : null
+      })
+    });
+    
+    const pollData = await pollResponse.json();
+    
+    if (pollData.success) {
+      showNotification('success', 'Succès', 'Sondage créé avec succès');
+      
+      // Réinitialiser le formulaire
+      pollQuestion.value = '';
+      pollOptionsContainer.innerHTML = `
+        <input type="text" class="poll-option-input" placeholder="Option 1" maxlength="255">
+        <input type="text" class="poll-option-input" placeholder="Option 2" maxlength="255">
+      `;
+      addPollOptionBtn.style.display = 'block';
+      pollImagePreview.style.display = 'none';
+      pollImagePreview.src = '';
+      selectedPollImage = null;
+      pollImageInput.value = '';
+      
+      // Fermer la modale
+      createPollModal.classList.add('hidden');
+      
+      // Rafraîchir le flux
+      if (typeof loadFeed === 'function') {
+        await loadFeed();
+      }
+    } else {
+      throw new Error(pollData.message || 'Erreur lors de la création du sondage');
+    }
+  } catch (err) {
+    console.error('Erreur:', err);
+    showNotification('error', 'Erreur', err.message || 'Une erreur s\'est produite');
+  } finally {
+    publishPollBtn.disabled = false;
+    publishPollBtn.textContent = 'Créer le sondage';
+  }
+});

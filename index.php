@@ -504,6 +504,7 @@ if (isset($_SESSION['user_id'])) {
         <div class="create-post-actions">
           <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
           <input type="file" id="postImageInput" accept="image/*" multiple style="display: none;">
+          <button id="createPollBtn" class="action-btn"><i class="fas fa-poll"></i> Sondage</button>
           <button id="publishPostBtn" class="btn-primary">Publier</button>
         </div>
       </div>
@@ -578,6 +579,47 @@ if (isset($_SESSION['user_id'])) {
           <div class="create-story-actions">
             <button type="button" id="cancelStoryBtn" class="btn-secondary">Annuler</button>
             <button type="button" id="publishStoryBtn" class="btn-primary">Publier la story</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modale création sondage -->
+    <div id="createPollModal" class="create-poll-modal hidden">
+      <div class="create-poll-card">
+        <button class="create-poll-close">&times;</button>
+        <h2>Créer un sondage</h2>
+        <div class="create-poll-form">
+          <div class="form-group">
+            <label for="pollQuestion">Question du sondage</label>
+            <textarea id="pollQuestion" rows="2" placeholder="Posez votre question..." maxlength="255"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="pollImage">Image (optionnel)</label>
+            <div class="poll-image-upload">
+              <input type="file" id="pollImageInput" accept="image/*" style="display: none;">
+              <button type="button" id="uploadPollImageBtn" class="btn-secondary">
+                <i class="fas fa-image"></i> Ajouter une image
+              </button>
+              <img id="pollImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 150px; margin-top: 12px; border-radius: 12px;" loading="lazy">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Options du sondage (2-5)</label>
+            <div id="pollOptionsContainer">
+              <input type="text" class="poll-option-input" placeholder="Option 1" maxlength="255">
+              <input type="text" class="poll-option-input" placeholder="Option 2" maxlength="255">
+            </div>
+            <button type="button" id="addPollOptionBtn" class="btn-secondary" style="margin-top: 12px; display: none;">
+              <i class="fas fa-plus"></i> Ajouter option
+            </button>
+          </div>
+          
+          <div class="create-poll-actions">
+            <button type="button" id="cancelPollBtn" class="btn-secondary">Annuler</button>
+            <button type="button" id="publishPollBtn" class="btn-primary">Créer le sondage</button>
           </div>
         </div>
       </div>
