@@ -585,6 +585,7 @@ if (isset($_SESSION['user_id'])) {
     </div>
 
     <!-- Modale création sondage -->
+    <!-- Modale création sondage -->
     <div id="createPollModal" class="create-poll-modal hidden">
       <div class="create-poll-card">
         <button class="create-poll-close">&times;</button>
@@ -609,10 +610,20 @@ if (isset($_SESSION['user_id'])) {
           <div class="form-group">
             <label>Options du sondage (2-5)</label>
             <div id="pollOptionsContainer">
-              <input type="text" class="poll-option-input" placeholder="Option 1" maxlength="255">
-              <input type="text" class="poll-option-input" placeholder="Option 2" maxlength="255">
+              <!-- Groupe option 1 -->
+              <div class="poll-option-group">
+                <input type="text" class="poll-option-input" placeholder="Option 1" maxlength="255">
+                <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 1)">
+                <img id="optionPreview1" style="display:none; max-width:80px; margin-top:4px;">
+              </div>
+              <!-- Groupe option 2 -->
+              <div class="poll-option-group">
+                <input type="text" class="poll-option-input" placeholder="Option 2" maxlength="255">
+                <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 2)">
+                <img id="optionPreview2" style="display:none; max-width:80px; margin-top:4px;">
+              </div>
             </div>
-            <button type="button" id="addPollOptionBtn" class="btn-secondary" style="margin-top: 12px; display: none;">
+            <button type="button" id="addPollOptionBtn" class="btn-secondary" style="margin-top: 12px;">
               <i class="fas fa-plus"></i> Ajouter option
             </button>
           </div>

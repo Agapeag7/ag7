@@ -83,5 +83,8 @@ BEGIN
 END$$
 DELIMITER ;
 
+
+ALTER TABLE poll_options ADD COLUMN option_image_url VARCHAR(255) DEFAULT NULL AFTER option_text;
+
 -- Note: Files for poll images will be saved in /pub/ directory like other post images
 -- Examples: post_1715168000_50a3e.jpg

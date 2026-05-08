@@ -2206,6 +2206,22 @@ const addPollOptionBtn = document.getElementById('addPollOptionBtn');
 
 let selectedPollImage = null;
 
+function previewOptionImage(input, index) {
+  const file = input.files[0];
+  const preview = document.getElementById(`optionPreview${index}`);
+  if (file && preview) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else if (preview) {
+    preview.style.display = 'none';
+    preview.src = '';
+  }
+}
+
 // Ouvrir la modale de sondage
 createPollBtn.addEventListener('click', () => {
   createPollModal.classList.remove('hidden');
@@ -2242,15 +2258,16 @@ pollImageInput.addEventListener('change', (e) => {
 
 // Ajouter une option au sondage
 addPollOptionBtn.addEventListener('click', () => {
-  const optionCount = pollOptionsContainer.querySelectorAll('.poll-option-input').length;
+  const optionCount = pollOptionsContainer.querySelectorAll('.poll-option-group').length;
   if (optionCount < 5) {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'poll-option-input';
-    input.placeholder = `Option ${optionCount + 1}`;
-    input.maxLength = 255;
-    pollOptionsContainer.appendChild(input);
-    
+    const group = document.createElement('div');
+    group.className = 'poll-option-group';
+    group.innerHTML = `
+      <input type="text" class="poll-option-input" placeholder="Option ${optionCount + 1}" maxlength="255">
+      <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, ${optionCount + 1})">
+      <img id="optionPreview${optionCount + 1}" style="display:none; max-width:80px; margin-top:4px;">
+    `;
+    pollOptionsContainer.appendChild(group);
     if (optionCount === 4) {
       addPollOptionBtn.style.display = 'none';
     }
@@ -2260,89 +2277,98 @@ addPollOptionBtn.addEventListener('click', () => {
 // Publier le sondage
 publishPollBtn.addEventListener('click', async () => {
   const question = pollQuestion.value.trim();
-  const options = Array.from(pollOptionsContainer.querySelectorAll('.poll-option-input'))
-    .map(input => ({text: input.value.trim()}))
-    .filter(opt => opt.text.length > 0);
-  
-  // Valider
+  const optionInputs = document.querySelectorAll('.poll-option-input');
+  const imageInputs = document.querySelectorAll('.poll-option-image');
+
+  // Récupérer les textes et les fichiers
+  const optionsText = Array.from(optionInputs).map(inp => inp.value.trim()).filter(t => t.length > 0);
+  const files = Array.from(imageInputs).map(inp => inp.files[0]);
+
+  // Validation
   if (!question) {
     showNotification('error', 'Erreur', 'Veuillez entrer une question');
     return;
   }
-  
-  if (options.length < 2 || options.length > 5) {
+  if (optionsText.length < 2 || optionsText.length > 5) {
     showNotification('error', 'Erreur', 'Le sondage doit avoir entre 2 et 5 options');
     return;
   }
-  
-  // Créer d'abord la publication contenant le sondage
+
+  // Désactiver le bouton pendant la création
+  publishPollBtn.disabled = true;
+  publishPollBtn.textContent = 'Création...';
+
   try {
-    publishPollBtn.disabled = true;
-    publishPollBtn.textContent = 'Création...';
-    
-    // Créer la publication
-    const formData = new FormData();
-    formData.append('action', 'createPost');
-    formData.append('post_content', `Sondage: ${question}`);
-    formData.append('post_visibility', 'public');
-    
+    // 1. Créer la publication parent
+    const postFormData = new FormData();
+    postFormData.append('action', 'createPost');
+    postFormData.append('post_content', `Sondage: ${question}`);
+    postFormData.append('post_visibility', 'public');
     if (selectedPollImage) {
-      formData.append('post_images', selectedPollImage);
+      postFormData.append('post_images', selectedPollImage);
     }
-    
-    const postResponse = await fetch(window.location.href, {
-      method: 'POST',
-      body: formData
-    });
-    
+
+    const postResponse = await fetch(window.location.href, { method: 'POST', body: postFormData });
     const postData = await postResponse.json();
-    
+
     if (!postData.success || !postData.post_id) {
-      throw new Error('Erreur lors de la création de la publication');
+      throw new Error(postData.message || 'Erreur création publication');
     }
-    
-    // Créer le sondage lié à la publication
-    const pollResponse = await fetch(window.location.href + '?action=createPoll', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        post_id: postData.post_id,
-        question: question,
-        options: options,
-        image_url: postData.images ? postData.images[0] : null
-      })
-    });
-    
+
+    // 2. Préparer l’envoi du sondage avec images
+    const pollFormData = new FormData();
+    pollFormData.append('action', 'createPoll');
+    pollFormData.append('post_id', postData.post_id);
+    pollFormData.append('question', question);
+    optionsText.forEach(t => pollFormData.append('options[]', t));
+    files.forEach(f => pollFormData.append('option_images[]', f)); // même si null, le serveur les ignore
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'createPoll');
+    const pollResponse = await fetch(url.toString(), { method: 'POST', body: pollFormData });
     const pollData = await pollResponse.json();
-    
-    if (pollData.success) {
-      showNotification('success', 'Succès', 'Sondage créé avec succès');
-      
-      // Réinitialiser le formulaire
-      pollQuestion.value = '';
-      pollOptionsContainer.innerHTML = `
-        <input type="text" class="poll-option-input" placeholder="Option 1" maxlength="255">
-        <input type="text" class="poll-option-input" placeholder="Option 2" maxlength="255">
-      `;
-      addPollOptionBtn.style.display = 'block';
-      pollImagePreview.style.display = 'none';
-      pollImagePreview.src = '';
-      selectedPollImage = null;
-      pollImageInput.value = '';
-      
-      // Fermer la modale
-      createPollModal.classList.add('hidden');
-      
-      // Rafraîchir le flux
-      if (typeof loadFeed === 'function') {
-        await loadFeed();
-      }
-    } else {
-      throw new Error(pollData.message || 'Erreur lors de la création du sondage');
+
+    if (!pollData.success) {
+      throw new Error(pollData.message || 'Erreur création sondage');
     }
+
+    // Succès
+    showNotification('success', 'Succès', 'Sondage créé avec succès');
+
+    // Réinitialiser le formulaire
+    pollQuestion.value = '';
+    pollOptionsContainer.innerHTML = `
+      <div class="poll-option-group">
+        <input type="text" class="poll-option-input" placeholder="Option 1" maxlength="255">
+        <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 1)">
+        <img id="optionPreview1" style="display:none; max-width:80px; margin-top:4px;">
+      </div>
+      <div class="poll-option-group">
+        <input type="text" class="poll-option-input" placeholder="Option 2" maxlength="255">
+        <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 2)">
+        <img id="optionPreview2" style="display:none; max-width:80px; margin-top:4px;">
+      </div>
+    `;
+    // Réinitialiser aussi les inputs file (on recrée les groupes avec leurs images)
+    document.querySelectorAll('.poll-option-image').forEach(inp => inp.value = '');
+    addPollOptionBtn.style.display = 'block';
+    pollImagePreview.style.display = 'none';
+    pollImagePreview.src = '';
+    selectedPollImage = null;
+    pollImageInput.value = '';
+
+    createPollModal.classList.add('hidden');
+
+    // Rafraîchir le flux
+    if (typeof loadActusFeed === 'function') {
+      await loadActusFeed();
+    } else if (typeof loadFeed === 'function') {
+      await loadFeed();
+    }
+
   } catch (err) {
     console.error('Erreur:', err);
-    showNotification('error', 'Erreur', err.message || 'Une erreur s\'est produite');
+    showNotification('error', 'Erreur', err.message || 'Une erreur est survenue');
   } finally {
     publishPollBtn.disabled = false;
     publishPollBtn.textContent = 'Créer le sondage';

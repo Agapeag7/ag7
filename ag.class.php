@@ -1148,11 +1148,11 @@ class PollModel extends BaseModel {
         return $poll_id;
     }
     
-    public function addOption($poll_id, $text, $order = 1, $description = null) {
-        $sql = 'INSERT INTO poll_options (option_poll_id, option_text, option_order, option_description, option_votes) 
-                VALUES (?, ?, ?, ?, 0)';
+    public function addOption($poll_id, $text, $order = 1, $image_url = null, $description = null) {
+        $sql = 'INSERT INTO poll_options (option_poll_id, option_text, option_image_url, option_order, option_description, option_votes) 
+                VALUES (?, ?, ?, ?, ?, 0)';
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([$poll_id, $text, $order, $description]);
+        return $stmt->execute([$poll_id, $text, $image_url, $order, $description]);
     }
     
     public function getPoll($poll_id) {
@@ -1229,6 +1229,7 @@ class PollModel extends BaseModel {
             
             $results['options'][] = [
                 'option_id' => $option['option_id'],
+                'option_image_url' => $option['option_image_url'],
                 'option_text' => $option['option_text'],
                 'option_votes' => $option['option_votes'],
                 'option_percentage' => $percentage,
@@ -2522,30 +2523,41 @@ class Router {
     }
     
     private function actionCreatePoll() {
-        // Vérifier l'authentification
         if (!isset($_SESSION['user_id'])) {
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
         }
-        
-        $data = json_decode(file_get_contents('php://input'), true);
-        
-        $post_id = $data['post_id'] ?? null;
-        $question = $data['question'] ?? null;
-        $options = $data['options'] ?? [];
-        $image_url = $data['image_url'] ?? null;
-        
-        // Valider les données
-        if (!$post_id || !$question || count($options) < 2 || count($options) > 5) {
-            Utils::jsonResponse(['success' => false, 'message' => 'Données invalides. 2-5 options requises'], 400);
+
+        $post_id = $_POST['post_id'] ?? null;
+        $question = $_POST['question'] ?? null;
+        $options_text = $_POST['options'] ?? [];     // on attend un tableau de textes
+        $options_images = $_FILES['option_images'] ?? []; // fichiers
+
+        if (!$post_id || !$question || count($options_text) < 2 || count($options_text) > 5) {
+            Utils::jsonResponse(['success' => false, 'message' => '2 à 5 options requises'], 400);
         }
-        
+
+        // Uploader les images des options
+        $imageUrls = [];
+        for ($i = 0; $i < count($options_text); $i++) {
+            $img = null;
+            if (!empty($options_images['tmp_name'][$i]) && $options_images['error'][$i] === UPLOAD_ERR_OK) {
+                $img = Utils::uploadPostImage($options_images['tmp_name'][$i], $options_images['name'][$i]);
+                if (!$img) {
+                    Utils::jsonResponse(['success' => false, 'message' => "Échec de l'upload de l'image de l'option ".($i+1)], 400);
+                }
+            }
+            $imageUrls[] = $img;
+        }
+
         try {
             $poll = new PollModel($this->db);
-            $poll_id = $poll->createPoll($post_id, $_SESSION['user_id'], $question, $image_url, $options);
-            
-            Utils::jsonResponse(['success' => true, 'poll_id' => $poll_id, 'message' => 'Sondage créé avec succès']);
+            $poll_id = $poll->createPoll($post_id, $_SESSION['user_id'], $question, null, []); // on va ajouter options après
+            foreach ($options_text as $i => $text) {
+                $poll->addOption($poll_id, $text, $i+1, $imageUrls[$i]);
+            }
+            Utils::jsonResponse(['success' => true, 'poll_id' => $poll_id]);
         } catch (Exception $e) {
-            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de la création du sondage'], 500);
+            Utils::jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
     

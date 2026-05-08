@@ -1371,44 +1371,47 @@ async function loadPollForPost(postId) {
   }
 }
 
-function renderPollHTML(poll, pollData) {
+function renderPollHTML(poll) {
   if (!poll) return '';
-  
+
   const options = poll.options || [];
+  const totalVotes = poll.poll_total_votes;
   const userVote = poll.user_vote;
-  let optionsHTML = '';
-  
-  options.forEach(option => {
+  const hasVoted = userVote !== null;
+
+  let optionsHTML = options.map(option => {
     const isVoted = userVote === option.option_id;
     const percentage = option.option_percentage || 0;
-    
-    optionsHTML += `
+    const votes = option.option_votes || 0;
+    const imageHTML = option.option_image_url
+      ? `<img src="pub/${option.option_image_url}" class="poll-option-thumb" alt="">`
+      : '';
+
+    return `
       <div class="poll-option ${isVoted ? 'voted' : ''}" data-option-id="${option.option_id}">
-        <div class="poll-option-radio"></div>
-        <div class="poll-option-content">
+        ${imageHTML}
+        <div class="poll-option-info">
           <span class="poll-option-text">${escapeHtml(option.option_text)}</span>
-          <div class="poll-option-result">
+          <div class="poll-option-result" style="display: ${hasVoted ? 'flex' : 'none'}">
             <div class="poll-result-bar">
               <div class="poll-result-fill" style="width: ${percentage}%"></div>
             </div>
-            <span>${percentage}%</span>
+            <span class="poll-option-percent">${percentage}%</span>
           </div>
+          <span class="poll-option-votes" style="display: ${hasVoted ? 'block' : 'none'}">${votes} vote${votes > 1 ? 's' : ''}</span>
         </div>
+        <div class="poll-option-voted-badge" style="display: ${isVoted ? 'flex' : 'none'}">✓</div>
       </div>
     `;
-  });
-  
-  const pollHTML = `
+  }).join('');
+
+  return `
     <div class="post-poll" data-poll-id="${poll.poll_id}">
-      <div class="post-poll-question">📊 ${escapeHtml(poll.poll_question)}</div>
-      <div class="post-poll-options">
-        ${optionsHTML}
-      </div>
-      <div class="poll-total-votes">${poll.poll_total_votes} vote${poll.poll_total_votes !== 1 ? 's' : ''}</div>
+      <div class="post-poll-question">${escapeHtml(poll.poll_question)}</div>
+      ${optionsHTML}
+      <div class="poll-total-votes">${totalVotes} vote${totalVotes !== 1 ? 's' : ''}</div>
     </div>
   `;
-  
-  return pollHTML;
 }
 
 async function handlePollVote(postElement, optionId, pollId) {
