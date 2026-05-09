@@ -577,6 +577,7 @@ if (isset($_SESSION['user_id'])) {
             <img id="storyImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 12px; border-radius: 12px;" loading="lazy">
           </div>
           <div class="create-story-actions">
+            <button type="button" id="cancelStoryBtn" class="btn-secondary">Annuler</button>
             <button type="button" id="publishStoryBtn" class="btn-primary">Publier la story</button>
           </div>
         </div>
@@ -593,6 +594,17 @@ if (isset($_SESSION['user_id'])) {
           <div class="form-group">
             <label for="pollQuestion">Question du sondage</label>
             <textarea id="pollQuestion" rows="2" placeholder="Posez votre question..." maxlength="255"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="pollImage">Image (optionnel)</label>
+            <div class="poll-image-upload">
+              <input type="file" id="pollImageInput" accept="image/*" style="display: none;">
+              <button type="button" id="uploadPollImageBtn" class="btn-secondary">
+                <i class="fas fa-image"></i> Ajouter une image
+              </button>
+              <img id="pollImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 150px; margin-top: 12px; border-radius: 12px;" loading="lazy">
+            </div>
           </div>
           
           <div class="form-group">
@@ -668,6 +680,21 @@ if (isset($_SESSION['user_id'])) {
         <div class="delete-post-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
           <button type="button" id="cancelDeleteBtn" class="btn-secondary">Annuler</button>
           <button type="button" id="confirmDeleteBtn" class="btn-danger" style="background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">Supprimer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmation Générique -->
+    <div id="confirmationModal" class="confirmation-modal hidden">
+      <div class="confirmation-card">
+        <div class="confirmation-header">
+          <i class="fas fa-exclamation-circle confirmation-icon"></i>
+          <h2 id="confirmationTitle">Confirmation</h2>
+        </div>
+        <p id="confirmationMessage" class="confirmation-message"></p>
+        <div class="confirmation-actions">
+          <button type="button" id="confirmationCancel" class="btn-secondary">Annuler</button>
+          <button type="button" id="confirmationConfirm" class="btn-danger">Confirmer</button>
         </div>
       </div>
     </div>

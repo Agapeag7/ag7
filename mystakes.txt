@@ -30,13 +30,6 @@
     · Nommage unique: comment_{TIMESTAMP}_{UNIQID}.{EXT}
     · Formats supportés: mp3, wav, ogg, webm, m4a
     · Permissions 0777 pour upload
-  ✓ Documentation:
-    · VOCAL_COMMENTS_README.md (guide complet)
-    · documentation/VOCAL_COMMENTS.md (backend)
-    · js/VOCAL_COMMENTS_FRONTEND.md (frontend)
-    · VOCAL_COMMENTS_DEMO.html (démo interactive)
-    · vocal_comments_ui_example.html (exemple HTML standalone)
-
 
 ✓ CORRECTIFS COMMENTAIRES VOCALES
   ✓ Limit\u00e9 la dur\u00e9e d'enregistrement \u00e0 30 secondes (auto-arr\u00eat aprèsmax)
@@ -45,7 +38,15 @@
 
 
 ✓ Suppression du bouton "Annuler" redondant dans la modale de création de story (il dépasse sur mobile et le bouton X existe déjà)
+✓ Remplacement des confirmations JS (alert/confirm) par des modales de confirmation frontend pour:
+  - Suppression de story
+  - Suppression de publication (depuis le profil)
+  - Modal générique réutilisable (.confirmationModal) avec fonction showConfirmation()
 
 * A Realiser :
 - Publication Vocale : l'utilisateur peut poster une publication vocale
   
+- A eviter et remplacer : les messages alert de JS pour confirmation de suppression de story et le message alert JS de suppression d'une publication quand on est sur profil. remplacer par des vrais message d'un front et non des alerts
+
+- Une chose à corriger et à mettre en place pour les story :
+

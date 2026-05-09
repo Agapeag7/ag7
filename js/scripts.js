@@ -37,6 +37,45 @@ function showNotification(type = 'info', title = '', message = '', duration = 40
   return toast;
 }
 
+// ===== SYSTÈME DE CONFIRMATION MODAL (GLOBAL) =====
+let confirmationCallback = null;
+
+function showConfirmation(title, message, onConfirm, onCancel = null) {
+  const modal = document.getElementById('confirmationModal');
+  const titleEl = document.getElementById('confirmationTitle');
+  const messageEl = document.getElementById('confirmationMessage');
+  const confirmBtn = document.getElementById('confirmationConfirm');
+  const cancelBtn = document.getElementById('confirmationCancel');
+
+  titleEl.textContent = title;
+  messageEl.textContent = message;
+
+  // Stocker le callback
+  confirmationCallback = onConfirm;
+
+  // Afficher le modal
+  modal.classList.remove('hidden');
+
+  // Gestionnaire du bouton Confirmer
+  const handleConfirm = () => {
+    modal.classList.add('hidden');
+    if (confirmationCallback) {
+      confirmationCallback();
+      confirmationCallback = null;
+    }
+  };
+
+  // Gestionnaire du bouton Annuler
+  const handleCancel = () => {
+    modal.classList.add('hidden');
+    confirmationCallback = null;
+    if (onCancel) onCancel();
+  };
+
+  confirmBtn.onclick = handleConfirm;
+  cancelBtn.onclick = handleCancel;
+}
+
 // ===== PROFIL GLOBAL =====
 // Initialize BEFORE the IIFE that needs it
 let currentUserProfile = {
@@ -1080,6 +1119,7 @@ const uploadStoryImageBtn = document.getElementById('uploadStoryImageBtn');
 const storyImageInput = document.getElementById('storyImageInput');
 const storyImagePreview = document.getElementById('storyImagePreview');
 const publishStoryBtn = document.getElementById('publishStoryBtn');
+const cancelStoryBtn = document.getElementById('cancelStoryBtn');
 const storiesContainer = document.getElementById('storiesContainer');
 
 storyTextInput.addEventListener('input', updateCreateStoryButtons);
@@ -1174,6 +1214,13 @@ if (actionsDiv) actionsDiv.style.display = 'none';
 
 // Fermer modales
 createStoryClose.addEventListener('click', () => {
+  createStoryModal.classList.add('hidden');
+  storyImageInput.value = '';
+  uploadStoryImageBtn.disabled = false;
+  uploadStoryImageBtn.style.opacity = '1';
+  uploadStoryImageBtn.style.cursor = 'pointer';
+});
+cancelStoryBtn.addEventListener('click', () => {
   createStoryModal.classList.add('hidden');
   storyImageInput.value = '';
   uploadStoryImageBtn.disabled = false;
@@ -1278,16 +1325,20 @@ function openStory(story) {
     if (story.isOwner) {
       deleteBtn.style.display = 'block';
       deleteBtn.onclick = async () => {
-        if (confirm('Supprimer cette story ?')) {
-          const result = await StoriesAPI.deleteStory(story.id);
-          if (result.success) {
-            closeStoryModal();
-            await loadStories();
-            showNotification('success', 'Story supprimée', '');
-          } else {
-            showNotification('error', 'Erreur', result.message);
+        showConfirmation(
+          'Supprimer cette story',
+          'Êtes-vous sûr de vouloir supprimer cette story ? Cette action est irréversible.',
+          async () => {
+            const result = await StoriesAPI.deleteStory(story.id);
+            if (result.success) {
+              closeStoryModal();
+              await loadStories();
+              showNotification('success', 'Story supprimée', '');
+            } else {
+              showNotification('error', 'Erreur', result.message);
+            }
           }
-        }
+        );
       };
     } else {
       deleteBtn.style.display = 'none';
@@ -1800,17 +1851,21 @@ function openPostDetailModal(post) {
     if (currentUserId && parseInt(currentUserId) === parseInt(post.user_id)) {
       deleteBtn.style.display = 'block';
       deleteBtn.onclick = () => {
-        if (confirm('Supprimer cette publication ?')) {
-          ActusAPI.deletePost(post.id).then(res => {
-            if (res.success) {
-              modal.classList.add('hidden');
-              loadCurrentProfile().then(() => updateProfileUI());
-              showNotification('success', 'Supprimé', 'Publication supprimée');
-            } else {
-              showNotification('error', 'Erreur', res.message);
-            }
-          });
-        }
+        showConfirmation(
+          'Supprimer cette publication',
+          'Êtes-vous sûr de vouloir supprimer cette publication ? Cette action est irréversible.',
+          () => {
+            ActusAPI.deletePost(post.id).then(res => {
+              if (res.success) {
+                modal.classList.add('hidden');
+                loadCurrentProfile().then(() => updateProfileUI());
+                showNotification('success', 'Supprimé', 'Publication supprimée');
+              } else {
+                showNotification('error', 'Erreur', res.message);
+              }
+            });
+          }
+        );
       };
     } else {
       deleteBtn.style.display = 'none';
@@ -2190,6 +2245,9 @@ const cancelPollBtn = document.getElementById('cancelPollBtn');
 const createPollClose = createPollModal.querySelector('.create-poll-close');
 const publishPollBtn = document.getElementById('publishPollBtn');
 const pollQuestion = document.getElementById('pollQuestion');
+const pollImageInput = document.getElementById('pollImageInput');
+const uploadPollImageBtn = document.getElementById('uploadPollImageBtn');
+const pollImagePreview = document.getElementById('pollImagePreview');
 const pollOptionsContainer = document.getElementById('pollOptionsContainer');
 const addPollOptionBtn = document.getElementById('addPollOptionBtn');
 
@@ -2223,6 +2281,25 @@ cancelPollBtn.addEventListener('click', () => createPollModal.classList.add('hid
 createPollModal.addEventListener('click', (e) => {
   if (e.target === createPollModal) {
     createPollModal.classList.add('hidden');
+  }
+});
+
+// Upload image pour le sondage
+uploadPollImageBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  pollImageInput.click();
+});
+
+pollImageInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    selectedPollImage = file;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      pollImagePreview.src = event.target.result;
+      pollImagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
   }
 });
 
@@ -2279,16 +2356,7 @@ publishPollBtn.addEventListener('click', async () => {
     }
 
     const postResponse = await fetch(window.location.href, { method: 'POST', body: postFormData });
-    const postText = await postResponse.text();
-    let postData;
-    try {
-      postData = JSON.parse(postText);
-    } catch (e) {
-      showNotification('error', 'Erreur', 'Réponse inattendue du serveur (voir console)');
-      publishPollBtn.disabled = false;
-      publishPollBtn.textContent = 'Créer le sondage';
-      return;
-    }
+    const postData = await postResponse.json();
 
     if (!postData.success || !postData.post_id) {
       throw new Error(postData.message || 'Erreur création publication');
@@ -2305,15 +2373,10 @@ publishPollBtn.addEventListener('click', async () => {
     const url = new URL(window.location.href);
     url.searchParams.set('action', 'createPoll');
     const pollResponse = await fetch(url.toString(), { method: 'POST', body: pollFormData });
-    const pollText = await pollResponse.text();
-    let pollData;
-    try {
-      pollData = JSON.parse(pollText);
-    } catch (e) {
-      showNotification('error', 'Erreur', 'Réponse inattendue du serveur (voir console)');
-      publishPollBtn.disabled = false;
-      publishPollBtn.textContent = 'Créer le sondage';
-      return;
+    const pollData = await pollResponse.json();
+
+    if (!pollData.success) {
+      throw new Error(pollData.message || 'Erreur création sondage');
     }
 
     // Succès
@@ -2336,7 +2399,10 @@ publishPollBtn.addEventListener('click', async () => {
     // Réinitialiser aussi les inputs file (on recrée les groupes avec leurs images)
     document.querySelectorAll('.poll-option-image').forEach(inp => inp.value = '');
     addPollOptionBtn.style.display = 'block';
+    pollImagePreview.style.display = 'none';
+    pollImagePreview.src = '';
     selectedPollImage = null;
+    pollImageInput.value = '';
 
     createPollModal.classList.add('hidden');
 
