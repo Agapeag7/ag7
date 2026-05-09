@@ -577,7 +577,6 @@ if (isset($_SESSION['user_id'])) {
             <img id="storyImagePreview" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 12px; border-radius: 12px;" loading="lazy">
           </div>
           <div class="create-story-actions">
-            <button type="button" id="cancelStoryBtn" class="btn-secondary">Annuler</button>
             <button type="button" id="publishStoryBtn" class="btn-primary">Publier la story</button>
           </div>
         </div>

@@ -44,9 +44,8 @@
   ✓ Input texte masqué automatiquement quand bascule sur onglet Vocal
 
 
-* A Realiser :
+✓ Suppression du bouton "Annuler" redondant dans la modale de création de story (il dépasse sur mobile et le bouton X existe déjà)
 
-scripts.js:2241 Uncaught TypeError: Cannot read properties of null (reading 'addEventListener')
-    at scripts.js:2241:20
-(anonymous)	@	scripts.js:2241
+* A Realiser :
+- Publication Vocale : l'utilisateur peut poster une publication vocale
   

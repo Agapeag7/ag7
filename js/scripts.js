@@ -1080,7 +1080,6 @@ const uploadStoryImageBtn = document.getElementById('uploadStoryImageBtn');
 const storyImageInput = document.getElementById('storyImageInput');
 const storyImagePreview = document.getElementById('storyImagePreview');
 const publishStoryBtn = document.getElementById('publishStoryBtn');
-const cancelStoryBtn = document.getElementById('cancelStoryBtn');
 const storiesContainer = document.getElementById('storiesContainer');
 
 storyTextInput.addEventListener('input', updateCreateStoryButtons);
@@ -1175,13 +1174,6 @@ if (actionsDiv) actionsDiv.style.display = 'none';
 
 // Fermer modales
 createStoryClose.addEventListener('click', () => {
-  createStoryModal.classList.add('hidden');
-  storyImageInput.value = '';
-  uploadStoryImageBtn.disabled = false;
-  uploadStoryImageBtn.style.opacity = '1';
-  uploadStoryImageBtn.style.cursor = 'pointer';
-});
-cancelStoryBtn.addEventListener('click', () => {
   createStoryModal.classList.add('hidden');
   storyImageInput.value = '';
   uploadStoryImageBtn.disabled = false;
