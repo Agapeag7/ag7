@@ -41,6 +41,7 @@
 ✓ Remplacement des confirmations JS (alert/confirm) par des modales de confirmation frontend pour:
   - Suppression de story
   - Suppression de publication (depuis le profil)
+  - Suppression de commentaire
   - Modal générique réutilisable (.confirmationModal) avec fonction showConfirmation()
 
 ✓ Corrections pour les publications de sondage :

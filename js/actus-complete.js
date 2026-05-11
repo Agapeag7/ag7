@@ -957,18 +957,22 @@ function createCommentElement(comment, postId, isReply = false) {
   if (deleteBtn && canDeleteComment) {
     deleteBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
-        const commentId = parseInt(deleteBtn.dataset.commentId);
-        const result = await ActusAPI.deleteComment(commentId);
-        if (result.success) {
-          showNotification('success', 'Succès', 'Commentaire supprimé');
-          // Recharger les commentaires
-          await openCommentsModal(postId);
-          updatePostCommentCount(postId);
-        } else {
-          showNotification('error', 'Erreur', result.message);
+      showConfirmation(
+        'Supprimer ce commentaire',
+        'Êtes-vous sûr de vouloir supprimer ce commentaire ? Cette action est irréversible.',
+        async () => {
+          const commentId = parseInt(deleteBtn.dataset.commentId);
+          const result = await ActusAPI.deleteComment(commentId);
+          if (result.success) {
+            showNotification('success', 'Succès', 'Commentaire supprimé');
+            // Recharger les commentaires
+            await openCommentsModal(postId);
+            updatePostCommentCount(postId);
+          } else {
+            showNotification('error', 'Erreur', result.message);
+          }
         }
-      }
+      );
     });
 
     // Afficher/masquer le bouton au survol
