@@ -43,10 +43,13 @@
   - Suppression de publication (depuis le profil)
   - Modal générique réutilisable (.confirmationModal) avec fonction showConfirmation()
 
+✓ Corrections pour les publications de sondage :
+  - Masquage du post-content quand un sondage est affiché (évite l'affichage double du titre)
+  - Ajout de CSS pour les inputs d'images de sondage (.poll-option-image)
+
+✓ Débordement des boutons sur mobile :
+  - CSS responsive pour la modale de confirmation (flex-direction: column sur mobile)
+  - Les boutons prennent toute la largeur disponible sur petit écran
+
 * A Realiser :
 - Publication Vocale : l'utilisateur peut poster une publication vocale
-  
-- A eviter et remplacer : les messages alert de JS pour confirmation de suppression de story et le message alert JS de suppression d'une publication quand on est sur profil. remplacer par des vrais message d'un front et non des alerts
-
-- Une chose à corriger et à mettre en place pour les story :
-

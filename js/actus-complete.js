@@ -364,6 +364,11 @@ function createPostElement(post) {
           pollContainer.innerHTML = renderPollHTML(pollData);
           pollContainer.style.display = 'block';
           attachPollEvents(postDiv);
+          // Masquer le contenu du post si un sondage est affiché
+          const contentDiv = postDiv.querySelector('.post-content');
+          if (contentDiv) {
+            contentDiv.style.display = 'none';
+          }
         }
       }
     } catch (err) {
