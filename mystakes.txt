@@ -47,6 +47,7 @@
 ✓ Corrections pour les publications de sondage :
   - Masquage du post-content quand un sondage est affiché (évite l'affichage double du titre)
   - Ajout de CSS pour les inputs d'images de sondage (.poll-option-image)
+  - Suppression du formulaire d'image globale du sondage (redondant avec les images par option)
 
 ✓ Débordement des boutons sur mobile :
   - CSS responsive pour la modale de confirmation (flex-direction: column sur mobile)
