@@ -2350,9 +2350,6 @@ publishPollBtn.addEventListener('click', async () => {
     postFormData.append('action', 'createPost');
     postFormData.append('post_content', `Sondage: ${question}`);
     postFormData.append('post_visibility', 'public');
-    if (selectedPollImage) {
-      postFormData.append('post_images', selectedPollImage);
-    }
 
     const postResponse = await fetch(window.location.href, { method: 'POST', body: postFormData });
     const postData = await postResponse.json();
