@@ -4133,11 +4133,19 @@ body.dark .modal-comment-input::placeholder,
   text-align: center;
 }
 
- /* Responsive */
- 
-/* Optimisation du LOGIN sur mobile (720x1612px) */
-/*  */
+.delete-post-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
 
+.delete-post-actions button {
+  flex: 1;
+  min-width: 120px;
+}
+
+ /* Responsive */
 @media (max-width: 768px) {
     .app-wrapper { 
       flex-direction: column; 
@@ -4233,6 +4241,14 @@ body.dark .modal-comment-input::placeholder,
 
     .create-poll-card {
       padding: 20px;
+    }
+
+    .delete-post-actions {
+      flex-direction: column;
+    }
+
+    .delete-post-actions button {
+      width: 100%;
     }
   }
 
