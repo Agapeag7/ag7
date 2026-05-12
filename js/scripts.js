@@ -2248,6 +2248,25 @@ const pollQuestion = document.getElementById('pollQuestion');
 const pollOptionsContainer = document.getElementById('pollOptionsContainer');
 const addPollOptionBtn = document.getElementById('addPollOptionBtn');
 
+// Fonction pour activer/désactiver le bouton "Ajouter option"
+function updateAddPollOptionButtonState() {
+  const optionInputs = document.querySelectorAll('#pollOptionsContainer .poll-option-input');
+  const addBtn = document.getElementById('addPollOptionBtn');
+  if (!addBtn) return;
+
+  const optionCount = optionInputs.length;
+  const allFilled = optionCount >= 2 && Array.from(optionInputs).every(inp => inp.value.trim() !== '');
+
+  if (optionCount >= 5) {
+    addBtn.style.display = 'none';
+  } else {
+    addBtn.style.display = 'block';
+    addBtn.disabled = !allFilled;
+  }
+}
+
+pollOptionsContainer.addEventListener('input', updateAddPollOptionButtonState);
+
 function previewOptionImage(input, index) {
   const file = input.files[0];
   const preview = document.getElementById(`optionPreview${index}`);
@@ -2267,6 +2286,7 @@ function previewOptionImage(input, index) {
 // Ouvrir la modale de sondage
 createPollBtn.addEventListener('click', () => {
   createPollModal.classList.remove('hidden');
+  updateAddPollOptionButtonState();
 });
 
 // Fermer la modale
@@ -2291,6 +2311,9 @@ addPollOptionBtn.addEventListener('click', () => {
       <img id="optionPreview${optionCount + 1}" style="display:none; max-width:80px; margin-top:4px;">
     `;
     pollOptionsContainer.appendChild(group);
+    
+    updateAddPollOptionButtonState(); // ← Mise à jour
+
     if (optionCount === 4) {
       addPollOptionBtn.style.display = 'none';
     }
@@ -2375,6 +2398,8 @@ publishPollBtn.addEventListener('click', async () => {
     // Réinitialiser aussi les inputs file
     document.querySelectorAll('.poll-option-image').forEach(inp => inp.value = '');
     addPollOptionBtn.style.display = 'block';
+
+    updateAddPollOptionButtonState();
 
     createPollModal.classList.add('hidden');
 

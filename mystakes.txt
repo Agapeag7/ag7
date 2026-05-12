@@ -37,21 +37,14 @@
   ✓ Input texte masqué automatiquement quand bascule sur onglet Vocal
 
 
-✓ Suppression du bouton "Annuler" redondant dans la modale de création de story (il dépasse sur mobile et le bouton X existe déjà)
-✓ Remplacement des confirmations JS (alert/confirm) par des modales de confirmation frontend pour:
-  - Suppression de story
-  - Suppression de publication (depuis le profil)
-  - Suppression de commentaire
-  - Modal générique réutilisable (.confirmationModal) avec fonction showConfirmation()
 
-✓ Corrections pour les publications de sondage :
-  - Masquage du post-content quand un sondage est affiché (évite l'affichage double du titre)
-  - Ajout de CSS pour les inputs d'images de sondage (.poll-option-image)
-  - Suppression du formulaire d'image globale du sondage (redondant avec les images par option)
-
-✓ Débordement des boutons sur mobile :
-  - CSS responsive pour la modale de confirmation (flex-direction: column sur mobile)
-  - Les boutons prennent toute la largeur disponible sur petit écran
 
 * A Realiser :
 - Publication Vocale : l'utilisateur peut poster une publication vocale
+
+* A corriger pour publication sondage :
+- pour publication sondage un utilisateur ne peut pas cliquer ici : 
+<button type="button" id="addPollOptionBtn" class="btn-secondary" style="margin-top: 12px;">
+  <i class="fas fa-plus"></i> Ajouter option
+</button>
+avant d'avoir completer les deux options qui apparaissent d'abord par defaut, c'est après qu'il les ait completer que le bouton doit devenir actif
