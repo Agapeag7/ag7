@@ -1853,7 +1853,6 @@
 
 .post-stats {
   padding: 12px 20px;
-  border-top: 1px solid var(--border-light);
   border-bottom: 1px solid var(--border-light);
   display: flex;
   gap: 24px;
@@ -4635,7 +4634,6 @@ body.dark .modal-comment-input::placeholder,
 .post-poll {
   margin: 12px 20px;
   padding: 12px 0;
-  border-top: 1px solid var(--border-light);
 }
 
 .post-poll-question {
