@@ -504,7 +504,7 @@ if (isset($_SESSION['user_id'])) {
         <div class="create-post-actions">
           <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
           <input type="file" id="postImageInput" accept="image/*" multiple style="display: none;">
-          <button id="createPollBtn" class="action-btn"><i class="fas fa-poll"></i> Sondage</button>
+          <button id="createPollBtn" class="action-btn"><i class="fas fa-poll"></i> Face-Off</button>
           <button id="publishPostBtn" class="btn-primary">Publier</button>
         </div>
       </div>
@@ -589,15 +589,15 @@ if (isset($_SESSION['user_id'])) {
     <div id="createPollModal" class="create-poll-modal hidden">
       <div class="create-poll-card">
         <button class="create-poll-close">&times;</button>
-        <h2>Créer un sondage</h2>
+        <h2>Créer un Face-Off</h2>
         <div class="create-poll-form">
           <div class="form-group">
-            <label for="pollQuestion">Question du sondage</label>
+            <label for="pollQuestion">Sujet du Face-Off</label>
             <textarea id="pollQuestion" rows="2" placeholder="Posez votre question..." maxlength="255"></textarea>
           </div>
           
           <div class="form-group">
-            <label>Options du sondage (2-5)</label>
+            <label>Options du Face-Off (2-5)</label>
             <div id="pollOptionsContainer">
               <!-- Groupe option 1 -->
               <div class="poll-option-group">
@@ -619,7 +619,7 @@ if (isset($_SESSION['user_id'])) {
           
           <div class="create-poll-actions">
             <button type="button" id="cancelPollBtn" class="btn-secondary">Annuler</button>
-            <button type="button" id="publishPollBtn" class="btn-primary">Créer le sondage</button>
+            <button type="button" id="publishPollBtn" class="btn-primary">Créer le Face-Off</button>
           </div>
         </div>
       </div>

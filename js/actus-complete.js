@@ -913,7 +913,7 @@ function createCommentElement(comment, postId, isReply = false) {
         <span style="font-size:12px; color:var(--text-secondary);">• ${timeStr}</span>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <button class="comment-like-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); transition: 0.2s; padding: 4px 8px;">
+        <button class="comment-like-btn" data-comment-id="${comment.id}" data-is-liked="${comment.isLiked ? 'true' : 'false'}" style="background:none; border:none; cursor:pointer; color: ${comment.isLiked ? '#ef4444' : 'var(--text-secondary)'}; transition: 0.2s; padding: 4px 8px;">
           <i class="fas fa-heart"></i> <span class="like-count">${comment.likes}</span>
         </button>
         <button class="comment-delete-btn" data-comment-id="${comment.id}" style="background:none; border:none; cursor:pointer; color: var(--text-secondary); padding: 4px 8px; transition: 0.2s; ${canDeleteComment ? 'display:block;' : 'display:none;'}" title="Supprimer le commentaire">
@@ -947,6 +947,7 @@ function createCommentElement(comment, postId, isReply = false) {
         const likeSpan = likeBtn.querySelector('.like-count');
         if (likeSpan) likeSpan.textContent = result.likes_count;
         likeBtn.style.color = result.isLiked ? '#ef4444' : 'var(--text-secondary)';
+        likeBtn.dataset.isLiked = result.isLiked ? 'true' : 'false';
       } else {
         showNotification('error', 'Erreur', result.message);
       }

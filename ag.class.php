@@ -1498,6 +1498,7 @@ class Router {
             $imgModel = new ImagePublicationModel($this->db);
             $likeModel = new LikePublicationModel($this->db);
             $comModel = new CommentaireModel($this->db);
+            $likeComModel = new LikeCommentaireModel($this->db);
             
             $enriched = [];
             foreach ($publications as $post) {
@@ -1526,7 +1527,8 @@ class Router {
                         'text' => $comment['comment_text'],
                         'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
                         'isAnonymous' => (bool)($comment['comment_anonym'] ?? false),
-                        'likes' => (int)($comment['comment_likes'] ?? 0)
+                        'likes' => (int)($comment['comment_likes'] ?? 0),
+                        'isLiked' => $user_id ? $likeComModel->hasLiked($user_id, $comment['comment_id']) : false
                     ];
                 }
                 
@@ -1656,6 +1658,10 @@ class Router {
         $com = new CommentaireModel($this->db);
         $allComments = $com->getByPostId($post_id, 1000); // Récupérer tous
         
+        // Initialiser le modèle de likes commentaires pour vérifier l'état des likes
+        $likeModel = new LikeCommentaireModel($this->db);
+        $user_id = $_SESSION['user_id'] ?? null;
+        
         // Organiser en commentaires principaux avec réponses
         $mainComments = [];
         $replies = [];
@@ -1673,7 +1679,8 @@ class Router {
                 'likes' => (int)($comment['comment_likes'] ?? 0),
                 'timestamp' => $comment['created_at'],
                 'user_id' => $comment['comment_user_id'],
-                'parent_id' => $comment['comment_parent_id']
+                'parent_id' => $comment['comment_parent_id'],
+                'isLiked' => $user_id ? $likeModel->hasLiked($user_id, $comment['comment_id']) : false
             ];
             
             if ($comment['comment_parent_id']) {
@@ -2070,6 +2077,7 @@ class Router {
             $imgModel = new ImagePublicationModel($this->db);
             $likeModel = new LikePublicationModel($this->db);
             $comModel = new CommentaireModel($this->db);
+            $likeComModel = new LikeCommentaireModel($this->db);
             
             $enriched = [];
             $current_user_id = $_SESSION['user_id'] ?? null;
@@ -2101,7 +2109,8 @@ class Router {
                         'text' => $comment['comment_text'],
                         'author' => $comment['user_name'] ?? 'Utilisateur supprimé',
                         'isAnonymous' => (bool)($comment['comment_anonym'] ?? false),
-                        'likes' => (int)($comment['comment_likes'] ?? 0)
+                        'likes' => (int)($comment['comment_likes'] ?? 0),
+                        'isLiked' => $current_user_id ? $likeComModel->hasLiked($current_user_id, $comment['comment_id']) : false
                     ];
                 }
                 
