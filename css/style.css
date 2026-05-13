@@ -4337,6 +4337,25 @@ body.dark .modal-comment-input::placeholder,
     .delete-post-actions button {
       width: 100%;
     }
+
+    .edit-actions {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .edit-actions button {
+      width: 100%;
+    }
+
+    .photo-upload-container {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .photo-upload-container .btn-secondary {
+      margin-left: 0;
+      width: 100%;
+    }
   }
 
 /* ========== MODALE MODIFICATION PROFIL ========== */

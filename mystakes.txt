@@ -9,5 +9,6 @@
 - Publication Vocale : l'utilisateur peut poster une publication vocale
 
 * A Realiser :
-- Je veux un bon style pour l'input "file" avec icone image : <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 1)">
+Sur mobile Ces boutons depassent leurs container :
+<button type="button" class="btn-secondary">Changer</button> et <button type="button" class="btn-secondary edit-profile-cancel">Annuler</button>
 
