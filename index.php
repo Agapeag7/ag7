@@ -602,13 +602,15 @@ if (isset($_SESSION['user_id'])) {
               <!-- Groupe option 1 -->
               <div class="poll-option-group">
                 <input type="text" class="poll-option-input" placeholder="Option 1" maxlength="255">
-                <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 1)">
+                <input type="file" class="poll-option-image" id="pollOptionImg1" accept="image/*" onchange="previewOptionImage(this, 1)">
+                <label for="pollOptionImg1"><i class="fas fa-image"></i> Ajouter une image</label>
                 <img id="optionPreview1" style="display:none; max-width:80px; margin-top:4px;">
-              </div>
+            </div>
               <!-- Groupe option 2 -->
               <div class="poll-option-group">
                 <input type="text" class="poll-option-input" placeholder="Option 2" maxlength="255">
-                <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 2)">
+                <input type="file" class="poll-option-image" id="pollOptionImg2" accept="image/*" onchange="previewOptionImage(this, 2)">
+                <label for="pollOptionImg2"><i class="fas fa-image"></i> Ajouter une image</label>
                 <img id="optionPreview2" style="display:none; max-width:80px; margin-top:4px;">
               </div>
             </div>

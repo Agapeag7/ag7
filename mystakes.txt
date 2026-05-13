@@ -9,4 +9,5 @@
 - Publication Vocale : l'utilisateur peut poster une publication vocale
 
 * A Realiser :
-- 
+- Je veux un bon style pour l'input "file" avec icone image : <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, 1)">
+

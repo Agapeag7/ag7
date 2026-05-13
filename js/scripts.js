@@ -2303,20 +2303,18 @@ createPollModal.addEventListener('click', (e) => {
 addPollOptionBtn.addEventListener('click', () => {
   const optionCount = pollOptionsContainer.querySelectorAll('.poll-option-group').length;
   if (optionCount < 5) {
+    const newId = `pollOptionImg${optionCount + 1}`;
     const group = document.createElement('div');
     group.className = 'poll-option-group';
     group.innerHTML = `
       <input type="text" class="poll-option-input" placeholder="Option ${optionCount + 1}" maxlength="255">
-      <input type="file" class="poll-option-image" accept="image/*" onchange="previewOptionImage(this, ${optionCount + 1})">
+      <input type="file" class="poll-option-image" id="${newId}" accept="image/*" onchange="previewOptionImage(this, ${optionCount + 1})">
+      <label for="${newId}"><i class="fas fa-image"></i> Ajouter une image</label>
       <img id="optionPreview${optionCount + 1}" style="display:none; max-width:80px; margin-top:4px;">
     `;
     pollOptionsContainer.appendChild(group);
-    
-    updateAddPollOptionButtonState(); // ← Mise à jour
-
-    if (optionCount === 4) {
-      addPollOptionBtn.style.display = 'none';
-    }
+    updateAddPollOptionButtonState();
+    if (optionCount + 1 === 5) addPollOptionBtn.style.display = 'none';
   }
 });
 
@@ -2415,3 +2413,19 @@ publishPollBtn.addEventListener('click', async () => {
     publishPollBtn.textContent = 'Créer le sondage';
   }
 });
+
+function previewOptionImage(input, index) {
+  const file = input.files[0];
+  const preview = document.getElementById(`optionPreview${index}`);
+  if (file && preview) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else if (preview) {
+    preview.style.display = 'none';
+    preview.src = '';
+  }
+}

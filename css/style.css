@@ -3973,22 +3973,109 @@ body.dark .modal-comment-input::placeholder,
   flex: 1 1 200px;
 }
 
+/* ===== AMÉLIORATION: Input File pour Images ===== */
 .poll-option-image {
-  padding: 8px 12px;
-  border: 2px dashed var(--border-light);
-  border-radius: 8px;
-  background: var(--input-bg, rgba(100, 200, 150, 0.05));
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--text-secondary);
-  transition: all 0.2s;
-  flex: 0 1 120px;
+    position: relative;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
-.poll-option-image:hover {
+/* Label qui remplace l'input file */
+.poll-option-image + label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-page);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: auto;
+    white-space: nowrap;
+}
+
+.poll-option-image + label i {
+    font-size: 14px;
+    color: var(--emerald-500);
+    margin-right: 4px;
+}
+
+.poll-option-image + label::before {
+    display: none;
+}
+
+.poll-option-image + label:hover {
+    background: var(--hover-bg);
+    border-color: var(--emerald-500);
+    color: var(--emerald-500);
+    transform: translateY(-1px);
+}
+
+.poll-image-label:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
+}
+
+/* Alternative: Si vous préférez utiliser l'input directement avec custom styling */
+.poll-option-image-wrapper {
+  position: relative;
+  flex: 0 1 140px;
+}
+
+.poll-option-image[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  cursor: pointer;
+}
+
+.poll-option-image[type="file"] + label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(4, 120, 87, 0.02) 100%);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.poll-option-image[type="file"]:hover + label {
   border-color: var(--emerald-500);
-  background: rgba(16, 185, 129, 0.1);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(4, 120, 87, 0.08) 100%);
   color: var(--emerald-500);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  transform: translateY(-2px);
+}
+
+.poll-option-image[type="file"]:hover + label i {
+  transform: scale(1.15);
+}
+
+.poll-option-image[type="file"]:active + label {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
+}
+
+.poll-option-image[type="file"] + label i {
+  font-size: 14px;
+  transition: transform 0.3s ease;
 }
 
 
