@@ -697,10 +697,12 @@ if (isset($_SESSION['user_id'])) {
         <div class="user-profile-header">
           <div class="user-profile-cover" id="userProfileCover"></div>
           <div class="user-profile-avatar" id="userProfileAvatar">AG</div>
-          <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: none; position: absolute; top: 12px; right: 12px; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; background: var(--emerald-500); color: white;">Suivre</button>
         </div>
         <div class="user-profile-info">
-          <h2 id="userProfileName">Nom utilisateur</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2 id="userProfileName" style="margin: 0;">Nom utilisateur</h2>
+            <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: none; padding: 6px 16px; border-radius: 24px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;">Suivre</button>
+          </div>
           <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@username</p>
           <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;"></p>
           <div class="user-profile-meta">

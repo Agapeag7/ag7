@@ -1119,90 +1119,130 @@ function setupDeleteModal() {
 
 // ===== AFFICHER PROFIL UTILISATEUR =====
 async function displayUserProfile(userId) {
-  try {
-    const modal = document.getElementById('userProfileModal');
-    if (!modal) {
-      console.warn('Profile modal NOT FOUND');
-      return;
-    }
+    try {
+        const modal = document.getElementById('userProfileModal');
+        if (!modal) {
+            console.warn('Profile modal NOT FOUND');
+            return;
+        }
 
-    // Afficher le loading
-    modal.classList.remove('hidden');
+        modal.classList.remove('hidden');
 
-    // Récupérer les infos utilisateur
-    const response = await fetch(`${window.location.href}?action=getUserProfile&user_id=${userId}`, {
-      method: 'GET'
-    });
+        // Récupérer les infos utilisateur
+        const response = await fetch(`${window.location.href}?action=getUserProfile&user_id=${userId}`, {
+            method: 'GET'
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (!data.success) {
-      showNotification('error', 'Erreur', 'Impossible de charger le profil');
-      modal.classList.add('hidden');
-      return;
-    }
+        if (!data.success) {
+            showNotification('error', 'Erreur', 'Impossible de charger le profil');
+            modal.classList.add('hidden');
+            return;
+        }
 
-    const profile = data.profile;
+        const profile = data.profile;
 
-    // Remplir le modal avec les données
-    document.getElementById('userProfileName').textContent = profile.user_name || 'Utilisateur';
-    document.getElementById('userProfileUsername').textContent = '@' + (profile.user_username || 'user');
-    document.getElementById('userProfileBio').textContent = profile.user_bio || '';
-    document.getElementById('userProfileLocation').textContent = profile.user_location || 'Localisation inconnue';
-    document.getElementById('userProfileMemberSince').textContent = 'Membre depuis ' + (profile.member_since || 'Janvier 2024');
-    document.getElementById('userProfileFollowersCount').textContent = profile.followers_count || 0;
-    document.getElementById('userProfileFollowingCount').textContent = profile.following_count || 0;
+        // Remplir les informations
+        document.getElementById('userProfileName').textContent = profile.user_name || 'Utilisateur';
+        document.getElementById('userProfileUsername').textContent = '@' + (profile.user_username || 'user');
+        document.getElementById('userProfileBio').textContent = profile.user_bio || '';
+        document.getElementById('userProfileLocation').textContent = profile.user_location || 'Localisation inconnue';
+        document.getElementById('userProfileMemberSince').textContent = 'Membre depuis ' + (profile.member_since || 'Janvier 2024');
+        document.getElementById('userProfileFollowersCount').textContent = profile.followers_count || 0;
+        document.getElementById('userProfileFollowingCount').textContent = profile.following_count || 0;
 
-    // Définir les images
-    const avatarEl = document.getElementById('userProfileAvatar');
-    const coverEl = document.getElementById('userProfileCover');
+        // Avatar
+        const avatarEl = document.getElementById('userProfileAvatar');
+        const coverEl = document.getElementById('userProfileCover');
+        if (profile.user_photo_url) {
+            avatarEl.style.backgroundImage = `url('imgApp/${profile.user_photo_url}')`;
+            avatarEl.style.backgroundSize = 'cover';
+            avatarEl.style.backgroundPosition = 'center';
+            avatarEl.textContent = '';
+        } else {
+            avatarEl.style.backgroundImage = '';
+            const initials = profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            avatarEl.textContent = initials;
+        }
 
-    if (profile.user_photo_url) {
-      avatarEl.style.backgroundImage = `url('imgApp/${profile.user_photo_url}')`;
-      avatarEl.style.backgroundSize = 'cover';
-      avatarEl.style.backgroundPosition = 'center';
-      avatarEl.textContent = '';
-    } else {
-      avatarEl.style.backgroundImage = '';
-      avatarEl.textContent = profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    }
+        if (profile.user_cover_photo_url) {
+            coverEl.style.backgroundImage = `url('imgApp/${profile.user_cover_photo_url}')`;
+        } else {
+            coverEl.style.backgroundImage = 'none';
+        }
 
-    if (profile.user_cover_photo_url) {
-      coverEl.style.backgroundImage = `url('imgApp/${profile.user_cover_photo_url}')`;
-    }
+        // Gestion du bouton "Suivre"
+        const followBtn = document.getElementById('userProfileFollowBtn');
+        const currentUserId = window.currentUserId || (currentUserProfile?.userid);
 
-    // Gérer le bouton Suivre
-    const followBtn = document.getElementById('userProfileFollowBtn');
-    if (followBtn) {
-      if (currentUserId && parseInt(currentUserId) === parseInt(userId)) {
-        // C'est le profil de l'utilisateur courant - masquer le bouton
-        followBtn.style.display = 'none';
-      } else {
-        // Montrer le bouton Suivre
-        followBtn.style.display = 'block';
-        followBtn.onclick = async (e) => {
-          e.preventDefault();
-          // TODO: Implémenter la logique de suivi
-          showNotification('info', 'Info', 'La fonction de suivi sera bientôt disponible');
+        if (!currentUserId || parseInt(currentUserId) === parseInt(userId)) {
+            followBtn.style.display = 'none';
+        } else {
+            followBtn.style.display = 'block';
+            const isFollowing = profile.is_following === true;
+            followBtn.textContent = isFollowing ? '✓ Suivi' : 'Suivre';
+            followBtn.style.background = isFollowing ? 'var(--text-secondary)' : 'var(--emerald-500)';
+            followBtn.style.color = 'white';
+
+            // Supprimer les anciens écouteurs pour éviter les doublons
+            const newBtn = followBtn.cloneNode(true);
+            followBtn.parentNode.replaceChild(newBtn, followBtn);
+            const updatedBtn = document.getElementById('userProfileFollowBtn');
+
+            updatedBtn.onclick = async (e) => {
+                e.preventDefault();
+                const currentlyFollowing = updatedBtn.textContent === '✓ Suivi';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('action', currentlyFollowing ? 'unfollowUser' : 'followUser');
+                    formData.append('followed_id', userId);
+
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        if (currentlyFollowing) {
+                            updatedBtn.textContent = 'Suivre';
+                            updatedBtn.style.background = 'var(--emerald-500)';
+                        } else {
+                            updatedBtn.textContent = '✓ Suivi';
+                            updatedBtn.style.background = 'var(--text-secondary)';
+                        }
+                        // Rafraîchir les compteurs du profil si nécessaire
+                        if (currentUserProfile && currentUserProfile.userid === currentUserId) {
+                            await loadCurrentProfile();
+                            updateProfileUI();
+                        }
+                        showNotification('success', currentlyFollowing ? 'Désabonné' : 'Abonné', '');
+                    } else {
+                        showNotification('error', 'Erreur', result.message || 'Action impossible');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showNotification('error', 'Erreur', 'Une erreur est survenue');
+                }
+            };
+        }
+
+        // Fermeture de la modale
+        const closeBtn = document.querySelector('.user-profile-close');
+        if (closeBtn) {
+            closeBtn.onclick = () => modal.classList.add('hidden');
+        }
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
         };
-      }
+
+    } catch (error) {
+        console.error('Erreur displayUserProfile:', error);
+        showNotification('error', 'Erreur', 'Une erreur est survenue');
+        document.getElementById('userProfileModal').classList.add('hidden');
     }
-
-    // Gérer la fermeture du modal
-    const closeBtn = document.querySelector('.user-profile-close');
-    if (closeBtn) {
-      closeBtn.onclick = () => modal.classList.add('hidden');
-    }
-
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.classList.add('hidden');
-    };
-
-  } catch (error) {
-    console.error('Erreur displayUserProfile:', error);
-    showNotification('error', 'Erreur', 'Une erreur est survenue');
-    document.getElementById('userProfileModal').classList.add('hidden');
-  }
 }
 
 // ===== PUBLIER UN POST =====
