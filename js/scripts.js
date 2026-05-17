@@ -1133,6 +1133,7 @@ async function loadStories() {
   const result = await StoriesAPI.getActiveStories();
   if (result.success && result.stories) {
     const user_id = currentUserProfile.userid;
+    window.currentUserId = currentUserProfile.userid;
     userStories = [];
     otherStories = [];
     result.stories.forEach(s => {
@@ -1536,91 +1537,6 @@ if (searchUsersInput) {
 
 // ========== GESTION DU FEED (PUBLICATIONS) ==========
 // ENTIÈREMENT GÉRÉE PAR actus-complete.js - NE RIEN MODIFIER ICI
-// Les commentaires sont maintenant persistants via ActusAPI.addComment()
-
-// Charger le feed depuis le backend
-// DISABLED - USE actus-complete.js INSTEAD
-/*
-async function loadFeed() {
-  try {
-    const response = await fetch(window.location.href + '?action=getFeed&limit=50&offset=0', {
-      method: 'GET'
-    });
-
-    if (!response.ok) {
-      console.error('Erreur HTTP lors du chargement du feed:', response.status);
-      showNotification('error', 'Erreur', 'Impossible de charger le feed');
-      return false;
-    }
-
-    const text = await response.text();
-    
-    // Vérifier si la réponse est du HTML d'erreur
-    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-      console.error('Le serveur a retourné du HTML au lieu de JSON:');
-      console.error(text.substring(0, 500)); // Afficher les 500 premiers caractères
-      showNotification('error', 'Erreur serveur', 'Le serveur a retourné une erreur PHP');
-      return false;
-    }
-
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch (parseErr) {
-      console.error('Erreur JSON parsing:', parseErr);
-      console.error('Réponse reçue:', text.substring(0, 200));
-      showNotification('error', 'Erreur', 'Réponse invalide du serveur');
-      return false;
-    }
-    
-    if (!result.success) {
-      console.error('Erreur serveur:', result.message);
-      showNotification('error', 'Erreur', result.message || 'Impossible de charger le feed');
-      return false;
-    }
-
-    // Transformer les données du backend au format attendu par le frontend
-    posts = result.posts.map(post => ({
-      id: post.id,
-      author: post.author || 'Utilisateur',
-      username: post.username,
-      avatar: post.avatar,
-      content: post.content,
-      images: post.images || [],
-      time: new Date(post.timestamp).toLocaleString('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      likes: post.likes || 0,
-      liked: post.userHasLiked || false,
-      comments: post.commentsList || [],
-      user_id: post.user_id,
-      visibility: post.visibility
-    }));
-
-    // renderFeed(); // DISABLED
-    return true;
-  } catch (e) {
-    console.error('Erreur au chargement du feed:', e);
-    showNotification('error', 'Erreur', 'Une erreur est survenue');
-    return false;
-  }
-}
-*/
-
-// Charger le feed quand on arrive sur la page
-// DISABLED - actus-complete.js le fait maintenant au DOMContentLoaded
-/*
-document.addEventListener('DOMContentLoaded', () => {
-  // S'assurer que le profil est chargé avant de charger le feed
-  if (document.getElementById('view-feed')?.style.display !== 'none') {
-    loadFeed();
-  }
-});
-*/
 
 const feedContainer = document.getElementById('feedContainer');
 const publishBtn = document.getElementById('publishPostBtn');
@@ -2206,6 +2122,135 @@ followModal?.addEventListener('click', (e) => {
 });
 
 
+// ========== MODAL PROFIL UTILISATEUR (AFFICHAGE D'UN AUTRE UTILISATEUR) ==========
+async function displayUserProfile(userId) {
+    try {
+        const modal = document.getElementById('userProfileModal');
+        if (!modal) {
+            console.warn('Profile modal NOT FOUND');
+            return;
+        }
+
+        modal.classList.remove('hidden');
+
+        // Récupérer les infos utilisateur (avec is_following)
+        const response = await fetch(`${window.location.href}?action=getUserProfile&user_id=${userId}`, {
+            method: 'GET'
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            showNotification('error', 'Erreur', 'Impossible de charger le profil');
+            modal.classList.add('hidden');
+            return;
+        }
+
+        const profile = data.profile;
+
+        // Remplir les informations
+        document.getElementById('userProfileName').textContent = profile.user_name || 'Utilisateur';
+        document.getElementById('userProfileUsername').textContent = '@' + (profile.user_username || 'user');
+        document.getElementById('userProfileBio').textContent = profile.user_bio || '';
+        document.getElementById('userProfileLocation').textContent = profile.user_location || 'Localisation inconnue';
+        document.getElementById('userProfileMemberSince').textContent = 'Membre depuis ' + (profile.member_since || 'Janvier 2024');
+        document.getElementById('userProfileFollowersCount').textContent = profile.followers_count || 0;
+        document.getElementById('userProfileFollowingCount').textContent = profile.following_count || 0;
+
+        // Avatar
+        const avatarEl = document.getElementById('userProfileAvatar');
+        const coverEl = document.getElementById('userProfileCover');
+        if (profile.user_photo_url) {
+            avatarEl.style.backgroundImage = `url('imgApp/${profile.user_photo_url}')`;
+            avatarEl.style.backgroundSize = 'cover';
+            avatarEl.style.backgroundPosition = 'center';
+            avatarEl.textContent = '';
+        } else {
+            avatarEl.style.backgroundImage = '';
+            const initials = profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            avatarEl.textContent = initials;
+        }
+
+        if (profile.user_cover_photo_url) {
+            coverEl.style.backgroundImage = `url('imgApp/${profile.user_cover_photo_url}')`;
+        } else {
+            coverEl.style.backgroundImage = 'none';
+        }
+
+        // Gestion du bouton "Suivre"
+        const followBtn = document.getElementById('userProfileFollowBtn');
+        const currentUserId = window.currentUserId || (currentUserProfile?.userid);
+
+        if (!currentUserId || parseInt(currentUserId) === parseInt(userId)) {
+            followBtn.style.display = 'none';
+        } else {
+            followBtn.style.display = 'block';
+            const isFollowing = profile.is_following === true;
+            followBtn.textContent = isFollowing ? '✓ Suivi' : 'Suivre';
+            followBtn.style.background = isFollowing ? 'var(--text-secondary)' : 'var(--emerald-500)';
+            followBtn.style.color = 'white';
+
+            // Supprimer les anciens écouteurs pour éviter les doublons
+            const newBtn = followBtn.cloneNode(true);
+            followBtn.parentNode.replaceChild(newBtn, followBtn);
+            const updatedBtn = document.getElementById('userProfileFollowBtn');
+
+            updatedBtn.onclick = async (e) => {
+                e.preventDefault();
+                const currentlyFollowing = updatedBtn.textContent === '✓ Suivi';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('action', currentlyFollowing ? 'unfollowUser' : 'followUser');
+                    formData.append('followed_id', userId);
+
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        if (currentlyFollowing) {
+                            updatedBtn.textContent = 'Suivre';
+                            updatedBtn.style.background = 'var(--emerald-500)';
+                        } else {
+                            updatedBtn.textContent = '✓ Suivi';
+                            updatedBtn.style.background = 'var(--text-secondary)';
+                        }
+                        // Rafraîchir les compteurs du profil courant si nécessaire
+                        if (currentUserProfile && currentUserProfile.userid === currentUserId) {
+                            await loadCurrentProfile();
+                            updateProfileUI();
+                        }
+                        showNotification('success', currentlyFollowing ? 'Désabonné' : 'Abonné', '');
+                    } else {
+                        showNotification('error', 'Erreur', result.message || 'Action impossible');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showNotification('error', 'Erreur', 'Une erreur est survenue');
+                }
+            };
+        }
+
+        // Fermeture de la modale
+        const closeBtn = document.querySelector('.user-profile-close');
+        if (closeBtn) {
+            closeBtn.onclick = () => modal.classList.add('hidden');
+        }
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+
+    } catch (error) {
+        console.error('Erreur displayUserProfile:', error);
+        showNotification('error', 'Erreur', 'Une erreur est survenue');
+        document.getElementById('userProfileModal').classList.add('hidden');
+    }
+}
+
+
 // Boutons d'icône pour changer les photos sur la page profil (délégation d'événements)
 document.addEventListener('click', (e) => {
   const changeProfileBtn = e.target.closest('.change-profile-btn');
@@ -2613,4 +2658,70 @@ function previewOptionImage(input, index) {
     preview.style.display = 'none';
     preview.src = '';
   }
+}
+
+// ========== CHANGEMENT DIRECT DE LA PHOTO DE COUVERTURE ==========
+const changeCoverBtn = document.querySelector('.change-cover-btn');
+if (changeCoverBtn) {
+    // Créer un input file caché
+    const coverFileInput = document.createElement('input');
+    coverFileInput.type = 'file';
+    coverFileInput.accept = 'image/*';
+    coverFileInput.style.display = 'none';
+
+    changeCoverBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        coverFileInput.click();
+    });
+
+    coverFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Afficher un indicateur de chargement
+        const originalText = changeCoverBtn.innerHTML;
+        changeCoverBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        changeCoverBtn.disabled = true;
+
+        try {
+            const formData = new FormData();
+            formData.append('action', 'updateProfile');
+            formData.append('user_cover_photo', file);
+
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.profile) {
+                // Mettre à jour la photo de couverture dans currentUserProfile
+                if (result.profile.user_cover_photo_url) {
+                    currentUserProfile.coverPhoto = getPhotoURL(result.profile.user_cover_photo_url);
+                } else {
+                    currentUserProfile.coverPhoto = null;
+                }
+
+                // Mettre à jour l'interface
+                const coverImg = document.querySelector('.cover-img');
+                if (coverImg && currentUserProfile.coverPhoto) {
+                    coverImg.src = currentUserProfile.coverPhoto;
+                }
+
+                showNotification('success', 'Succès', 'Photo de couverture mise à jour');
+            } else {
+                showNotification('error', 'Erreur', result.message || 'Impossible de changer la photo');
+            }
+        } catch (err) {
+            console.error(err);
+            showNotification('error', 'Erreur', 'Une erreur est survenue');
+        } finally {
+            changeCoverBtn.innerHTML = originalText;
+            changeCoverBtn.disabled = false;
+            coverFileInput.value = ''; // Permet de sélectionner à nouveau le même fichier
+        }
+    });
+
+    document.body.appendChild(coverFileInput);
 }
