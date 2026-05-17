@@ -2030,6 +2030,7 @@ class Router {
         $user_id = $_GET['user_id'] ?? null;
         $limit = (int)($_GET['limit'] ?? 50);
         $offset = (int)($_GET['offset'] ?? 0);
+        $current_user_id = $_SESSION['user_id'] ?? null;
 
         if (!$user_id) {
             Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
@@ -2040,11 +2041,16 @@ class Router {
 
         $result = [];
         foreach ($followers as $user) {
+            $is_following = false;
+            if ($current_user_id) {
+                $is_following = $follow->isFollowing($current_user_id, $user['user_id']);
+            }
             $result[] = [
                 'id' => $user['user_id'],
                 'name' => $user['user_name'],
                 'username' => '@' . $user['user_username'],
-                'photo' => $user['user_photo_url'] ? 'imgApp/' . $user['user_photo_url'] : null
+                'photo' => $user['user_photo_url'] ? 'imgApp/' . $user['user_photo_url'] : null,
+                'is_following' => $is_following
             ];
         }
 
@@ -2058,6 +2064,7 @@ class Router {
         $user_id = $_GET['user_id'] ?? null;
         $limit = (int)($_GET['limit'] ?? 50);
         $offset = (int)($_GET['offset'] ?? 0);
+        $current_user_id = $_SESSION['user_id'] ?? null;
 
         if (!$user_id) {
             Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
@@ -2068,11 +2075,16 @@ class Router {
 
         $result = [];
         foreach ($following as $user) {
+            $is_following = false;
+            if ($current_user_id) {
+                $is_following = $follow->isFollowing($current_user_id, $user['user_id']);
+            }
             $result[] = [
                 'id' => $user['user_id'],
                 'name' => $user['user_name'],
                 'username' => '@' . $user['user_username'],
-                'photo' => $user['user_photo_url'] ? 'imgApp/' . $user['user_photo_url'] : null
+                'photo' => $user['user_photo_url'] ? 'imgApp/' . $user['user_photo_url'] : null,
+                'is_following' => $is_following
             ];
         }
 

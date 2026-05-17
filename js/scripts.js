@@ -2068,7 +2068,6 @@ let currentFollowUserId = null;
  * Charge et affiche les followers ou following depuis l'API
  */
 async function openFollowModal(type, userId = null) {
-    // Si pas d'userId passé, on prend celui de l'utilisateur connecté
     if (!userId && currentUserProfile && currentUserProfile.userid) {
         userId = currentUserProfile.userid;
     }
@@ -2080,15 +2079,11 @@ async function openFollowModal(type, userId = null) {
     currentFollowType = type;
     currentFollowUserId = userId;
 
-    // Mettre à jour le titre de la modale
     followModalTitle.innerText = type === 'followers' ? 'Abonnés' : 'Abonnements';
-
-    // Afficher un indicateur de chargement
     followList.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
     followModal.classList.remove('hidden');
 
     try {
-        // Déterminer l'action backend
         const action = type === 'followers' ? 'getFollowers' : 'getFollowing';
         const url = new URL(window.location.href);
         url.searchParams.set('action', action);
@@ -2110,7 +2105,6 @@ async function openFollowModal(type, userId = null) {
             return;
         }
 
-        // Générer le HTML pour chaque utilisateur
         followList.innerHTML = users.map(user => {
             const initials = user.name
                 .split(' ')
@@ -2126,8 +2120,8 @@ async function openFollowModal(type, userId = null) {
                 avatarHTML = `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${initials}</div>`;
             }
 
-            // Déterminer si l'utilisateur courant suit déjà cette personne
-            const isFollowing = currentUserProfile?.following?.includes(user.id) || false;
+            // Utiliser le flag is_following retourné par le backend
+            const isFollowing = user.is_following === true;
 
             return `
                 <div class="follow-list-item">
@@ -2162,7 +2156,6 @@ async function openFollowModal(type, userId = null) {
                     const result = await response.json();
 
                     if (result.success) {
-                        // Mettre à jour l'état local du bouton
                         if (isCurrentlyFollowing) {
                             btn.classList.remove('following');
                             btn.innerHTML = '<i class="fas fa-user-plus"></i> Suivre';
@@ -2171,7 +2164,7 @@ async function openFollowModal(type, userId = null) {
                             btn.innerHTML = '<i class="fas fa-check"></i> Suivi';
                         }
 
-                        // Mettre à jour les compteurs sur le profil (si c'est le profil de l'utilisateur courant)
+                        // Rafraîchir les compteurs du profil si nécessaire
                         if (currentFollowUserId === currentUserProfile?.userid) {
                             await loadCurrentProfile();
                             updateProfileUI();
