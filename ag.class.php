@@ -2023,6 +2023,62 @@ class Router {
         Utils::jsonResponse(['success' => true, 'users' => $result]);
     }
     
+    /**
+     * Récupère les followers d'un utilisateur
+     */
+    private function actionGetFollowers() {
+        $user_id = $_GET['user_id'] ?? null;
+        $limit = (int)($_GET['limit'] ?? 50);
+        $offset = (int)($_GET['offset'] ?? 0);
+
+        if (!$user_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
+        }
+
+        $follow = new AbonnementModel($this->db);
+        $followers = $follow->getFollowers($user_id, $limit, $offset);
+
+        $result = [];
+        foreach ($followers as $user) {
+            $result[] = [
+                'id' => $user['user_id'],
+                'name' => $user['user_name'],
+                'username' => '@' . $user['user_username'],
+                'photo' => $user['user_photo_url'] ? 'imgApp/' . $user['user_photo_url'] : null
+            ];
+        }
+
+        Utils::jsonResponse(['success' => true, 'followers' => $result]);
+    }
+    
+    /**
+     * Récupère les utilisateurs suivis par un utilisateur
+     */
+    private function actionGetFollowing() {
+        $user_id = $_GET['user_id'] ?? null;
+        $limit = (int)($_GET['limit'] ?? 50);
+        $offset = (int)($_GET['offset'] ?? 0);
+
+        if (!$user_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
+        }
+
+        $follow = new AbonnementModel($this->db);
+        $following = $follow->getFollowing($user_id, $limit, $offset);
+
+        $result = [];
+        foreach ($following as $user) {
+            $result[] = [
+                'id' => $user['user_id'],
+                'name' => $user['user_name'],
+                'username' => '@' . $user['user_username'],
+                'photo' => $user['user_photo_url'] ? 'imgApp/' . $user['user_photo_url'] : null
+            ];
+        }
+
+        Utils::jsonResponse(['success' => true, 'following' => $result]);
+    }
+    
     private function actionGetUserProfile() {
         $user_id = $_GET['user_id'] ?? null;
         

@@ -1444,9 +1444,17 @@ function renderDiscoverGrid() {
     // Créer les initiales du nom
     const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     
+    // Afficher la photo réelle ou un avatar avec gradient + initiales
+    let avatarHTML;
+    if (user.photo) {
+      avatarHTML = `<img src="${user.photo}" alt="${user.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" loading="lazy">`;
+    } else {
+      avatarHTML = `<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px; margin: 0 auto 12px;">${initials}</div>`;
+    }
+    
     userCard.innerHTML = `
-      <div class="discover-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px; margin: 0 auto 12px;">
-        ${initials}
+      <div class="discover-avatar" style="margin: 0 auto 12px;">
+        ${avatarHTML}
       </div>
       <h3>${escapeHtml(user.name)}</h3>
       <div class="discover-username">${escapeHtml(user.username)}</div>
@@ -2054,31 +2062,96 @@ const followModal = document.getElementById("followModal");
 const followModalTitle = document.getElementById("followModalTitle");
 const followList = document.getElementById("followList");
 let currentModalType = "";
+let currentModalUserId = null;
 
-function openFollowModal(type) {
+/**
+ * Charge et affiche les followers ou following depuis l'API
+ */
+async function openFollowModal(type, userId = null) {
   currentModalType = type;
-  const list = type === "followers" ? currentUserProfile.followers : currentUserProfile.following;
+  currentModalUserId = userId || currentUserProfile.id;
+  
+  // Mettre à jour le titre
   followModalTitle.innerText = type === "followers" ? "Abonnés" : "Abonnements";
-  followList.innerHTML = list.map(user => `
-    <div class="follow-list-item">
-      <div class="follow-avatar">${user.avatar}</div>
-      <div class="follow-info">
-        <div class="follow-name">${user.name}</div>
-        <div class="follow-username">${user.username}</div>
-      </div>
-      <button class="btn-follow-sm" data-username="${user.username}">Suivre</button>
-    </div>
-  `).join('');
+  
+  // Afficher un indicateur de chargement
+  followList.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
   followModal.classList.remove("hidden");
   
-  // Add event listeners for follow buttons
-  document.querySelectorAll('.btn-follow-sm').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      btn.classList.toggle('following');
-      btn.textContent = btn.classList.contains('following') ? 'Abonné' : 'Suivre';
-    });
-  });
+  try {
+    const action = type === "followers" ? "getFollowers" : "getFollowing";
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', action);
+    url.searchParams.set('user_id', currentModalUserId);
+    url.searchParams.set('limit', 50);
+    
+    const response = await fetch(url.toString(), { method: 'GET' });
+    const data = await response.json();
+    
+    if (data.success) {
+      const users = type === "followers" ? data.followers : data.following;
+      
+      if (users.length === 0) {
+        followList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">Aucun utilisateur à afficher</div>';
+        return;
+      }
+      
+      followList.innerHTML = users.map(user => {
+        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        let avatarHTML;
+        if (user.photo) {
+            avatarHTML = `<img src="${user.photo}" alt="${user.name}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">`;
+        } else {
+            avatarHTML = `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${initials}</div>`;
+        }
+        return `
+            <div class="follow-list-item">
+                <div class="follow-avatar">${avatarHTML}</div>
+                <div class="follow-info">
+                    <div class="follow-name">${escapeHtml(user.name)}</div>
+                    <div class="follow-username">${escapeHtml(user.username)}</div>
+                </div>
+                <button class="btn-follow-sm" data-user-id="${user.id}" data-username="${user.username}">Suivre</button>
+            </div>
+        `;
+      }).join('');
+      
+      // Add event listeners for follow buttons
+      document.querySelectorAll('.btn-follow-sm').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          
+          const userId = btn.getAttribute('data-user-id');
+          const isFollowing = btn.classList.contains('following');
+          
+          try {
+            const formData = new FormData();
+            formData.append('action', isFollowing ? 'unfollowUser' : 'followUser');
+            formData.append('followed_id', userId);
+            
+            const response = await fetch(window.location.href, {
+              method: 'POST',
+              body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              btn.classList.toggle('following');
+              btn.innerHTML = btn.classList.contains('following') ? '<i class="fas fa-check"></i> Abonné' : '<i class="fas fa-user-plus"></i> Suivre';
+            }
+          } catch (error) {
+            console.error('Erreur follow:', error);
+          }
+        });
+      });
+    } else {
+      followList.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement</div>';
+    }
+  } catch (error) {
+    console.error('Erreur openFollowModal:', error);
+    followList.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement</div>';
+  }
 }
 
 // Boutons d'icône pour changer les photos sur la page profil (délégation d'événements)
@@ -2294,6 +2367,7 @@ if (typeof loadCurrentProfile === 'function') {
     updateProfileUI();
   });
 } else {
+  
   updateProfileUI();
 }
 

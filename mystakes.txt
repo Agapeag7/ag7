@@ -6,6 +6,20 @@
 ✓ Ajout de la possibilité de liker de commentaire et afficher les données réel de nombre de like de commentaire sur Frontend
 
 * A Realiser :
+- Afficher les données de la base des données correspondant à ces zones (Abonnés et Abonnements) :
+<div class="follow-modal-header">
+    <h3 id="followModalTitle">Abonnés</h3>
+    <button class="follow-modal-close">×</button>
+</div>
+
+<div class="follow-modal-header">
+    <h3 id="followModalTitle">Abonnements</h3>
+    <button class="follow-modal-close">×</button>
+</div> 
+
+- Si l'utilisateur a une photo de profil Afficher la ici :
+<div class="discover-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px; margin: 0 auto 12px;"></div>
+
 - Par défaut, les publications vocales n’autorisent pas l’écoute automatique au scroll. L’utilisateur doit cliquer délibérément sur un bouton « Écouter ». Cela évite les nuisances sonores inattendues.
 - Afficher le nombre d’écoutes (compteur) pour que l’utilisateur sache si son message a été entendu. C’est un puissant levier d’engagement.
 - 
