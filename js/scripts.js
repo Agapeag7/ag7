@@ -458,7 +458,7 @@ let currentUserProfile = {
       
       // Rendu spécifique par vue
       if (viewId === 'contacts') {
-        renderDiscoverGrid();
+        loadDiscoverUsers();
       }
       
       // Charger le profil réel quand on accède à la section profil
@@ -1393,45 +1393,104 @@ renderStories();
 
 // ========== GESTION DÉCOUVRIR (UTILISATEURS) ==========
 let followingUsers = new Set();
-let suggestedUsers = [
-  { id: 1, name: 'Marie Lambert', username: '@marie_lambert', bio: 'UX Designer, Coffee addict' },
-  { id: 2, name: 'Thomas Dubois', username: '@thomas.dubois', bio: 'Frontend Dev | React | Node.js' },
-  { id: 3, name: 'Sophie Caron', username: '@sophie_caron', bio: 'Product Manager | Innovation enthusiast' },
-  { id: 4, name: 'Antoine Lefevre', username: '@antoine.lf', bio: 'Digital Strategist | Growth Hacker' },
-  { id: 5, name: 'Claire Moreau', username: '@claire_moreau', bio: 'Graphic Designer | Brand identity' },
-  { id: 6, name: 'Julien Martin', username: '@julien.martin', bio: 'DevOps Engineer | Cloud Architecture' },
-  { id: 7, name: 'Lucie Bernard', username: '@lucie_bernard', bio: 'Marketing Lead | Data enthusiast' },
-  { id: 8, name: 'Marc Renault', username: '@marc_renault', bio: 'Business Analyst | Process Optimization' }
-];
+let discoverUsers = []; // Stocke les utilisateurs récupérés de la BDD
+
+/**
+ * Charge les utilisateurs depuis la BDD pour la section "Découvrir"
+ */
+async function loadDiscoverUsers() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'getDiscoverUsers');
+    url.searchParams.set('limit', 20);
+    
+    const response = await fetch(url.toString(), { method: 'GET' });
+    const data = await response.json();
+    
+    if (data.success) {
+      discoverUsers = data.users;
+      
+      // Mettre à jour le Set des utilisateurs suivis
+      followingUsers.clear();
+      discoverUsers.forEach(user => {
+        if (user.isFollowing) {
+          followingUsers.add(user.id);
+        }
+      });
+      
+      renderDiscoverGrid();
+    } else {
+      console.error('Erreur chargement utilisateurs:', data.message);
+      showNotification('error', 'Erreur', 'Impossible de charger les utilisateurs');
+    }
+  } catch (error) {
+    console.error('Erreur loadDiscoverUsers:', error);
+    showNotification('error', 'Erreur', 'Impossible de charger les utilisateurs');
+  }
+}
 
 function renderDiscoverGrid() {
   const discoverGrid = document.getElementById('discoverGrid');
   if (!discoverGrid) return;
   
   discoverGrid.innerHTML = '';
-  suggestedUsers.forEach(user => {
+  
+  // Utiliser les vraies données de la BDD
+  discoverUsers.forEach(user => {
     const isFollowing = followingUsers.has(user.id);
     const userCard = document.createElement('div');
     userCard.className = 'discover-card';
+    
+    // Créer les initiales du nom
+    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    
     userCard.innerHTML = `
-      <div class="discover-avatar">${user.name.split(' ').map(n => n[0]).join('')}</div>
+      <div class="discover-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px; margin: 0 auto 12px;">
+        ${initials}
+      </div>
       <h3>${escapeHtml(user.name)}</h3>
       <div class="discover-username">${escapeHtml(user.username)}</div>
-      <div class="discover-bio">${escapeHtml(user.bio)}</div>
-      <button class="discover-follow-btn ${isFollowing ? 'following' : ''}">
+      <div class="discover-bio">${escapeHtml(user.bio || 'Pas de bio')}</div>
+      <button class="discover-follow-btn ${isFollowing ? 'following' : ''}" data-user-id="${user.id}">
         ${isFollowing ? '<i class="fas fa-check"></i> Suivi' : '<i class="fas fa-user-plus"></i> Suivre'}
       </button>
     `;
     
     const followBtn = userCard.querySelector('.discover-follow-btn');
-    followBtn.addEventListener('click', (e) => {
+    followBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (isFollowing) {
-        followingUsers.delete(user.id);
-      } else {
-        followingUsers.add(user.id);
+      
+      const userId = user.id;
+      const wasFollowing = isFollowing;
+      
+      try {
+        const formData = new FormData();
+        formData.append('action', wasFollowing ? 'unfollowUser' : 'followUser');
+        formData.append('followed_id', userId);
+        
+        const response = await fetch(window.location.href, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          if (wasFollowing) {
+            followingUsers.delete(userId);
+            showNotification('success', 'Désabonné', `Vous avez arrêté de suivre ${user.name}`);
+          } else {
+            followingUsers.add(userId);
+            showNotification('success', 'Suivi', `Vous suivez maintenant ${user.name}`);
+          }
+          renderDiscoverGrid();
+        } else {
+          showNotification('error', 'Erreur', data.message || 'Erreur lors du suivi');
+        }
+      } catch (error) {
+        console.error('Erreur follow:', error);
+        showNotification('error', 'Erreur', 'Impossible de suivre cet utilisateur');
       }
-      renderDiscoverGrid();
     });
     
     discoverGrid.appendChild(userCard);

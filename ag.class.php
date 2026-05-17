@@ -428,20 +428,24 @@ class PublicationModel extends BaseModel {
         $sql = 'SELECT p.*, u.user_name, u.user_username, u.user_photo_url 
                 FROM publications p 
                 JOIN utilisateurs u ON p.post_user_id = u.user_id 
-                WHERE p.post_visibility = "public"';
+                WHERE ';
+        
+        $params = [];
         
         if ($user_id) {
-            $sql .= ' OR (p.post_visibility = "followers" AND EXISTS (
-                SELECT 1 FROM abonnements WHERE follower_id = ? AND followed_id = u.user_id
-            ))';
+            // Afficher UNIQUEMENT les posts des utilisateurs suivis + les propres posts
+            $sql .= '(p.post_user_id = ? OR (p.post_user_id IN (
+                SELECT followed_id FROM abonnements WHERE follower_id = ?
+            )))';
+            $params[] = $user_id;
+            $params[] = $user_id;
+        } else {
+            // Utilisateur non authentifié : ne rien afficher (ou afficher posts publics seulement)
+            $sql .= 'p.post_visibility = "public"';
         }
         
         $sql .= ' ORDER BY p.post_created_at DESC LIMIT ? OFFSET ?';
         
-        $params = [];
-        if ($user_id) {
-            $params[] = $user_id;
-        }
         $params[] = (int)$limit;
         $params[] = (int)$offset;
         
@@ -1972,6 +1976,51 @@ class Router {
         $follow->unfollow($_SESSION['user_id'], $followed_id);
         
         Utils::jsonResponse(['success' => true, 'message' => 'Désabonnement réussi']);
+    }
+    
+    /**
+     * Récupère les utilisateurs pour la section "Découvrir"
+     * Exclut l'utilisateur actuel et retourne les utilisateurs avec leurs infos de base
+     */
+    private function actionGetDiscoverUsers() {
+        $current_user_id = $_SESSION['user_id'] ?? null;
+        $limit = (int)($_GET['limit'] ?? 20);
+        $offset = (int)($_GET['offset'] ?? 0);
+        
+        $user = new Utilisateur($this->db);
+        $users = $user->getAllUsers($limit + 1, $offset); // +1 pour exclure l'utilisateur actuel
+        
+        $follow = new AbonnementModel($this->db);
+        $result = [];
+        
+        foreach ($users as $u) {
+            // Exclure l'utilisateur actuel
+            if ($current_user_id && $u['user_id'] == $current_user_id) {
+                continue;
+            }
+            
+            $isFollowing = false;
+            if ($current_user_id) {
+                $isFollowing = $follow->isFollowing($current_user_id, $u['user_id']);
+            }
+            
+            $result[] = [
+                'id' => $u['user_id'],
+                'name' => $u['user_name'],
+                'username' => '@' . $u['user_username'],
+                'bio' => $u['user_bio'] ?? '',
+                'photo' => $u['user_photo_url'] ? 'imgApp/' . $u['user_photo_url'] : null,
+                'postsCount' => (int)$u['user_posts_count'],
+                'isFollowing' => $isFollowing
+            ];
+            
+            // Respecter la limite (sans le +1)
+            if (count($result) >= $limit) {
+                break;
+            }
+        }
+        
+        Utils::jsonResponse(['success' => true, 'users' => $result]);
     }
     
     private function actionGetUserProfile() {

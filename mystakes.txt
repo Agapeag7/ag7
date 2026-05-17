@@ -6,9 +6,14 @@
 ✓ Ajout de la possibilité de liker de commentaire et afficher les données réel de nombre de like de commentaire sur Frontend
 
 * A Realiser :
-- Publication Vocale : l'utilisateur peut poster une publication vocale
+- Par défaut, les publications vocales n’autorisent pas l’écoute automatique au scroll. L’utilisateur doit cliquer délibérément sur un bouton « Écouter ». Cela évite les nuisances sonores inattendues.
+- Afficher le nombre d’écoutes (compteur) pour que l’utilisateur sache si son message a été entendu. C’est un puissant levier d’engagement.
+- 
 
-* A Realiser :
-Sur mobile Ces boutons depassent leurs container :
-<button type="button" class="btn-secondary">Changer</button> et <button type="button" class="btn-secondary edit-profile-cancel">Annuler</button>
+
+
+* Post Production :
+- Signalement utilisateur : possibilité de signaler une publication vocale.
+- Modération humaine ciblée : auditer uniquement les contenus signalés
+- 
 
