@@ -2058,101 +2058,150 @@ function updateProfileUI() {
 }
 
 // Modale followers/following
-const followModal = document.getElementById("followModal");
-const followModalTitle = document.getElementById("followModalTitle");
-const followList = document.getElementById("followList");
-let currentModalType = "";
-let currentModalUserId = null;
+const followModal = document.getElementById('followModal');
+const followModalTitle = document.getElementById('followModalTitle');
+const followList = document.getElementById('followList');
+let currentFollowType = '';
+let currentFollowUserId = null;
 
 /**
  * Charge et affiche les followers ou following depuis l'API
  */
 async function openFollowModal(type, userId = null) {
-  currentModalType = type;
-  currentModalUserId = userId || currentUserProfile.id;
-  
-  // Mettre à jour le titre
-  followModalTitle.innerText = type === "followers" ? "Abonnés" : "Abonnements";
-  
-  // Afficher un indicateur de chargement
-  followList.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
-  followModal.classList.remove("hidden");
-  
-  try {
-    const action = type === "followers" ? "getFollowers" : "getFollowing";
-    const url = new URL(window.location.href);
-    url.searchParams.set('action', action);
-    url.searchParams.set('user_id', currentModalUserId);
-    url.searchParams.set('limit', 50);
-    
-    const response = await fetch(url.toString(), { method: 'GET' });
-    const data = await response.json();
-    
-    if (data.success) {
-      const users = type === "followers" ? data.followers : data.following;
-      
-      if (users.length === 0) {
-        followList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">Aucun utilisateur à afficher</div>';
-        return;
-      }
-      
-      followList.innerHTML = users.map(user => {
-        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        let avatarHTML;
-        if (user.photo) {
-            avatarHTML = `<img src="${user.photo}" alt="${user.name}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">`;
-        } else {
-            avatarHTML = `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${initials}</div>`;
-        }
-        return `
-            <div class="follow-list-item">
-                <div class="follow-avatar">${avatarHTML}</div>
-                <div class="follow-info">
-                    <div class="follow-name">${escapeHtml(user.name)}</div>
-                    <div class="follow-username">${escapeHtml(user.username)}</div>
-                </div>
-                <button class="btn-follow-sm" data-user-id="${user.id}" data-username="${user.username}">Suivre</button>
-            </div>
-        `;
-      }).join('');
-      
-      // Add event listeners for follow buttons
-      document.querySelectorAll('.btn-follow-sm').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.preventDefault();
-          
-          const userId = btn.getAttribute('data-user-id');
-          const isFollowing = btn.classList.contains('following');
-          
-          try {
-            const formData = new FormData();
-            formData.append('action', isFollowing ? 'unfollowUser' : 'followUser');
-            formData.append('followed_id', userId);
-            
-            const response = await fetch(window.location.href, {
-              method: 'POST',
-              body: formData
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-              btn.classList.toggle('following');
-              btn.innerHTML = btn.classList.contains('following') ? '<i class="fas fa-check"></i> Abonné' : '<i class="fas fa-user-plus"></i> Suivre';
-            }
-          } catch (error) {
-            console.error('Erreur follow:', error);
-          }
-        });
-      });
-    } else {
-      followList.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement</div>';
+    // Si pas d'userId passé, on prend celui de l'utilisateur connecté
+    if (!userId && currentUserProfile && currentUserProfile.userid) {
+        userId = currentUserProfile.userid;
     }
-  } catch (error) {
-    console.error('Erreur openFollowModal:', error);
-    followList.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement</div>';
-  }
+    if (!userId) {
+        showNotification('error', 'Erreur', 'Utilisateur non identifié');
+        return;
+    }
+
+    currentFollowType = type;
+    currentFollowUserId = userId;
+
+    // Mettre à jour le titre de la modale
+    followModalTitle.innerText = type === 'followers' ? 'Abonnés' : 'Abonnements';
+
+    // Afficher un indicateur de chargement
+    followList.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
+    followModal.classList.remove('hidden');
+
+    try {
+        // Déterminer l'action backend
+        const action = type === 'followers' ? 'getFollowers' : 'getFollowing';
+        const url = new URL(window.location.href);
+        url.searchParams.set('action', action);
+        url.searchParams.set('user_id', userId);
+        url.searchParams.set('limit', 50);
+        url.searchParams.set('offset', 0);
+
+        const response = await fetch(url.toString(), { method: 'GET' });
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Erreur lors du chargement');
+        }
+
+        const users = type === 'followers' ? data.followers : data.following;
+
+        if (!users || users.length === 0) {
+            followList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">Aucun utilisateur à afficher</div>';
+            return;
+        }
+
+        // Générer le HTML pour chaque utilisateur
+        followList.innerHTML = users.map(user => {
+            const initials = user.name
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2);
+
+            let avatarHTML;
+            if (user.photo) {
+                avatarHTML = `<img src="${user.photo}" alt="${user.name}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">`;
+            } else {
+                avatarHTML = `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${initials}</div>`;
+            }
+
+            // Déterminer si l'utilisateur courant suit déjà cette personne
+            const isFollowing = currentUserProfile?.following?.includes(user.id) || false;
+
+            return `
+                <div class="follow-list-item">
+                    <div class="follow-avatar">${avatarHTML}</div>
+                    <div class="follow-info">
+                        <div class="follow-name">${escapeHtml(user.name)}</div>
+                        <div class="follow-username">${escapeHtml(user.username)}</div>
+                    </div>
+                    <button class="btn-follow-sm ${isFollowing ? 'following' : ''}" data-user-id="${user.id}" data-username="${escapeHtml(user.username)}">
+                        ${isFollowing ? '<i class="fas fa-check"></i> Suivi' : '<i class="fas fa-user-plus"></i> Suivre'}
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        // Attacher les événements aux boutons "Suivre"
+        document.querySelectorAll('.btn-follow-sm').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const targetUserId = btn.getAttribute('data-user-id');
+                const isCurrentlyFollowing = btn.classList.contains('following');
+
+                try {
+                    const formData = new FormData();
+                    formData.append('action', isCurrentlyFollowing ? 'unfollowUser' : 'followUser');
+                    formData.append('followed_id', targetUserId);
+
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Mettre à jour l'état local du bouton
+                        if (isCurrentlyFollowing) {
+                            btn.classList.remove('following');
+                            btn.innerHTML = '<i class="fas fa-user-plus"></i> Suivre';
+                        } else {
+                            btn.classList.add('following');
+                            btn.innerHTML = '<i class="fas fa-check"></i> Suivi';
+                        }
+
+                        // Mettre à jour les compteurs sur le profil (si c'est le profil de l'utilisateur courant)
+                        if (currentFollowUserId === currentUserProfile?.userid) {
+                            await loadCurrentProfile();
+                            updateProfileUI();
+                        }
+
+                        showNotification('success', isCurrentlyFollowing ? 'Désabonné' : 'Abonné', isCurrentlyFollowing ? 'Vous ne suivez plus cet utilisateur' : 'Vous suivez maintenant cet utilisateur');
+                    } else {
+                        showNotification('error', 'Erreur', result.message || 'Action impossible');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showNotification('error', 'Erreur', 'Une erreur est survenue');
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error('Erreur openFollowModal:', error);
+        followList.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement</div>';
+    }
 }
+
+// Fermeture de la modale
+document.querySelector('.follow-modal-close')?.addEventListener('click', () => {
+    followModal.classList.add('hidden');
+});
+followModal?.addEventListener('click', (e) => {
+    if (e.target === followModal) followModal.classList.add('hidden');
+});
+
 
 // Boutons d'icône pour changer les photos sur la page profil (délégation d'événements)
 document.addEventListener('click', (e) => {
@@ -2172,11 +2221,11 @@ document.addEventListener('click', (e) => {
 });
 
 document.querySelectorAll(".stat-item").forEach(stat => {
-  stat.addEventListener("click", (e) => {
-    const type = stat.getAttribute("data-type");
-    if (type === "followers") openFollowModal("followers");
-    if (type === "following") openFollowModal("following");
-  });
+    stat.addEventListener("click", (e) => {
+        const type = stat.getAttribute("data-type");
+        if (type === "followers") openFollowModal("followers");
+        if (type === "following") openFollowModal("following");
+    });
 });
 
 // Fermeture modale
