@@ -1435,16 +1435,14 @@ function renderDiscoverGrid() {
   
   discoverGrid.innerHTML = '';
   
-  // Utiliser les vraies données de la BDD
   discoverUsers.forEach(user => {
     const isFollowing = followingUsers.has(user.id);
     const userCard = document.createElement('div');
     userCard.className = 'discover-card';
+    userCard.style.cursor = 'pointer';  // Indique que c'est cliquable
     
-    // Créer les initiales du nom
     const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     
-    // Afficher la photo réelle ou un avatar avec gradient + initiales
     let avatarHTML;
     if (user.photo) {
       avatarHTML = `<img src="${user.photo}" alt="${user.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" loading="lazy">`;
@@ -1464,6 +1462,13 @@ function renderDiscoverGrid() {
       </button>
     `;
     
+    // Clic sur la carte → ouvrir le profil (sauf si on clique sur le bouton follow)
+    userCard.addEventListener('click', (e) => {
+      if (e.target.closest('.discover-follow-btn')) return; // ignorer si c'est le bouton
+      displayUserProfile(user.id);
+    });
+    
+    // Gestion du bouton follow (avec stopPropagation pour ne pas ouvrir le profil)
     const followBtn = userCard.querySelector('.discover-follow-btn');
     followBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -1491,7 +1496,12 @@ function renderDiscoverGrid() {
             followingUsers.add(userId);
             showNotification('success', 'Suivi', `Vous suivez maintenant ${user.name}`);
           }
-          renderDiscoverGrid();
+          renderDiscoverGrid(); // Rafraîchir la grille
+          // Rafraîchir le profil courant si nécessaire
+          if (typeof loadCurrentProfile === 'function') {
+            await loadCurrentProfile();
+            updateProfileUI();
+          }
         } else {
           showNotification('error', 'Erreur', data.message || 'Erreur lors du suivi');
         }
