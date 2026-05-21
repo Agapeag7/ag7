@@ -1773,42 +1773,80 @@ function renderAudioPreview() {
   }
 }
 
-function createPitchShifter(context, pitchFactor) {
-  // Créer un nœud ScriptProcessor (obsolète mais facile)
-  const bufferSize = 4096;
-  const processor = context.createScriptProcessor(bufferSize, 1, 1);
-  let phase = 0;
-  processor.onaudioprocess = (event) => {
-    const input = event.inputBuffer.getChannelData(0);
-    const output = event.outputBuffer.getChannelData(0);
-    for (let i = 0; i < input.length; i++) {
-      // Pitch shifting simple par ré-échantillonnage linéaire
-      // (non réaliste mais illustratif)
-      let index = Math.floor(phase);
-      if (index < input.length) {
-        output[i] = input[index];
-      }
-      phase += pitchFactor;
-      if (phase >= input.length) phase -= input.length;
-    }
-  };
-  return processor;
+async function createPitchShifter(context, pitchFactor) {
+  return await createPitchShifterWorklet(context, pitchFactor);
 }
 
-function createRobotFilter(context) {
-  const processor = context.createScriptProcessor(4096, 1, 1);
-  let lastValue = 0;
-  processor.onaudioprocess = (event) => {
-    const input = event.inputBuffer.getChannelData(0);
-    const output = event.outputBuffer.getChannelData(0);
-    for (let i = 0; i < input.length; i++) {
-      // Effet robot : ajout de bruit et quantification
-      const quantized = Math.round(input[i] * 10) / 10;
-      const noise = (Math.random() - 0.5) * 0.2;
-      output[i] = quantized + noise;
+async function createRobotFilter(context) {
+  return await createRobotFilterWorklet(context);
+}
+
+// ===== AUDIOWORKLET : PITCH SHIFTER =====
+async function createPitchShifterWorklet(context, pitchFactor) {
+  const script = `
+    class PitchShifterProcessor extends AudioWorkletProcessor {
+      constructor() {
+        super();
+        this.phase = 0;
+        this.pitchFactor = ${pitchFactor};
+      }
+      process(inputs, outputs, parameters) {
+        const input = inputs[0];
+        const output = outputs[0];
+        if (!input || !output) return true;
+        const inputChannel = input[0];
+        const outputChannel = output[0];
+        if (!inputChannel || !outputChannel) return true;
+        const length = inputChannel.length;
+        for (let i = 0; i < length; i++) {
+          let index = Math.floor(this.phase);
+          if (index < length) {
+            outputChannel[i] = inputChannel[index];
+          } else {
+            outputChannel[i] = 0;
+          }
+          this.phase += this.pitchFactor;
+          if (this.phase >= length) this.phase -= length;
+        }
+        return true;
+      }
     }
-  };
-  return processor;
+    registerProcessor('pitch-shifter', PitchShifterProcessor);
+  `;
+  const blob = new Blob([script], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  await context.audioWorklet.addModule(url);
+  URL.revokeObjectURL(url);
+  return new AudioWorkletNode(context, 'pitch-shifter');
+}
+
+// ===== AUDIOWORKLET : ROBOT FILTER =====
+async function createRobotFilterWorklet(context) {
+  const script = `
+    class RobotFilterProcessor extends AudioWorkletProcessor {
+      process(inputs, outputs, parameters) {
+        const input = inputs[0];
+        const output = outputs[0];
+        if (!input || !output) return true;
+        const inputChannel = input[0];
+        const outputChannel = output[0];
+        if (!inputChannel || !outputChannel) return true;
+        const length = inputChannel.length;
+        for (let i = 0; i < length; i++) {
+          const quantized = Math.round(inputChannel[i] * 10) / 10;
+          const noise = (Math.random() - 0.5) * 0.2;
+          outputChannel[i] = quantized + noise;
+        }
+        return true;
+      }
+    }
+    registerProcessor('robot-filter', RobotFilterProcessor);
+  `;
+  const blob = new Blob([script], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  await context.audioWorklet.addModule(url);
+  URL.revokeObjectURL(url);
+  return new AudioWorkletNode(context, 'robot-filter');
 }
 
 // ===== VIEWER IMAGES =====
