@@ -253,6 +253,54 @@ class Utils {
         error_log("move_uploaded_file échoué pour commentaire vocal: tmp=" . $tmpName . ", dest=" . $uploadPath);
         return false;
     }
+
+    public static function uploadVocalPost($tmpName, $fileName) {
+        $allowedExt = ['mp3', 'wav', 'ogg', 'webm', 'm4a'];
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        
+        if (!in_array($ext, $allowedExt)) {
+            error_log("Upload publication vocale échoué: Extension .{$ext} non autorisée");
+            return false;
+        }
+        
+        // Vérifier le type MIME
+        $allowedMimes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4'];
+        $fileMime = mime_content_type($tmpName);
+        if (!in_array($fileMime, $allowedMimes)) {
+            error_log("Warning: MIME type {$fileMime} pour audio, mais extension .{$ext} acceptée");
+        }
+        
+        // Créer le dossier audio/posts/ s'il n'existe pas
+        $uploadDir = __DIR__ . '/audio/posts';
+        if (!is_dir($uploadDir)) {
+            if (!@mkdir($uploadDir, 0777, true)) {
+                error_log("Impossible de créer dossier audio/posts");
+                return false;
+            }
+        }
+        
+        // Vérifier permissions d'écriture
+        if (!is_writable($uploadDir)) {
+            chmod($uploadDir, 0777);
+            if (!is_writable($uploadDir)) {
+                error_log("Dossier audio/posts n'est pas writable");
+                return false;
+            }
+        }
+        
+        // Générer nom unique - prefix "post_" pour les publications vocales
+        $audioName = 'post_' . time() . '_' . uniqid() . '.' . $ext;
+        $uploadPath = $uploadDir . '/' . $audioName;
+        
+        // Sauvegarder le fichier
+        if (@move_uploaded_file($tmpName, $uploadPath)) {
+            error_log("Publication vocale uploadée: $audioName");
+            return $audioName; // Retourner juste le nom du fichier
+        }
+        
+        error_log("move_uploaded_file échoué pour publication vocale: tmp=" . $tmpName . ", dest=" . $uploadPath);
+        return false;
+    }
 }
 
 abstract class BaseModel {
@@ -359,12 +407,14 @@ class UtilisateurModel extends BaseModel {
 class PublicationModel extends BaseModel {
     
     public function create(array $data) {
-        $sql = 'INSERT INTO publications (post_user_id, post_content, post_created_at, post_visibility, updated_at) 
-                VALUES (?, ?, NOW(), ?, NOW())';
+        $sql = 'INSERT INTO publications (post_user_id, post_content, post_audio_url, post_audio_duration, post_audio_listens, post_created_at, post_visibility, updated_at) 
+                VALUES (?, ?, ?, ?, 0, NOW(), ?, NOW())';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             $data['post_user_id'],
-            $data['post_content'],
+            $data['post_content'] ?? null,
+            $data['post_audio_url'] ?? null,
+            $data['post_audio_duration'] ?? null,
             $data['post_visibility'] ?? 'public'
         ]);
         return $this->pdo->lastInsertId();
@@ -471,6 +521,11 @@ class PublicationModel extends BaseModel {
     
     public function decrementComments($post_id) {
         $stmt = $this->pdo->prepare('UPDATE publications SET post_comments = post_comments - 1 WHERE post_id = ?');
+        return $stmt->execute([$post_id]);
+    }
+    
+    public function incrementAudioListens($post_id) {
+        $stmt = $this->pdo->prepare('UPDATE publications SET post_audio_listens = post_audio_listens + 1 WHERE post_id = ?');
         return $stmt->execute([$post_id]);
     }
 }
@@ -1448,19 +1503,35 @@ class Router {
         $content = $_POST['post_content'] ?? '';
         $visibility = $_POST['post_visibility'] ?? 'public';
         $hasImages = !empty($_FILES['post_images']) && is_array($_FILES['post_images']['tmp_name']);
+        $hasAudio = !empty($_FILES['post_audio']) && $_FILES['post_audio']['error'] === UPLOAD_ERR_OK;
         
-        error_log('Contenu: ' . strlen($content) . ' chars | Images: ' . ($hasImages ? 'OUI' : 'NON'));
+        error_log('Contenu: ' . strlen($content) . ' chars | Images: ' . ($hasImages ? 'OUI' : 'NON') . ' | Audio: ' . ($hasAudio ? 'OUI' : 'NON'));
         
-        // Permettre de publier si contenu OU images (ou les deux)
-        if (empty($content) && !$hasImages) {
-            error_log('ERROR: Ni contenu ni images présents');
-            Utils::jsonResponse(['success' => false, 'message' => 'Veuillez ajouter du texte ou des images'], 400);
+        // Permettre de publier si contenu OU images OU audio
+        if (empty($content) && !$hasImages && !$hasAudio) {
+            error_log('ERROR: Ni contenu ni images ni audio présents');
+            Utils::jsonResponse(['success' => false, 'message' => 'Veuillez ajouter du texte, des images ou un audio'], 400);
+        }
+        
+        // Traiter l'audio s'il existe
+        $audioUrl = null;
+        $audioDuration = null;
+        if ($hasAudio) {
+            $audioUrl = Utils::uploadVocalPost($_FILES['post_audio']['tmp_name'], $_FILES['post_audio']['name']);
+            if (!$audioUrl) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'upload audio'], 400);
+            }
+            // Récupérer la durée depuis le formulaire si envoyée
+            $audioDuration = (int)($_POST['post_audio_duration'] ?? 0);
+            error_log('Audio uploadé: ' . $audioUrl . ' - Durée: ' . $audioDuration . 's');
         }
         
         $pub = new PublicationModel($this->db);
         $post_id = $pub->create([
             'post_user_id' => $_SESSION['user_id'],
             'post_content' => $content,
+            'post_audio_url' => $audioUrl,
+            'post_audio_duration' => $audioDuration,
             'post_visibility' => $visibility
         ]);
         
@@ -2550,6 +2621,23 @@ class Router {
         $pub->delete($post_id);
         
         Utils::jsonResponse(['success' => true, 'message' => 'Publication et tous ses contenus supprimés']);
+    }
+    
+    private function actionIncrementAudioListens() {
+        $post_id = $_POST['post_id'] ?? null;
+        
+        if (!$post_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Post ID manquant'], 400);
+        }
+        
+        $pub = new PublicationModel($this->db);
+        $result = $pub->incrementAudioListens($post_id);
+        
+        if ($result) {
+            Utils::jsonResponse(['success' => true, 'message' => 'Compteur d\'écoute incrémenté']);
+        } else {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'incrémentation'], 500);
+        }
     }
     
     private function actionDeleteComment() {

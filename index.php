@@ -501,9 +501,17 @@ if (isset($_SESSION['user_id'])) {
           <div class="preview-grid"></div>
           <button type="button" id="clearImagesBtn" class="btn-secondary" style="margin-top: 12px;">Supprimer les images</button>
         </div>
+        <div id="postAudioPreview" class="post-audio-preview" style="display: none;">
+          <div class="audio-player-preview">
+            <audio id="previewAudio" controls style="width: 100%; margin: 12px 0;"></audio>
+            <button type="button" id="clearAudioBtn" class="btn-secondary">Supprimer l'audio</button>
+          </div>
+        </div>
         <div class="create-post-actions">
           <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
           <input type="file" id="postImageInput" accept="image/*" multiple style="display: none;">
+          <button id="recordAudioBtn" class="action-btn"><i class="fas fa-microphone"></i> Audio</button>
+          <input type="file" id="postAudioInput" accept="audio/*" style="display: none;">
           <button id="createPollBtn" class="action-btn"><i class="fas fa-poll"></i> Face-Off</button>
           <button id="publishPostBtn" class="btn-primary">Publier</button>
         </div>

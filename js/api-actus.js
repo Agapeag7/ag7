@@ -13,8 +13,10 @@ const ActusAPI = {
    * @param {string} content - Contenu de la publication
    * @param {string} visibility - 'public' ou 'private'
    * @param {File[]} images - Tableau de fichiers images
+   * @param {File} audioFile - Fichier audio optionnel
+   * @param {number} audioDuration - Durée de l'audio en secondes
    */
-  async createPost(content, visibility = 'public', images = []) {
+  async createPost(content, visibility = 'public', images = [], audioFile = null, audioDuration = 0) {
     try {
       const formData = new FormData();
       formData.append('action', 'createPost');
@@ -25,6 +27,14 @@ const ActusAPI = {
       images.forEach(img => {
         formData.append('post_images[]', img);
       });
+
+      // Ajouter l'audio s'il existe
+      if (audioFile) {
+        formData.append('post_audio', audioFile);
+        if (audioDuration > 0) {
+          formData.append('post_audio_duration', audioDuration);
+        }
+      }
 
       const response = await fetch(window.location.href, {
         method: 'POST',
@@ -331,6 +341,34 @@ const ActusAPI = {
       return { success: true, message: data.message };
     } catch (error) {
       console.error('Erreur deleteComment:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  /**
+   * Incrémenter le compteur d'écoutes d'une publication vocale
+   * @param {number} post_id - ID de la publication
+   */
+  async incrementAudioListens(post_id) {
+    try {
+      const formData = new FormData();
+      formData.append('action', 'incrementAudioListens');
+      formData.append('post_id', post_id);
+
+      const response = await fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Erreur lors de l\'incrémentation');
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('Erreur incrementAudioListens:', error);
       return { success: false, message: error.message };
     }
   }

@@ -19,6 +19,9 @@ let actusState = {
 // postImages et currentUserId sont déclarés globalement
 let currentUserId = null;
 
+let postAudio = null;
+let postAudioDuration = 0;
+
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', async () => {
   
@@ -95,6 +98,30 @@ function setupActusUI() {
     clearImagesBtn.addEventListener('click', () => {
       postImages = [];
       renderImagePreview();
+    });
+  }
+  
+  // Bouton enregistrement audio
+  const recordAudioBtn = document.getElementById('recordAudioBtn');
+  if (recordAudioBtn) {
+    recordAudioBtn.addEventListener('click', () => {
+      document.getElementById('postAudioInput').click();
+    });
+  }
+  
+  // Input audio
+  const audioInput = document.getElementById('postAudioInput');
+  if (audioInput) {
+    audioInput.addEventListener('change', handleAudioSelect);
+  }
+  
+  // Bouton effacer audio
+  const clearAudioBtn = document.getElementById('clearAudioBtn');
+  if (clearAudioBtn) {
+    clearAudioBtn.addEventListener('click', () => {
+      postAudio = null;
+      postAudioDuration = 0;
+      renderAudioPreview();
     });
   }
   
@@ -183,7 +210,29 @@ function renderActusFeed() {
   feedContainer.innerHTML = '';
   
   if (actusState.posts.length === 0) {
-    feedContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Aucune publication pour le moment</p>';
+    feedContainer.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 16px; display: block; color: var(--emerald-500);"></i>
+        <p style="font-size: 16px; margin-bottom: 24px;">Aucune publication pour le moment</p>
+        <p style="font-size: 14px; margin-bottom: 24px;">Suivez des comptes pour voir leurs publications dans votre fil d'actualités</p>
+        <button class="btn-primary" id="discoverButton" style="padding: 10px 20px;">
+          <i class="fas fa-compass"></i> Découvrir des comptes
+        </button>
+      </div>
+    `;
+    
+    // Ajouter l'événement au bouton Découvrir
+    const discoverBtn = feedContainer.querySelector('#discoverButton');
+    if (discoverBtn) {
+      discoverBtn.addEventListener('click', () => {
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+          if (item.getAttribute('data-view') === 'contacts') {
+            item.click();
+          }
+        });
+      });
+    }
     return;
   }
   
@@ -233,6 +282,23 @@ function createPostElement(post) {
         <img src="${post.images[0]}" class="post-image" data-post-id="${post.id}" data-index="0" alt="image post" loading="lazy">
         ${post.images.length > 1 ? `<button class="feed-image-next" data-id="${post.id}"><i class="fas fa-chevron-right"></i></button>` : ''}
         ${post.images.length > 1 ? `<div class="feed-image-counter">1 / ${post.images.length}</div>` : ''}
+      </div>`;
+  }
+  
+  // Audio vocal
+  if (post.post_audio_url) {
+    const audioPath = 'audio/posts/' + post.post_audio_url;
+    const audioListens = post.post_audio_listens || 0;
+    contentHTML += `
+      <div class="post-audio-container" style="margin: 12px 0; padding: 12px; background: var(--hover-bg); border-radius: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+          <i class="fas fa-volume-up" style="color: var(--emerald-500); font-size: 18px;"></i>
+          <span style="font-size: 13px; color: var(--text-secondary);">${audioListens} ${audioListens === 1 ? 'écoute' : 'écoutes'}</span>
+        </div>
+        <audio controls style="width: 100%; height: 32px;" data-post-id="${post.id}" class="post-audio-player">
+          <source src="${audioPath}">
+          Votre navigateur ne supporte pas l'élément audio.
+        </audio>
       </div>`;
   }
   
@@ -430,6 +496,15 @@ function attachPostEvents() {
       });
     });
     
+    // Ajouter les event listeners pour les lecteurs audio vocaux
+    const audioPlayers = document.querySelectorAll('.post-audio-player');
+    audioPlayers.forEach(audio => {
+      audio.addEventListener('play', () => {
+        const postId = parseInt(audio.dataset.postId);
+        handleAudioPlay(postId);
+      });
+    });
+    
   } catch(e) {
     console.error('💥 ERROR in attachPostEvents():', e.message, e.stack);
   }
@@ -466,6 +541,30 @@ async function handleLike(e) {
     showNotification('success', '', result.isLiked ? 'Post aimé !' : 'Like retiré');
   } else {
     showNotification('error', 'Erreur', result.message);
+  }
+}
+
+// ===== GESTION ÉCOUTE AUDIO =====
+async function handleAudioPlay(postId) {
+  // Incrémenter le compteur d'écoutes une seule fois par écoute
+  const result = await ActusAPI.incrementAudioListens(postId);
+  
+  if (result.success) {
+    // Mettre à jour l'affichage du compteur
+    const post = actusState.posts.find(p => p.id === postId);
+    if (post) {
+      post.post_audio_listens = (post.post_audio_listens || 0) + 1;
+      
+      // Mettre à jour le compteur sur la page
+      const audioContainer = document.querySelector(`[data-post-id="${postId}"]`).closest('.post-audio-container');
+      if (audioContainer) {
+        const listensSpan = audioContainer.querySelector('span:last-of-type');
+        if (listensSpan) {
+          const newCount = post.post_audio_listens;
+          listensSpan.textContent = `${newCount} ${newCount === 1 ? 'écoute' : 'écoutes'}`;
+        }
+      }
+    }
   }
 }
 
@@ -1249,8 +1348,8 @@ async function displayUserProfile(userId) {
 async function handlePublishPost(e) {
   const content = document.getElementById('postContent').value.trim();
   
-  if (!content && postImages.length === 0) {
-    showNotification('warning', 'Champs vides', 'Écrivez du texte ou ajoutez une image');
+  if (!content && postImages.length === 0 && !postAudio) {
+    showNotification('warning', 'Champs vides', 'Écrivez du texte, ajoutez une image ou un audio');
     return;
   }
   
@@ -1263,8 +1362,11 @@ async function handlePublishPost(e) {
     .filter(img => img.file)
     .map(img => img.file);
   
+  // Récupérer le fichier audio
+  const audioFile = postAudio ? postAudio.file : null;
+  const audioDuration = postAudio ? postAudio.duration : 0;
   
-  const result = await ActusAPI.createPost(content, 'public', imageFiles);
+  const result = await ActusAPI.createPost(content, 'public', imageFiles, audioFile, audioDuration);
   
   btn.disabled = false;
   btn.textContent = 'Publier';
@@ -1273,7 +1375,10 @@ async function handlePublishPost(e) {
     showNotification('success', 'Publié', result.message);
     document.getElementById('postContent').value = '';
     postImages = [];
+    postAudio = null;
+    postAudioDuration = 0;
     renderImagePreview();
+    renderAudioPreview();
     
     
     // SIMPLE: Recharger le feed complètement pour éviter les duplicatas
@@ -1335,6 +1440,44 @@ function renderImagePreview() {
     
     grid.appendChild(div);
   });
+}
+
+// ===== GESTION AUDIO =====
+function handleAudioSelect(e) {
+  const file = e.target.files[0];
+  
+  if (file) {
+    // Créer une URL pour l'aperçu
+    const audioUrl = URL.createObjectURL(file);
+    
+    // Charger le fichier audio pour obtenir la durée
+    const audio = new Audio(audioUrl);
+    audio.onloadedmetadata = () => {
+      postAudioDuration = Math.round(audio.duration);
+      postAudio = {
+        url: audioUrl,
+        file: file,
+        duration: postAudioDuration
+      };
+      renderAudioPreview();
+    };
+  }
+  
+  e.target.value = '';
+}
+
+// ===== AFFICHER APERÇU AUDIO =====
+function renderAudioPreview() {
+  const preview = document.getElementById('postAudioPreview');
+  const audioElement = document.getElementById('previewAudio');
+  
+  if (!postAudio) {
+    preview.style.display = 'none';
+    return;
+  }
+  
+  preview.style.display = 'block';
+  audioElement.src = postAudio.url;
 }
 
 // ===== VIEWER IMAGES =====
