@@ -3222,6 +3222,36 @@ body.dark .modal-comment-input::placeholder,
     text-align: center;
     border-radius: 0;
   }
+
+  
+  .vocal-post-card h2 {
+    font-size: 1.4rem;
+  }
+  .vocal-controls button {
+    min-width: 80px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  .recording-timer {
+    font-size: 1.5rem;
+  }
+  .vocal-filter-group select {
+    padding: 10px;
+  }
+
+  .vocal-preview-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .vocal-preview-actions button {
+    padding: 16px 12px;
+    font-size: 1.1rem;
+    min-height: 54px;
+  }
+
+  #vocalConfirmBtn {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 }
 
 /* ========== PERSONNALISATION DU THEME ========== */
@@ -4356,6 +4386,43 @@ body.dark .modal-comment-input::placeholder,
       margin-left: 0;
       width: 100%;
     }
+
+    .vocal-post-card {
+      padding: 20px 16px;
+    }
+    .vocal-post-card h2 {
+      font-size: 1.4rem;
+    }
+    .vocal-controls button {
+      min-width: 80px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+    }
+    .recording-timer {
+      font-size: 1.5rem;
+    }
+    .vocal-filter-group select {
+      padding: 10px;
+    }
+
+    .vocal-preview-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .vocal-preview-actions button {
+      width: 100%;
+      padding: 14px 12px;
+      font-size: 1rem;
+      border-radius: 50px;
+    }
+
+    #vocalConfirmBtn {
+      order: 1;
+      background: var(--emerald-500);
+      font-weight: 600;
+    }
   }
 
 /* ========== MODALE MODIFICATION PROFIL ========== */
@@ -4873,22 +4940,40 @@ body.dark .modal-comment-input::placeholder,
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  backdrop-filter: blur(4px);
+  padding: 16px;
+  box-sizing: border-box;
 }
+
 .vocal-post-card {
   background: var(--card-bg);
-  border-radius: 24px;
-  width: 90%;
+  border-radius: 32px;
+  width: 100%;
   max-width: 500px;
-  padding: 24px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px 20px;
   position: relative;
   box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+  animation: fadeInUp 0.3s ease;
 }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .vocal-post-close {
   position: absolute;
   top: 16px;
@@ -4898,57 +4983,184 @@ body.dark .modal-comment-input::placeholder,
   font-size: 28px;
   cursor: pointer;
   color: var(--text-secondary);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: 0.2s;
 }
+.vocal-post-close:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.vocal-post-card h2 {
+  font-size: 1.6rem;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  padding-right: 32px;
+}
+
+.vocal-post-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+
+/* Filtre vocal */
 .vocal-filter-group {
-  margin: 20px 0;
-  margin-top: 5px;
+  margin-bottom: 24px;
 }
+.vocal-filter-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
 .vocal-filter-group select {
   width: 100%;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 24px;
   background: var(--bg-container);
   border: 1px solid var(--border-light);
   color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
 }
-.recording-indicator {
-  background: #ef4444;
-  color: white;
-  padding: 8px;
-  border-radius: 30px;
+
+/* Statut d'enregistrement */
+.vocal-recorder-status {
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 40px;
+  padding: 16px;
+  margin-bottom: 20px;
   text-align: center;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   font-weight: bold;
+  color: #ef4444;
+  margin-bottom: 8px;
 }
 .red-dot {
-  display: inline-block;
   width: 12px;
   height: 12px;
-  background: white;
+  background: #ef4444;
   border-radius: 50%;
-  margin-right: 8px;
-  animation: pulse 1s infinite;
+  display: inline-block;
+  animation: pulse 1.2s infinite;
 }
 @keyframes pulse {
-  0% { opacity: 1; transform: scale(1);}
-  100% { opacity: 0.3; transform: scale(1.2);}
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
 }
 .recording-timer {
-  text-align: center;
-  font-size: 24px;
+  font-size: 1.8rem;
   font-weight: bold;
-  margin: 12px 0;
   font-family: monospace;
+  letter-spacing: 1px;
+  color: var(--text-primary);
 }
+
+/* Boutons de contrôle */
 .vocal-controls {
   display: flex;
   gap: 12px;
   justify-content: center;
-  margin: 20px 0;
+  margin: 24px 0;
+  flex-wrap: wrap;
 }
+
+.vocal-controls button {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 16px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.vocal-controls .btn-primary {
+  background: var(--emerald-500);
+  color: white;
+}
+.vocal-controls .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.vocal-controls .btn-danger {
+  background: #ef4444;
+  color: white;
+}
+.vocal-controls .btn-secondary {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+/* Aperçu audio */
+#vocalPreviewSection {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+#vocalPreviewSection p {
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+#vocalPreviewAudio {
+  width: 100%;
+  border-radius: 40px;
+  background: var(--bg-container);
+}
+
 .vocal-preview-actions {
   display: flex;
   gap: 12px;
   margin-top: 16px;
+}
+
+.vocal-preview-actions .btn-primary {
+  padding: 14px 20px;
+  font-size: 1.1rem;
+  min-height: 52px;
+  border-radius: 60px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.vocal-preview-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 40px;
+  font-weight: 500;
+  background: var(--hover-bg);
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.vocal-preview-actions button:active {
+  transform: scale(0.97);
 }
 
 /* Lecteur audio moderne */
