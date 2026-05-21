@@ -1459,7 +1459,7 @@ function renderDiscoverGrid() {
       <div class="discover-username">${escapeHtml(user.username)}</div>
       <div class="discover-bio">${escapeHtml(user.bio || 'Pas de bio')}</div>
       <button class="discover-follow-btn ${isFollowing ? 'following' : ''}" data-user-id="${user.id}">
-        ${isFollowing ? '<i class="fas fa-check"></i> Suivi' : '<i class="fas fa-user-plus"></i> Suivre'}
+        ${isFollowing ? '<i class="fas fa-check"></i> Suivi(e)' : '<i class="fas fa-user-plus"></i> Suivre'}
       </button>
     `;
     
@@ -1495,7 +1495,7 @@ function renderDiscoverGrid() {
             showNotification('success', 'Désabonné', `Vous avez arrêté de suivre ${user.name}`);
           } else {
             followingUsers.add(userId);
-            showNotification('success', 'Suivi', `Vous suivez maintenant ${user.name}`);
+            showNotification('success', 'Suivi(e)', `Vous suivez maintenant ${user.name}`);
           }
           renderDiscoverGrid(); // Rafraîchir la grille
           // Rafraîchir le profil courant si nécessaire
@@ -1504,7 +1504,7 @@ function renderDiscoverGrid() {
             updateProfileUI();
           }
         } else {
-          showNotification('error', 'Erreur', data.message || 'Erreur lors du suivi');
+          showNotification('error', 'Erreur', data.message || 'Erreur lors du suivi(e)');
         }
       } catch (error) {
         console.error('Erreur follow:', error);
@@ -2057,7 +2057,7 @@ async function openFollowModal(type, userId = null) {
                         <div class="follow-username">${escapeHtml(user.username)}</div>
                     </div>
                     <button class="btn-follow-sm ${isFollowing ? 'following' : ''}" data-user-id="${user.id}" data-username="${escapeHtml(user.username)}">
-                        ${isFollowing ? '<i class="fas fa-check"></i> Suivi' : '<i class="fas fa-user-plus"></i> Suivre'}
+                        ${isFollowing ? '<i class="fas fa-check"></i> Suivi(e)' : '<i class="fas fa-user-plus"></i> Suivre'}
                     </button>
                 </div>
             `;
@@ -2087,7 +2087,7 @@ async function openFollowModal(type, userId = null) {
                             btn.innerHTML = '<i class="fas fa-user-plus"></i> Suivre';
                         } else {
                             btn.classList.add('following');
-                            btn.innerHTML = '<i class="fas fa-check"></i> Suivi';
+                            btn.innerHTML = '<i class="fas fa-check"></i> Suivi(e)';
                         }
 
                         // Rafraîchir les compteurs du profil si nécessaire
@@ -2186,7 +2186,7 @@ async function displayUserProfile(userId) {
         } else {
             followBtn.style.display = 'block';
             const isFollowing = profile.is_following === true;
-            followBtn.textContent = isFollowing ? '✓ Suivi' : 'Suivre';
+            followBtn.textContent = isFollowing ? '✓ Suivi(e)' : 'Suivre';
             followBtn.style.background = isFollowing ? 'var(--text-secondary)' : 'var(--emerald-500)';
             followBtn.style.color = 'white';
 
@@ -2197,7 +2197,7 @@ async function displayUserProfile(userId) {
 
             updatedBtn.onclick = async (e) => {
                 e.preventDefault();
-                const currentlyFollowing = updatedBtn.textContent === '✓ Suivi';
+                const currentlyFollowing = updatedBtn.textContent === '✓ Suivi(e)';
 
                 try {
                     const formData = new FormData();
@@ -2215,7 +2215,7 @@ async function displayUserProfile(userId) {
                             updatedBtn.textContent = 'Suivre';
                             updatedBtn.style.background = 'var(--emerald-500)';
                         } else {
-                            updatedBtn.textContent = '✓ Suivi';
+                            updatedBtn.textContent = '✓ Suivi(e)';
                             updatedBtn.style.background = 'var(--text-secondary)';
                         }
                         // Rafraîchir les compteurs du profil courant si nécessaire

@@ -1181,7 +1181,7 @@ async function displayUserProfile(userId) {
         } else {
             followBtn.style.display = 'block';
             const isFollowing = profile.is_following === true;
-            followBtn.textContent = isFollowing ? '✓ Suivi' : 'Suivre';
+            followBtn.textContent = isFollowing ? '✓ Suivi(e)' : 'Suivre';
             followBtn.style.background = isFollowing ? 'var(--text-secondary)' : 'var(--emerald-500)';
             followBtn.style.color = 'white';
 
@@ -1192,7 +1192,7 @@ async function displayUserProfile(userId) {
 
             updatedBtn.onclick = async (e) => {
                 e.preventDefault();
-                const currentlyFollowing = updatedBtn.textContent === '✓ Suivi';
+                const currentlyFollowing = updatedBtn.textContent === '✓ Suivi(e)';
 
                 try {
                     const formData = new FormData();
@@ -1210,7 +1210,7 @@ async function displayUserProfile(userId) {
                             updatedBtn.textContent = 'Suivre';
                             updatedBtn.style.background = 'var(--emerald-500)';
                         } else {
-                            updatedBtn.textContent = '✓ Suivi';
+                            updatedBtn.textContent = '✓ Suivi(e)';
                             updatedBtn.style.background = 'var(--text-secondary)';
                         }
                         // Rafraîchir les compteurs du profil si nécessaire

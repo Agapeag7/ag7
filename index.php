@@ -267,7 +267,7 @@ if (isset($_SESSION['user_id'])) {
       <div class="profile-cover-wrapper">
         <div class="profile-cover">
           <img src="https://picsum.photos/id/104/1200/400" alt="cover" class="cover-img" loading="lazy">
-          <button class="change-cover-btn"><i class="fas fa-camera"></i></button>
+          <!-- <button class="change-cover-btn"><i class="fas fa-camera"></i></button> -->
         </div>
       </div>
       
