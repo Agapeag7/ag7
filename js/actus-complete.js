@@ -217,16 +217,16 @@ async function startModalRecording() {
     let processorNode = null;
     switch (selectedFilter) {
       case 'pitch_up':
-        processorNode = createPitchShifter(audioContext, 1.5);
+        processorNode = await createPitchShifter(audioContext, 1.5);
         break;
       case 'pitch_down':
-        processorNode = createPitchShifter(audioContext, 0.7);
+        processorNode = await createPitchShifter(audioContext, 0.7);
         break;
       case 'robot':
-        processorNode = createRobotFilter(audioContext);
+        processorNode = await createRobotFilter(audioContext);
         break;
       case 'helium':
-        processorNode = createPitchShifter(audioContext, 1.8);
+        processorNode = await createPitchShifter(audioContext, 1.8);
         break;
       default:
         processorNode = null;
@@ -1677,10 +1677,10 @@ async function startRecording() {
     let processorNode = null;
     switch (selectedFilter) {
       case 'pitch_up':
-        processorNode = await createPitchShifter(audioContext, 1.5); // aigu
+        processorNode = await createPitchShifter(audioContext, 1.5);
         break;
       case 'pitch_down':
-        processorNode = await createPitchShifter(audioContext, 0.7); // grave
+        processorNode = await createPitchShifter(audioContext, 0.7);
         break;
       case 'robot':
         processorNode = await createRobotFilter(audioContext);
