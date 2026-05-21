@@ -22,6 +22,27 @@ let currentUserId = null;
 let postAudio = null;
 let postAudioDuration = 0;
 
+let vocalModal = null;
+let vocalStartBtn = null, vocalStopBtn = null, vocalCancelBtn = null;
+let vocalConfirmBtn = null, vocalReRecordBtn = null;
+let vocalFilterSelect = null;
+let vocalPreviewAudio = null;
+let vocalTimerDisplay = null;
+let vocalRecorderStatusDiv = null;
+let vocalPreviewSection = null;
+
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let recordedAudioBlob = null;
+let recordedAudioDuration = 0;
+let audioContext = null;
+let mediaStream = null;
+let selectedFilter = 'none';
+let recordingStartTime = null;
+let timerInterval = null;
+const MAX_DURATION = 120;
+
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', async () => {
   
@@ -101,32 +122,211 @@ function setupActusUI() {
     });
   }
   
-  // Bouton enregistrement audio
-  const recordAudioBtn = document.getElementById('recordAudioBtn');
-  if (recordAudioBtn) {
-    recordAudioBtn.addEventListener('click', () => {
-      document.getElementById('postAudioInput').click();
-    });
-  }
-  
-  // Input audio
-  const audioInput = document.getElementById('postAudioInput');
-  if (audioInput) {
-    audioInput.addEventListener('change', handleAudioSelect);
-  }
-  
-  // Bouton effacer audio
+  // Bouton d'enregistrement vocal
+  const startRecordBtn = document.getElementById('startVocalRecordBtn');
+  const vocalFilterSelect = document.getElementById('vocalFilterSelect');
   const clearAudioBtn = document.getElementById('clearAudioBtn');
+
+  if (startRecordBtn) {
+    startRecordBtn.addEventListener('click', openVocalPostModal);
+  }
   if (clearAudioBtn) {
-    clearAudioBtn.addEventListener('click', () => {
-      postAudio = null;
-      postAudioDuration = 0;
-      renderAudioPreview();
+    clearAudioBtn.addEventListener('click', clearRecordedAudio);
+  }
+  if (vocalFilterSelect) {
+    vocalFilterSelect.addEventListener('change', (e) => {
+      selectedFilter = e.target.value;
     });
   }
   
   // Setup modal suppression
   setupDeleteModal();
+}
+
+// ========== MODAL ENREGISTREMENT VOCAL ==========
+function openVocalPostModal() {
+  if (!vocalModal) {
+    vocalModal = document.getElementById('vocalPostModal');
+    if (!vocalModal) {
+      console.error('Modal vocal introuvable');
+      return;
+    }
+    vocalStartBtn = document.getElementById('vocalStartBtn');
+    vocalStopBtn = document.getElementById('vocalStopBtn');
+    vocalCancelBtn = document.getElementById('vocalCancelBtn');
+    vocalConfirmBtn = document.getElementById('vocalConfirmBtn');
+    vocalReRecordBtn = document.getElementById('vocalReRecordBtn');
+    vocalFilterSelect = document.getElementById('vocalModalFilterSelect');
+    vocalPreviewAudio = document.getElementById('vocalPreviewAudio');
+    vocalTimerDisplay = document.getElementById('vocalTimer');
+    vocalRecorderStatusDiv = document.getElementById('vocalRecorderStatus');
+    vocalPreviewSection = document.getElementById('vocalPreviewSection');
+
+    // Écouteurs
+    vocalStartBtn.addEventListener('click', startModalRecording);
+    vocalStopBtn.addEventListener('click', stopModalRecording);
+    vocalCancelBtn.addEventListener('click', closeVocalModal);
+    vocalReRecordBtn.addEventListener('click', resetModalRecording);
+    vocalConfirmBtn.addEventListener('click', confirmModalRecording);
+    vocalFilterSelect.addEventListener('change', (e) => { selectedFilter = e.target.value; });
+  }
+
+  // Réinitialiser l'interface
+  resetModalRecording();
+  vocalModal.classList.remove('hidden');
+  vocalStartBtn.disabled = false;
+  vocalStopBtn.disabled = true;
+  vocalRecorderStatusDiv.style.display = 'none';
+  vocalPreviewSection.style.display = 'none';
+  recordedAudioBlob = null;
+  recordedAudioDuration = 0;
+}
+
+function closeVocalModal() {
+  if (vocalModal) vocalModal.classList.add('hidden');
+  // Nettoyer l'enregistrement en cours
+  if (isRecording) stopModalRecording();
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop());
+    mediaStream = null;
+  }
+  if (audioContext && audioContext.state !== 'closed') {
+    audioContext.close().catch(e => console.warn('AudioContext close error:', e));
+    audioContext = null;
+  }
+}
+
+function resetModalRecording() {
+  if (isRecording) stopModalRecording();
+  recordedAudioBlob = null;
+  recordedAudioDuration = 0;
+  vocalStartBtn.disabled = false;
+  vocalStopBtn.disabled = true;
+  vocalRecorderStatusDiv.style.display = 'none';
+  vocalPreviewSection.style.display = 'none';
+  if (vocalPreviewAudio) vocalPreviewAudio.src = '';
+  if (vocalTimerDisplay) vocalTimerDisplay.textContent = '00:00 / 02:00';
+}
+
+async function startModalRecording() {
+  if (isRecording) return;
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    let processorNode = null;
+    switch (selectedFilter) {
+      case 'pitch_up':
+        processorNode = createPitchShifter(audioContext, 1.5);
+        break;
+      case 'pitch_down':
+        processorNode = createPitchShifter(audioContext, 0.7);
+        break;
+      case 'robot':
+        processorNode = createRobotFilter(audioContext);
+        break;
+      case 'helium':
+        processorNode = createPitchShifter(audioContext, 1.8);
+        break;
+      default:
+        processorNode = null;
+    }
+
+    if (processorNode) {
+      source.connect(processorNode);
+      const destination = audioContext.createMediaStreamDestination();
+      processorNode.connect(destination);
+      mediaRecorder = new MediaRecorder(destination.stream);
+    } else {
+      mediaRecorder = new MediaRecorder(mediaStream);
+    }
+
+    audioChunks = [];
+    mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/wav' });
+      recordedAudioBlob = blob;
+      // Calcul de la durée approximative (le blob peut être analysé)
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(blob);
+      audio.onloadedmetadata = () => {
+        recordedAudioDuration = Math.min(Math.round(audio.duration), MAX_DURATION);
+        vocalPreviewAudio.src = audio.src;
+        vocalPreviewSection.style.display = 'block';
+        vocalRecorderStatusDiv.style.display = 'none';
+        vocalStartBtn.disabled = false;
+        vocalStopBtn.disabled = true;
+      };
+      isRecording = false;
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    recordingStartTime = Date.now();
+    vocalStartBtn.disabled = true;
+    vocalStopBtn.disabled = false;
+    vocalRecorderStatusDiv.style.display = 'block';
+    vocalPreviewSection.style.display = 'none';
+
+    // Timer
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+      if (elapsed >= MAX_DURATION) {
+        stopModalRecording();
+        showNotification('warning', 'Limite atteinte', 'Durée maximale de 2 minutes');
+      }
+      const remaining = MAX_DURATION - elapsed;
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      vocalTimerDisplay.textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')} / 02:00`;
+    }, 200);
+  } catch (err) {
+    console.error(err);
+    showNotification('error', 'Erreur', 'Accès au microphone refusé');
+  }
+}
+
+function stopModalRecording() {
+  if (mediaRecorder && isRecording) {
+    mediaRecorder.stop();
+    if (timerInterval) clearInterval(timerInterval);
+  }
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop());
+    mediaStream = null;
+  }
+  if (audioContext) audioContext.close();
+  isRecording = false;
+}
+
+function confirmModalRecording() {
+  if (!recordedAudioBlob) {
+    showNotification('warning', 'Aucun enregistrement', 'Veuillez enregistrer un audio');
+    return;
+  }
+  // Fermer le modal et stocker l'audio pour publication
+  closeVocalModal();
+  // Appeler la fonction de prévisualisation dans le formulaire principal
+  showRecordedAudioInPreview(recordedAudioBlob, recordedAudioDuration);
+}
+
+function showRecordedAudioInPreview(blob, duration) {
+  recordedAudioBlob = blob;
+  recordedAudioDuration = duration;
+  renderAudioPreview();
+  // Mettre à jour le bouton "Enregistrer" pour indiquer qu'un audio est prêt
+  const startRecordBtn = document.getElementById('startVocalRecordBtn');
+  if (startRecordBtn) {
+    startRecordBtn.innerHTML = '<i class="fas fa-check-circle"></i> Audio prêt';
+    startRecordBtn.style.background = '#28a745';
+    startRecordBtn.style.color = 'white';
+    setTimeout(() => {
+      startRecordBtn.innerHTML = '<i class="fas fa-microphone"></i> Enregistrer';
+      startRecordBtn.style.background = '';
+      startRecordBtn.style.color = '';
+    }, 2000);
+  }
 }
 
 // ===== RÉCUPÉRER L'UTILISATEUR COURANT =====
@@ -241,6 +441,8 @@ function renderActusFeed() {
   });
   
   attachPostEvents();
+
+  enhanceAudioPlayers();
 }
 
 // ===== CRÉER UN ÉLÉMENT POST =====
@@ -290,16 +492,29 @@ function createPostElement(post) {
     const audioPath = 'audio/posts/' + post.post_audio_url;
     const audioListens = post.post_audio_listens || 0;
     contentHTML += `
-      <div class="post-audio-container" style="margin: 12px 0; padding: 12px; background: var(--hover-bg); border-radius: 8px;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-          <i class="fas fa-volume-up" style="color: var(--emerald-500); font-size: 18px;"></i>
-          <span style="font-size: 13px; color: var(--text-secondary);">${audioListens} ${audioListens === 1 ? 'écoute' : 'écoutes'}</span>
+      <div class="post-audio-card" data-post-id="${post.id}">
+        <div class="audio-player-wrapper">
+          <button class="audio-play-pause" data-post-id="${post.id}">
+            <i class="fas fa-play"></i>
+          </button>
+          <div class="audio-progress-container">
+            <div class="audio-progress-bar">
+              <div class="audio-progress-fill" style="width: 0%;"></div>
+            </div>
+            <div class="audio-time-info">
+              <span class="audio-current-time">00:00</span>
+              <span class="audio-duration">${formatDuration(post.post_audio_duration)}</span>
+            </div>
+          </div>
+          <div class="audio-stats">
+            <span class="audio-listens-count"><i class="fas fa-headphones"></i> ${audioListens}</span>
+          </div>
         </div>
-        <audio controls style="width: 100%; height: 32px;" data-post-id="${post.id}" class="post-audio-player">
+        <audio class="hidden-audio" data-post-id="${post.id}" preload="metadata" style="display: none;">
           <source src="${audioPath}">
-          Votre navigateur ne supporte pas l'élément audio.
         </audio>
-      </div>`;
+      </div>
+    `;
   }
   
   contentHTML += `</div>`;
@@ -1348,7 +1563,7 @@ async function displayUserProfile(userId) {
 async function handlePublishPost(e) {
   const content = document.getElementById('postContent').value.trim();
   
-  if (!content && postImages.length === 0 && !postAudio) {
+  if (!content && postImages.length === 0 && !recordedAudioBlob) {
     showNotification('warning', 'Champs vides', 'Écrivez du texte, ajoutez une image ou un audio');
     return;
   }
@@ -1358,13 +1573,11 @@ async function handlePublishPost(e) {
   btn.textContent = 'Publication en cours...';
   
   // Collecteur les fichiers images
-  const imageFiles = postImages
-    .filter(img => img.file)
-    .map(img => img.file);
+  const imageFiles = postImages.map(img => img.file);
   
   // Récupérer le fichier audio
-  const audioFile = postAudio ? postAudio.file : null;
-  const audioDuration = postAudio ? postAudio.duration : 0;
+  const audioFile = recordedAudioBlob ? new File([recordedAudioBlob], `recording_${Date.now()}.wav`, { type: 'audio/wav' }) : null;
+  const audioDuration = recordedAudioDuration;
   
   const result = await ActusAPI.createPost(content, 'public', imageFiles, audioFile, audioDuration);
   
@@ -1377,8 +1590,10 @@ async function handlePublishPost(e) {
     postImages = [];
     postAudio = null;
     postAudioDuration = 0;
-    renderImagePreview();
+    recordedAudioBlob = null;
+    recordedAudioDuration = 0;
     renderAudioPreview();
+    renderImagePreview();
     
     
     // SIMPLE: Recharger le feed complètement pour éviter les duplicatas
@@ -1442,42 +1657,158 @@ function renderImagePreview() {
   });
 }
 
-// ===== GESTION AUDIO =====
-function handleAudioSelect(e) {
-  const file = e.target.files[0];
-  
-  if (file) {
-    // Créer une URL pour l'aperçu
-    const audioUrl = URL.createObjectURL(file);
-    
-    // Charger le fichier audio pour obtenir la durée
-    const audio = new Audio(audioUrl);
-    audio.onloadedmetadata = () => {
-      postAudioDuration = Math.round(audio.duration);
-      postAudio = {
-        url: audioUrl,
-        file: file,
-        duration: postAudioDuration
-      };
-      renderAudioPreview();
-    };
+// ===== AFFICHER APERÇU AUDIO =====
+async function toggleVocalRecording() {
+  if (isRecording) {
+    await stopRecording();
+  } else {
+    await startRecording();
   }
-  
-  e.target.value = '';
 }
 
-// ===== AFFICHER APERÇU AUDIO =====
-function renderAudioPreview() {
-  const preview = document.getElementById('postAudioPreview');
-  const audioElement = document.getElementById('previewAudio');
-  
-  if (!postAudio) {
-    preview.style.display = 'none';
-    return;
+async function startRecording() {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    // Créer un contexte audio pour appliquer les filtres
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    
+    let processorNode = null;
+    switch (selectedFilter) {
+      case 'pitch_up':
+        processorNode = await createPitchShifter(audioContext, 1.5); // aigu
+        break;
+      case 'pitch_down':
+        processorNode = await createPitchShifter(audioContext, 0.7); // grave
+        break;
+      case 'robot':
+        processorNode = await createRobotFilter(audioContext);
+        break;
+      case 'helium':
+        processorNode = await createPitchShifter(audioContext, 1.8);
+        break;
+      default:
+        processorNode = null;
+    }
+    
+    // Connecter les nœuds
+    if (processorNode) {
+      source.connect(processorNode);
+      // (plus de connexion directe aux haut-parleurs)
+      const destination = audioContext.createMediaStreamDestination();
+      processorNode.connect(destination);
+      const processedStream = destination.stream;
+      mediaRecorder = new MediaRecorder(processedStream);
+    } else {
+      mediaRecorder = new MediaRecorder(mediaStream);
+    }
+    
+    audioChunks = [];
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.push(event.data);
+    };
+    
+    mediaRecorder.onstop = () => {
+      recordedAudioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+      recordedAudioDuration = 0;
+      // Estimer la durée (approximative)
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(recordedAudioBlob);
+      audio.onloadedmetadata = () => {
+        recordedAudioDuration = Math.round(audio.duration);
+        renderAudioPreview();
+      };
+      isRecording = false;
+      document.getElementById('startVocalRecordBtn').innerHTML = '<i class="fas fa-microphone"></i> Enregistrer';
+      document.getElementById('startVocalRecordBtn').classList.remove('recording');
+      document.getElementById('vocalFilterSelect').style.display = 'none';
+    };
+    
+    mediaRecorder.start();
+    isRecording = true;
+    document.getElementById('startVocalRecordBtn').innerHTML = '<i class="fas fa-stop-circle"></i> Arrêter';
+    document.getElementById('startVocalRecordBtn').classList.add('recording');
+    document.getElementById('vocalFilterSelect').style.display = 'inline-block';
+    
+  } catch (err) {
+    console.error('Erreur microphone:', err);
+    showNotification('error', 'Erreur', 'Accès au microphone refusé');
   }
-  
-  preview.style.display = 'block';
-  audioElement.src = postAudio.url;
+}
+
+async function stopRecording() {
+  if (mediaRecorder && isRecording) {
+    mediaRecorder.stop();
+    // Arrêter les flux
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+    }
+    if (audioContext) {
+      await audioContext.close();
+    }
+  }
+}
+
+function clearRecordedAudio() {
+  recordedAudioBlob = null;
+  recordedAudioDuration = 0;
+  const previewDiv = document.getElementById('postAudioPreview');
+  if (previewDiv) previewDiv.style.display = 'none';
+  const audioElem = document.getElementById('previewAudio');
+  if (audioElem) audioElem.src = '';
+  document.getElementById('startVocalRecordBtn').innerHTML = '<i class="fas fa-microphone"></i> Enregistrer';
+  document.getElementById('vocalFilterSelect').style.display = 'none';
+}
+
+function renderAudioPreview() {
+  const previewDiv = document.getElementById('postAudioPreview');
+  const audioElem = document.getElementById('previewAudio');
+  if (recordedAudioBlob) {
+    const url = URL.createObjectURL(recordedAudioBlob);
+    audioElem.src = url;
+    previewDiv.style.display = 'block';
+  } else {
+    previewDiv.style.display = 'none';
+  }
+}
+
+function createPitchShifter(context, pitchFactor) {
+  // Créer un nœud ScriptProcessor (obsolète mais facile)
+  const bufferSize = 4096;
+  const processor = context.createScriptProcessor(bufferSize, 1, 1);
+  let phase = 0;
+  processor.onaudioprocess = (event) => {
+    const input = event.inputBuffer.getChannelData(0);
+    const output = event.outputBuffer.getChannelData(0);
+    for (let i = 0; i < input.length; i++) {
+      // Pitch shifting simple par ré-échantillonnage linéaire
+      // (non réaliste mais illustratif)
+      let index = Math.floor(phase);
+      if (index < input.length) {
+        output[i] = input[index];
+      }
+      phase += pitchFactor;
+      if (phase >= input.length) phase -= input.length;
+    }
+  };
+  return processor;
+}
+
+function createRobotFilter(context) {
+  const processor = context.createScriptProcessor(4096, 1, 1);
+  let lastValue = 0;
+  processor.onaudioprocess = (event) => {
+    const input = event.inputBuffer.getChannelData(0);
+    const output = event.outputBuffer.getChannelData(0);
+    for (let i = 0; i < input.length; i++) {
+      // Effet robot : ajout de bruit et quantification
+      const quantized = Math.round(input[i] * 10) / 10;
+      const noise = (Math.random() - 0.5) * 0.2;
+      output[i] = quantized + noise;
+    }
+  };
+  return processor;
 }
 
 // ===== VIEWER IMAGES =====
@@ -1657,6 +1988,81 @@ function attachPollEvents(postElement) {
     option.addEventListener('click', () => {
       const optionId = parseInt(option.dataset.optionId);
       handlePollVote(postElement, optionId, pollId);
+    });
+  });
+}
+
+// ===== AMÉLIORATION DES LECTEURS AUDIO (FEED) =====
+function enhanceAudioPlayers() {
+  document.querySelectorAll('.post-audio-card').forEach(container => {
+    if (container.dataset.enhanced) return;
+    container.dataset.enhanced = 'true';
+
+    const audio = container.querySelector('.hidden-audio');
+    if (!audio) return;
+
+    const playBtn = container.querySelector('.audio-play-pause');
+    const progressBar = container.querySelector('.audio-progress-bar');
+    const progressFill = container.querySelector('.audio-progress-fill');
+    const currentTimeSpan = container.querySelector('.audio-current-time');
+    const durationSpan = container.querySelector('.audio-duration');
+    const listensSpan = container.querySelector('.audio-listens-count');
+    const postId = parseInt(container.dataset.postId);
+    let hasListened = false;
+
+    // Mise à jour de la durée une fois chargée
+    audio.addEventListener('loadedmetadata', () => {
+      const duration = audio.duration;
+      if (durationSpan) durationSpan.textContent = formatDuration(Math.floor(duration));
+    });
+
+    // Play / Pause
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (audio.paused) {
+        // Arrêter tous les autres audios
+        document.querySelectorAll('.post-audio-card .hidden-audio').forEach(a => {
+          if (a !== audio) a.pause();
+        });
+        audio.play();
+        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        // Incrémenter les écoutes à la première lecture
+        if (!hasListened && !audio.dataset.listened) {
+          audio.dataset.listened = 'true';
+          hasListened = true;
+          ActusAPI.incrementAudioListens(postId).then(() => {
+            // Mettre à jour l'affichage du compteur
+            const currentListens = parseInt(listensSpan.innerText.match(/\d+/) || 0);
+            listensSpan.innerHTML = `<i class="fas fa-headphones"></i> ${currentListens + 1}`;
+          });
+        }
+      } else {
+        audio.pause();
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+      }
+    });
+
+    // Mise à jour de la barre de progression et du temps
+    audio.addEventListener('timeupdate', () => {
+      const percent = (audio.currentTime / audio.duration) * 100;
+      progressFill.style.width = percent + '%';
+      currentTimeSpan.textContent = formatDuration(Math.floor(audio.currentTime));
+    });
+
+    // Quand l'audio se termine
+    audio.addEventListener('ended', () => {
+      playBtn.innerHTML = '<i class="fas fa-play"></i>';
+      progressFill.style.width = '0%';
+      currentTimeSpan.textContent = '00:00';
+    });
+
+    // Clic sur la barre de progression pour chercher
+    progressBar.addEventListener('click', (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      if (audio.duration) {
+        audio.currentTime = percent * audio.duration;
+      }
     });
   });
 }

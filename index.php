@@ -267,7 +267,7 @@ if (isset($_SESSION['user_id'])) {
       <div class="profile-cover-wrapper">
         <div class="profile-cover">
           <img src="https://picsum.photos/id/104/1200/400" alt="cover" class="cover-img" loading="lazy">
-          <!-- <button class="change-cover-btn"><i class="fas fa-camera"></i></button> -->
+          <button class="change-cover-btn"><i class="fas fa-camera"></i></button>
         </div>
       </div>
       
@@ -510,8 +510,16 @@ if (isset($_SESSION['user_id'])) {
         <div class="create-post-actions">
           <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
           <input type="file" id="postImageInput" accept="image/*" multiple style="display: none;">
-          <button id="recordAudioBtn" class="action-btn"><i class="fas fa-microphone"></i> Audio</button>
-          <input type="file" id="postAudioInput" accept="audio/*" style="display: none;">
+          
+          <button id="startVocalRecordBtn" class="action-btn"><i class="fas fa-microphone"></i> Vocal</button>
+          <select id="vocalFilterSelect" class="action-btn" style="display: none; width: auto;">
+            <option value="none">Sans filtre</option>
+            <option value="pitch_up">Voix aiguë</option>
+            <option value="pitch_down">Voix grave</option>
+            <option value="robot">Robot</option>
+            <option value="helium">Hélium</option>
+          </select>
+
           <button id="createPollBtn" class="action-btn"><i class="fas fa-poll"></i> Face-Off</button>
           <button id="publishPostBtn" class="btn-primary">Publier</button>
         </div>
@@ -520,6 +528,52 @@ if (isset($_SESSION['user_id'])) {
       <!-- Flux des publications -->
       <div id="feedContainer" class="feed-container">
         <!-- Les posts seront injectés ici dynamiquement -->
+      </div>
+    </div>
+
+    <!-- Modale Enregistrement Vocal pour publication -->
+    <div id="vocalPostModal" class="vocal-post-modal hidden">
+      <div class="vocal-post-card">
+        <button class="vocal-post-close">&times;</button>
+        <h2>Enregistrement vocal</h2>
+        <p class="vocal-post-desc">Maximum 2 minutes - Vous pouvez appliquer un filtre vocal</p>
+
+        <!-- Filtre vocal -->
+        <div class="vocal-filter-group">
+          <label><i class="fas fa-magic"></i> Filtre :</label>
+          <select id="vocalModalFilterSelect">
+            <option value="none">Sans filtre</option>
+            <option value="pitch_up">Voix aiguë</option>
+            <option value="pitch_down">Voix grave</option>
+            <option value="robot">Robot</option>
+            <option value="helium">Hélium</option>
+          </select>
+        </div>
+
+        <!-- Statut d'enregistrement -->
+        <div class="vocal-recorder-status" id="vocalRecorderStatus" style="display: none;">
+          <div class="recording-indicator">
+            <span class="red-dot"></span> ENREGISTREMENT EN COURS
+          </div>
+          <div class="recording-timer" id="vocalTimer">00:00 / 02:00</div>
+        </div>
+
+        <!-- Boutons de contrôle -->
+        <div class="vocal-controls">
+          <button id="vocalStartBtn" class="btn-primary"><i class="fas fa-microphone"></i> Démarrer</button>
+          <button id="vocalStopBtn" class="btn-danger" disabled><i class="fas fa-stop-circle"></i> Arrêter</button>
+          <button id="vocalCancelBtn" class="btn-secondary"><i class="fas fa-times"></i> Annuler</button>
+        </div>
+
+        <!-- Zone d'aperçu après enregistrement -->
+        <div id="vocalPreviewSection" style="display: none;">
+          <p><strong>Aperçu :</strong></p>
+          <audio id="vocalPreviewAudio" controls style="width: 100%;"></audio>
+          <div class="vocal-preview-actions">
+            <button id="vocalReRecordBtn" class="btn-secondary"><i class="fas fa-redo"></i> Réenregistrer</button>
+            <button id="vocalConfirmBtn" class="btn-primary"><i class="fas fa-check"></i> Utiliser cet audio</button>
+          </div>
+        </div>
       </div>
     </div>
 

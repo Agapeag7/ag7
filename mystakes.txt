@@ -6,12 +6,8 @@
 ✓ Ajout de la possibilité de liker de commentaire et afficher les données réel de nombre de like de commentaire sur Frontend
 
 * A Realiser :
-- Quand un utilisateur ne suit aucun autre compte et qu'il n'a aucune publication , sur son fil d'actualités(feed) aulieu d'afficher ce message "Aucune publication pour le moment", met un bouton qui propose l'utilisateur de suivre des comptes (quand on clique sur le bouton on le dirige vers la section "Decouvrir')
-* Ajout de possibilité aux utilisateurs de créer des publications vocales :
-- Par défaut, les publications vocales n’autorisent pas l’écoute automatique au scroll. L’utilisateur doit cliquer délibérément sur un l'icone vocale (on prend les design des images mais pour ce cas de publication vocale à la place où il y'aurait la photo c'est là que s'affiche l'icone vocale). Cela évite les nuisances sonores inattendues.
-- Afficher le nombre d’écoutes (compteur) pour que l’utilisateur sache si son message a été entendu. C’est un puissant levier d’engagement.
-
-
+- Limitation de durée de post vocale : vous pouvez ajouter une minuterie pour limiter l’enregistrement à 2 minutes par exemple.
+- 
 
 
 

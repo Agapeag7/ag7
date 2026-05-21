@@ -1626,7 +1626,10 @@ class Router {
                     'commentsList' => $commentsList,
                     'timestamp' => $post['post_created_at'],
                     'visibility' => $post['post_visibility'],
-                    'user_id' => $post['post_user_id']
+                    'user_id' => $post['post_user_id'],
+                    'post_audio_url' => $post['post_audio_url'],
+                    'post_audio_duration' => (int)$post['post_audio_duration'],
+                    'post_audio_listens' => (int)$post['post_audio_listens'],
                 ];
             }
             
@@ -2315,7 +2318,10 @@ class Router {
                     'commentsList' => $commentsList,
                     'timestamp' => $post['post_created_at'],
                     'visibility' => $post['post_visibility'],
-                    'user_id' => $post['post_user_id']
+                    'user_id' => $post['post_user_id'],
+                    'post_audio_url' => $post['post_audio_url'],
+                    'post_audio_duration' => (int)$post['post_audio_duration'],
+                    'post_audio_listens' => (int)$post['post_audio_listens'],
                 ];
             }
             
