@@ -5236,3 +5236,118 @@ body.dark .modal-comment-input::placeholder,
   margin-right: 4px;
   color: var(--emerald-500);
 }
+
+
+/* ===== STYLE SPÉCIAL POUR POST VOCAL (PLAY CENTRAL) ===== */
+.post-audio-card {
+  background: linear-gradient(135deg, var(--hover-bg) 0%, var(--card-bg) 100%);
+  border-radius: 28px;
+  padding: 20px 16px;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+/* Wrapper principal : colonne pour centrer le play */
+.audio-player-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Bouton PLAY / PAUSE géant et au centre */
+.audio-play-pause {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--emerald-500);
+  border: none;
+  color: white;
+  font-size: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  margin-bottom: 8px;
+}
+
+.audio-play-pause:active {
+  transform: scale(0.96);
+}
+
+.audio-play-pause:hover {
+  background: var(--emerald-600);
+  transform: scale(1.02);
+}
+
+/* Conteneur progression + temps (sous le bouton) */
+.audio-progress-container {
+  width: 100%;
+  padding: 0 8px;
+}
+
+/* Barre de progression */
+.audio-progress-bar {
+  background: var(--border-light);
+  height: 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.audio-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--emerald-500);
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+/* Infos temps + compteur écoutes */
+.audio-time-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.audio-stats {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--hover-bg);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 40px;
+  margin-top: 8px;
+}
+
+.audio-stats i {
+  margin-right: 6px;
+  color: var(--emerald-500);
+}
+
+/* Ajustement pour mobile (max-width 480px) */
+@media (max-width: 480px) {
+  .audio-play-pause {
+    width: 70px;
+    height: 70px;
+    font-size: 32px;
+  }
+  .audio-progress-container {
+    padding: 0;
+  }
+  .audio-time-info {
+    font-size: 12px;
+  }
+  .audio-stats {
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+}
