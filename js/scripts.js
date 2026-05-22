@@ -1818,12 +1818,14 @@ function openPostDetailModal(post) {
   const modal = document.getElementById('postDetailModal');
   if (!modal) return;
 
+  // Remplir les infos de base
   document.getElementById('postDetailAuthor').textContent = post.author || 'Utilisateur';
   document.getElementById('postDetailTime').textContent = formatTime(post.timestamp);
   document.getElementById('postDetailText').textContent = post.content || '';
   document.getElementById('postDetailLikes').textContent = post.likes || 0;
   document.getElementById('postDetailComments').textContent = post.comments || 0;
 
+  // Avatar
   const avatar = document.getElementById('postDetailAvatar');
   if (post.avatar) {
     avatar.style.backgroundImage = `url('${post.avatar}')`;
@@ -1835,14 +1837,89 @@ function openPostDetailModal(post) {
     avatar.textContent = (post.author || 'U').substring(0, 2).toUpperCase();
   }
 
+  // Image (première image seulement)
   const imgEl = document.getElementById('postDetailImage');
   if (post.images && post.images.length > 0) {
-    imgEl.src = post.images[0]; // première image
+    imgEl.src = post.images[0];
     imgEl.style.display = 'block';
   } else {
     imgEl.style.display = 'none';
   }
 
+  // Supprimer les anciennes sections audio ou sondage pour éviter les doublons
+  const existingAudioDiv = document.querySelector('#postDetailAudioSection');
+  if (existingAudioDiv) existingAudioDiv.remove();
+  const existingPollDiv = document.querySelector('#postDetailPollSection');
+  if (existingPollDiv) existingPollDiv.remove();
+
+  // ===== SECTION AUDIO =====
+  if (post.post_audio_url) {
+    const audioPath = 'audio/posts/' + post.post_audio_url;
+    const audioListens = post.post_audio_listens || 0;
+    const audioDuration = formatDuration(post.post_audio_duration);
+
+    const audioSection = document.createElement('div');
+    audioSection.id = 'postDetailAudioSection';
+    audioSection.className = 'post-audio-card';
+    audioSection.setAttribute('data-post-id', post.id);
+    audioSection.innerHTML = `
+      <div class="audio-player-wrapper">
+        <button class="audio-play-pause" data-post-id="${post.id}">
+          <i class="fas fa-play"></i>
+        </button>
+        <div class="audio-progress-container">
+          <div class="audio-progress-bar">
+            <div class="audio-progress-fill" style="width: 0%;"></div>
+          </div>
+          <div class="audio-time-info">
+            <span class="audio-current-time">00:00</span>
+            <span class="audio-duration">${audioDuration}</span>
+          </div>
+        </div>
+        <div class="audio-stats">
+          <span class="audio-listens-count"><i class="fas fa-headphones"></i> ${audioListens}</span>
+        </div>
+      </div>
+      <audio class="hidden-audio" data-post-id="${post.id}" preload="metadata" style="display: none;">
+        <source src="${audioPath}">
+      </audio>
+    `;
+
+    // Insérer la section audio après le texte (ou avant les stats)
+    const contentDiv = modal.querySelector('.post-detail-content');
+    const statsDiv = contentDiv.querySelector('.post-detail-stats');
+    contentDiv.insertBefore(audioSection, statsDiv);
+
+    // Initialiser le lecteur audio (même logique que dans le feed)
+    setTimeout(() => {
+      initDetailAudioPlayer(post.id);
+    }, 50);
+  }
+
+  // ===== SECTION SONDAGE =====
+  if (post.has_poll) {
+    // Charger les données du sondage depuis l'API
+    fetch(`?action=getPollByPost&post_id=${post.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.poll) {
+          const pollSection = document.createElement('div');
+          pollSection.id = 'postDetailPollSection';
+          pollSection.className = 'post-poll-detail';
+          pollSection.innerHTML = renderPollHTML(data.poll);
+
+          const contentDiv = modal.querySelector('.post-detail-content');
+          const statsDiv = contentDiv.querySelector('.post-detail-stats');
+          contentDiv.insertBefore(pollSection, statsDiv);
+
+          // Attacher les événements de vote (identique au feed)
+          attachPollEventsToDetail(pollSection, post.id);
+        }
+      })
+      .catch(err => console.error('Erreur chargement sondage:', err));
+  }
+
+  // Bouton suppression (déjà présent)
   const deleteBtn = document.getElementById('postDetailDeleteBtn');
   if (deleteBtn) {
     if (currentUserId && parseInt(currentUserId) === parseInt(post.user_id)) {
@@ -1870,6 +1947,102 @@ function openPostDetailModal(post) {
   }
 
   modal.classList.remove('hidden');
+}
+
+// Fonction auxiliaire pour initialiser le lecteur audio dans le modal
+function initDetailAudioPlayer(postId) {
+  const container = document.querySelector('#postDetailAudioSection');
+  if (!container) return;
+  const audio = container.querySelector('.hidden-audio');
+  const playBtn = container.querySelector('.audio-play-pause');
+  const progressBar = container.querySelector('.audio-progress-bar');
+  const progressFill = container.querySelector('.audio-progress-fill');
+  const currentTimeSpan = container.querySelector('.audio-current-time');
+  const listensSpan = container.querySelector('.audio-listens-count');
+  let hasListened = false;
+
+  audio.addEventListener('loadedmetadata', () => {
+    const durationSpan = container.querySelector('.audio-duration');
+    if (durationSpan) durationSpan.textContent = formatDuration(Math.floor(audio.duration));
+  });
+
+  playBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play();
+      playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+      if (!hasListened && !audio.dataset.listened) {
+        audio.dataset.listened = 'true';
+        hasListened = true;
+        ActusAPI.incrementAudioListens(postId).then(() => {
+          const currentListens = parseInt(listensSpan.innerText.match(/\d+/) || 0);
+          listensSpan.innerHTML = `<i class="fas fa-headphones"></i> ${currentListens + 1}`;
+        });
+      }
+    } else {
+      audio.pause();
+      playBtn.innerHTML = '<i class="fas fa-play"></i>';
+    }
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    const percent = (audio.currentTime / audio.duration) * 100;
+    progressFill.style.width = percent + '%';
+    currentTimeSpan.textContent = formatDuration(Math.floor(audio.currentTime));
+  });
+
+  audio.addEventListener('ended', () => {
+    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+    progressFill.style.width = '0%';
+    currentTimeSpan.textContent = '00:00';
+  });
+
+  progressBar.addEventListener('click', (e) => {
+    const rect = progressBar.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    if (audio.duration) {
+      audio.currentTime = percent * audio.duration;
+    }
+  });
+}
+
+// Fonction auxiliaire pour attacher les événements de vote dans le modal
+function attachPollEventsToDetail(pollContainer, postId) {
+  const pollDiv = pollContainer.querySelector('.post-poll');
+  if (!pollDiv) return;
+  const pollId = pollDiv.dataset.pollId;
+  const options = pollContainer.querySelectorAll('.poll-option');
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      const optionId = parseInt(option.dataset.optionId);
+      handlePollVoteDetail(pollContainer, optionId, pollId, postId);
+    });
+  });
+}
+
+async function handlePollVoteDetail(pollContainer, optionId, pollId, postId) {
+  if (!currentUserId) {
+    showNotification('error', 'Erreur', 'Veuillez vous connecter pour voter');
+    return;
+  }
+  try {
+    const response = await fetch(`?action=votePoll`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ poll_id: pollId, option_id: optionId })
+    });
+    const data = await response.json();
+    if (data.success && data.poll) {
+      const newPollHTML = renderPollHTML(data.poll);
+      pollContainer.innerHTML = newPollHTML;
+      attachPollEventsToDetail(pollContainer, postId);
+      showNotification('success', 'Succès', 'Votre vote a été enregistré');
+    } else {
+      showNotification('error', 'Erreur', data.message || 'Erreur au vote');
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification('error', 'Erreur', 'Une erreur s\'est produite');
+  }
 }
 
 // Fermeture du modal

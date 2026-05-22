@@ -4948,6 +4948,13 @@ body.dark .modal-comment-input::placeholder,
   box-sizing: border-box;
 }
 
+.post-poll-detail {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--hover-bg);
+  border-radius: 16px;
+}
+
 .vocal-post-card {
   background: var(--card-bg);
   border-radius: 32px;

@@ -1,199 +1,256 @@
-## ✅ Problème : sur le profil, tous les posts ressemblent à des images
+## ✅ Amélioration de la modale `post-detail-modal` pour afficher audio et sondage
 
-Actuellement, la grille du profil (`#profilePostsGrid`) affiche chaque publication avec une image (ou un placeholder) sans distinguer les types : texte seul, audio (Papot), sondage (Face-Off), image.  
-Il faut adapter l’affichage pour que chaque type soit reconnaissable.
-
----
-
-## 🔧 Modifications à apporter
-
-### 1. Backend – `ag.class.php`
-
-Dans `actionGetUserPosts()`, ajoutez une colonne `has_poll` pour savoir si le post possède un sondage.
-
-**Localisation :** fonction `actionGetUserPosts()` (vers la fin du fichier).
-
-```php
-private function actionGetUserPosts() {
-    $user_id = $_GET['user_id'] ?? (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null);
-    $limit = (int)($_GET['limit'] ?? 50);
-    $offset = (int)($_GET['offset'] ?? 0);
-    
-    if (!$user_id) {
-        Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
-    }
-    
-    try {
-        // Modifier la requête pour inclure has_poll
-        $sql = "SELECT p.*, 
-                EXISTS (SELECT 1 FROM polls WHERE poll_post_id = p.post_id) as has_poll,
-                u.user_name, u.user_username, u.user_photo_url 
-                FROM publications p 
-                JOIN utilisateurs u ON p.post_user_id = u.user_id 
-                WHERE p.post_user_id = ? AND p.post_visibility = 'public'
-                ORDER BY p.post_created_at DESC LIMIT ? OFFSET ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$user_id, (int)$limit, (int)$offset]);
-        $publications = $stmt->fetchAll();
-        
-        // ... le reste de la fonction (enrichissement)
-        foreach ($publications as $post) {
-            // ... récupérer images, likes, commentaires
-            $enriched[] = [
-                // ... champs existants
-                'post_audio_url' => $post['post_audio_url'],
-                'post_audio_duration' => (int)$post['post_audio_duration'],
-                'post_audio_listens' => (int)$post['post_audio_listens'],
-                'has_poll' => (bool)$post['has_poll']   // ← ajouter cette ligne
-            ];
-        }
-        // ...
-    }
-}
-```
-
----
-
-### 2. Frontend – `scripts.js`
-
-#### a) Dans `loadUserPosts()`, stockez les informations supplémentaires
+Dans `scripts.js`, remplacez la fonction `openPostDetailModal` par le code ci-dessous. Il gère désormais l’affichage des **publications audio** (lecteur moderne) et des **sondages** (options + résultats).
 
 ```javascript
-async function loadUserPosts(userId) {
-  try {
-    const response = await fetch(`?action=getUserPosts&user_id=${userId}&limit=50`);
-    const result = await response.json();
-    if (result.success) {
-      currentUserProfile.posts = result.posts.map(post => ({
-        id: post.id,
-        author: post.author,
-        username: post.username,
-        avatar: post.avatar,
-        content: post.content,
-        image: post.images && post.images.length > 0 ? post.images[0] : null,
-        images: post.images || [],
-        likes: post.likes,
-        comments: post.comments,
-        userHasLiked: post.userHasLiked,
-        timestamp: post.timestamp,
-        user_id: post.user_id,
-        visibility: post.visibility,
-        // Ajout des champs pour audio et sondage
-        post_audio_url: post.post_audio_url,
-        post_audio_duration: post.post_audio_duration,
-        post_audio_listens: post.post_audio_listens,
-        has_poll: post.has_poll
-      }));
-    }
-  } catch(e) { ... }
-}
-```
+function openPostDetailModal(post) {
+  const modal = document.getElementById('postDetailModal');
+  if (!modal) return;
 
-#### b) Modifier `updateProfileUI()` pour afficher chaque type différemment
+  // Remplir les infos de base
+  document.getElementById('postDetailAuthor').textContent = post.author || 'Utilisateur';
+  document.getElementById('postDetailTime').textContent = formatTime(post.timestamp);
+  document.getElementById('postDetailText').textContent = post.content || '';
+  document.getElementById('postDetailLikes').textContent = post.likes || 0;
+  document.getElementById('postDetailComments').textContent = post.comments || 0;
 
-Remplacez la partie qui construit la grille des posts (`profilePostsGrid`) par le code suivant :
-
-```javascript
-// Grille des posts - affichage selon le type
-const grid = document.getElementById("profilePostsGrid");
-if (grid) {
-  if (!currentUserProfile.posts || currentUserProfile.posts.length === 0) {
-    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 20px;">Aucune publication pour le moment</div>';
+  // Avatar
+  const avatar = document.getElementById('postDetailAvatar');
+  if (post.avatar) {
+    avatar.style.backgroundImage = `url('${post.avatar}')`;
+    avatar.style.backgroundSize = 'cover';
+    avatar.style.backgroundPosition = 'center';
+    avatar.textContent = '';
   } else {
-    grid.innerHTML = '';
-    currentUserProfile.posts.forEach(post => {
-      const postCard = document.createElement('div');
-      postCard.className = 'grid-post-card';
-      postCard.style.cursor = 'pointer';
-      
-      // Déterminer le type de contenu
-      let contentHtml = '';
-      let badgeHtml = '';
-      
-      if (post.post_audio_url) {
-        // Publication audio
-        contentHtml = `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; background: var(--hover-bg);">
-            <i class="fas fa-microphone-alt" style="font-size: 48px; color: var(--emerald-500); margin-bottom: 12px;"></i>
-            <span style="font-size: 12px; color: var(--text-secondary);">${post.post_audio_listens || 0} écoute(s)</span>
+    avatar.style.backgroundImage = 'none';
+    avatar.textContent = (post.author || 'U').substring(0, 2).toUpperCase();
+  }
+
+  // Image (première image seulement)
+  const imgEl = document.getElementById('postDetailImage');
+  if (post.images && post.images.length > 0) {
+    imgEl.src = post.images[0];
+    imgEl.style.display = 'block';
+  } else {
+    imgEl.style.display = 'none';
+  }
+
+  // Supprimer les anciennes sections audio ou sondage pour éviter les doublons
+  const existingAudioDiv = document.querySelector('#postDetailAudioSection');
+  if (existingAudioDiv) existingAudioDiv.remove();
+  const existingPollDiv = document.querySelector('#postDetailPollSection');
+  if (existingPollDiv) existingPollDiv.remove();
+
+  // ===== SECTION AUDIO =====
+  if (post.post_audio_url) {
+    const audioPath = 'audio/posts/' + post.post_audio_url;
+    const audioListens = post.post_audio_listens || 0;
+    const audioDuration = formatDuration(post.post_audio_duration);
+
+    const audioSection = document.createElement('div');
+    audioSection.id = 'postDetailAudioSection';
+    audioSection.className = 'post-audio-card';
+    audioSection.setAttribute('data-post-id', post.id);
+    audioSection.innerHTML = `
+      <div class="audio-player-wrapper">
+        <button class="audio-play-pause" data-post-id="${post.id}">
+          <i class="fas fa-play"></i>
+        </button>
+        <div class="audio-progress-container">
+          <div class="audio-progress-bar">
+            <div class="audio-progress-fill" style="width: 0%;"></div>
           </div>
-        `;
-        badgeHtml = `<span class="post-type-badge audio"><i class="fas fa-headphones"></i> Papot</span>`;
-      } 
-      else if (post.has_poll) {
-        // Sondage
-        contentHtml = `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; background: var(--hover-bg);">
-            <i class="fas fa-chart-simple" style="font-size: 48px; color: var(--emerald-500); margin-bottom: 12px;"></i>
-            <span style="font-size: 12px; color: var(--text-secondary);">Face-Off</span>
-          </div>
-        `;
-        badgeHtml = `<span class="post-type-badge poll"><i class="fas fa-poll"></i> Face-Off</span>`;
-      }
-      else if (post.images && post.images.length > 0) {
-        // Image(s)
-        contentHtml = `<img src="${post.images[0]}" class="grid-post-image" alt="post" loading="lazy">`;
-        badgeHtml = `<span class="post-type-badge image"><i class="fas fa-image"></i> Photo</span>`;
-      }
-      else {
-        // Texte seul
-        const previewText = post.content.length > 80 ? post.content.substring(0, 80) + '...' : post.content;
-        contentHtml = `
-          <div style="padding: 16px; height: 200px; display: flex; align-items: center; justify-content: center; background: var(--hover-bg);">
-            <p style="margin: 0; font-size: 13px; color: var(--text-primary); text-align: center; line-height: 1.4;">${escapeHtml(previewText)}</p>
-          </div>
-        `;
-        badgeHtml = `<span class="post-type-badge text"><i class="fas fa-file-alt"></i> Texte</span>`;
-      }
-      
-      postCard.innerHTML = `
-        <div style="position: relative;">
-          ${contentHtml}
-          <div style="position: absolute; top: 8px; left: 8px;">${badgeHtml}</div>
-        </div>
-        <div class="grid-post-info">
-          <div class="grid-post-stats">
-            <span><i class="far fa-heart"></i> ${post.likes}</span>
-            <span><i class="far fa-comment"></i> ${post.comments}</span>
+          <div class="audio-time-info">
+            <span class="audio-current-time">00:00</span>
+            <span class="audio-duration">${audioDuration}</span>
           </div>
         </div>
-      `;
-      
-      postCard.addEventListener('click', () => openPostDetailModal(post));
-      grid.appendChild(postCard);
+        <div class="audio-stats">
+          <span class="audio-listens-count"><i class="fas fa-headphones"></i> ${audioListens}</span>
+        </div>
+      </div>
+      <audio class="hidden-audio" data-post-id="${post.id}" preload="metadata" style="display: none;">
+        <source src="${audioPath}">
+      </audio>
+    `;
+
+    // Insérer la section audio après le texte (ou avant les stats)
+    const contentDiv = modal.querySelector('.post-detail-content');
+    const statsDiv = contentDiv.querySelector('.post-detail-stats');
+    contentDiv.insertBefore(audioSection, statsDiv);
+
+    // Initialiser le lecteur audio (même logique que dans le feed)
+    setTimeout(() => {
+      initDetailAudioPlayer(post.id);
+    }, 50);
+  }
+
+  // ===== SECTION SONDAGE =====
+  if (post.has_poll) {
+    // Charger les données du sondage depuis l'API
+    fetch(`?action=getPollByPost&post_id=${post.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.poll) {
+          const pollSection = document.createElement('div');
+          pollSection.id = 'postDetailPollSection';
+          pollSection.className = 'post-poll-detail';
+          pollSection.innerHTML = renderPollHTML(data.poll);
+
+          const contentDiv = modal.querySelector('.post-detail-content');
+          const statsDiv = contentDiv.querySelector('.post-detail-stats');
+          contentDiv.insertBefore(pollSection, statsDiv);
+
+          // Attacher les événements de vote (identique au feed)
+          attachPollEventsToDetail(pollSection, post.id);
+        }
+      })
+      .catch(err => console.error('Erreur chargement sondage:', err));
+  }
+
+  // Bouton suppression (déjà présent)
+  const deleteBtn = document.getElementById('postDetailDeleteBtn');
+  if (deleteBtn) {
+    if (currentUserId && parseInt(currentUserId) === parseInt(post.user_id)) {
+      deleteBtn.style.display = 'block';
+      deleteBtn.onclick = () => {
+        showConfirmation(
+          'Supprimer cette publication',
+          'Êtes-vous sûr de vouloir supprimer cette publication ? Cette action est irréversible.',
+          () => {
+            ActusAPI.deletePost(post.id).then(res => {
+              if (res.success) {
+                modal.classList.add('hidden');
+                loadCurrentProfile().then(() => updateProfileUI());
+                showNotification('success', 'Supprimé', 'Publication supprimée');
+              } else {
+                showNotification('error', 'Erreur', res.message);
+              }
+            });
+          }
+        );
+      };
+    } else {
+      deleteBtn.style.display = 'none';
+    }
+  }
+
+  modal.classList.remove('hidden');
+}
+
+// Fonction auxiliaire pour initialiser le lecteur audio dans le modal
+function initDetailAudioPlayer(postId) {
+  const container = document.querySelector('#postDetailAudioSection');
+  if (!container) return;
+  const audio = container.querySelector('.hidden-audio');
+  const playBtn = container.querySelector('.audio-play-pause');
+  const progressBar = container.querySelector('.audio-progress-bar');
+  const progressFill = container.querySelector('.audio-progress-fill');
+  const currentTimeSpan = container.querySelector('.audio-current-time');
+  const listensSpan = container.querySelector('.audio-listens-count');
+  let hasListened = false;
+
+  audio.addEventListener('loadedmetadata', () => {
+    const durationSpan = container.querySelector('.audio-duration');
+    if (durationSpan) durationSpan.textContent = formatDuration(Math.floor(audio.duration));
+  });
+
+  playBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play();
+      playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+      if (!hasListened && !audio.dataset.listened) {
+        audio.dataset.listened = 'true';
+        hasListened = true;
+        ActusAPI.incrementAudioListens(postId).then(() => {
+          const currentListens = parseInt(listensSpan.innerText.match(/\d+/) || 0);
+          listensSpan.innerHTML = `<i class="fas fa-headphones"></i> ${currentListens + 1}`;
+        });
+      }
+    } else {
+      audio.pause();
+      playBtn.innerHTML = '<i class="fas fa-play"></i>';
+    }
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    const percent = (audio.currentTime / audio.duration) * 100;
+    progressFill.style.width = percent + '%';
+    currentTimeSpan.textContent = formatDuration(Math.floor(audio.currentTime));
+  });
+
+  audio.addEventListener('ended', () => {
+    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+    progressFill.style.width = '0%';
+    currentTimeSpan.textContent = '00:00';
+  });
+
+  progressBar.addEventListener('click', (e) => {
+    const rect = progressBar.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    if (audio.duration) {
+      audio.currentTime = percent * audio.duration;
+    }
+  });
+}
+
+// Fonction auxiliaire pour attacher les événements de vote dans le modal
+function attachPollEventsToDetail(pollContainer, postId) {
+  const pollDiv = pollContainer.querySelector('.post-poll');
+  if (!pollDiv) return;
+  const pollId = pollDiv.dataset.pollId;
+  const options = pollContainer.querySelectorAll('.poll-option');
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      const optionId = parseInt(option.dataset.optionId);
+      handlePollVoteDetail(pollContainer, optionId, pollId, postId);
     });
+  });
+}
+
+async function handlePollVoteDetail(pollContainer, optionId, pollId, postId) {
+  if (!currentUserId) {
+    showNotification('error', 'Erreur', 'Veuillez vous connecter pour voter');
+    return;
+  }
+  try {
+    const response = await fetch(`?action=votePoll`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ poll_id: pollId, option_id: optionId })
+    });
+    const data = await response.json();
+    if (data.success && data.poll) {
+      const newPollHTML = renderPollHTML(data.poll);
+      pollContainer.innerHTML = newPollHTML;
+      attachPollEventsToDetail(pollContainer, postId);
+      showNotification('success', 'Succès', 'Votre vote a été enregistré');
+    } else {
+      showNotification('error', 'Erreur', data.message || 'Erreur au vote');
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification('error', 'Erreur', 'Une erreur s\'est produite');
   }
 }
 ```
 
-#### c) Ajouter les styles correspondants dans `style.css`
+### 🧩 Ajout du CSS pour le sondage dans le modal (optionnel mais recommandé)
+
+Dans `style.css`, ajoutez :
 
 ```css
-.post-type-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  backdrop-filter: blur(4px);
-  background: rgba(0,0,0,0.6);
-  color: white;
+.post-poll-detail {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--hover-bg);
+  border-radius: 16px;
 }
-.post-type-badge.audio { background: rgba(16,185,129,0.9); }
-.post-type-badge.poll { background: rgba(245,158,11,0.9); }
-.post-type-badge.image { background: rgba(59,130,246,0.9); }
-.post-type-badge.text { background: rgba(100,116,139,0.9); }
 ```
 
----
+### ✅ Résultat
 
-## ✅ Résultat attendu
-
-- **Audio** : icône micro + badge “Papot” + compteur d’écoutes.
-- **Sondage** : icône graphique + badge “Face-Off”.
-- **Image** : miniature de la première image + badge “Photo”.
-- **Texte seul** : aperçu du texte tronqué + badge “Texte”.
-
-Ainsi, sur le profil, chaque type de publication est immédiatement identifiable.
+- La modale affiche maintenant un **lecteur audio moderne** pour les publications “Papot”.
+- Pour les “Face-Off”, elle affiche les **options du sondage** avec les résultats et permet de voter.
+- Les boutons de suppression, les likes et commentaires restent fonctionnels.
+- L’expérience est cohérente avec le feed et la grille du profil.
