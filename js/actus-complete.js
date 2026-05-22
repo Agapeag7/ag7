@@ -322,7 +322,7 @@ function showRecordedAudioInPreview(blob, duration) {
     startRecordBtn.style.background = '#28a745';
     startRecordBtn.style.color = 'white';
     setTimeout(() => {
-      startRecordBtn.innerHTML = '<i class="fas fa-microphone"></i> Vocal';
+      startRecordBtn.innerHTML = '<i class="fas fa-microphone"></i> Papot';
       startRecordBtn.style.background = '';
       startRecordBtn.style.color = '';
     }, 2000);
@@ -1720,7 +1720,7 @@ async function startRecording() {
         renderAudioPreview();
       };
       isRecording = false;
-      document.getElementById('startVocalRecordBtn').innerHTML = '<i class="fas fa-microphone"></i> Vocal';
+      document.getElementById('startVocalRecordBtn').innerHTML = '<i class="fas fa-microphone"></i> Papot';
       document.getElementById('startVocalRecordBtn').classList.remove('recording');
       document.getElementById('vocalFilterSelect').style.display = 'none';
     };
@@ -1757,7 +1757,7 @@ function clearRecordedAudio() {
   if (previewDiv) previewDiv.style.display = 'none';
   const audioElem = document.getElementById('previewAudio');
   if (audioElem) audioElem.src = '';
-  document.getElementById('startVocalRecordBtn').innerHTML = '<i class="fas fa-microphone"></i> Vocal';
+  document.getElementById('startVocalRecordBtn').innerHTML = '<i class="fas fa-microphone"></i> Papot';
   document.getElementById('vocalFilterSelect').style.display = 'none';
 }
 

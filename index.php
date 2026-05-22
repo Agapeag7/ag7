@@ -511,7 +511,7 @@ if (isset($_SESSION['user_id'])) {
           <button id="addImageBtn" class="action-btn"><i class="fas fa-image"></i> Image</button>
           <input type="file" id="postImageInput" accept="image/*" multiple style="display: none;">
           
-          <button id="startVocalRecordBtn" class="action-btn"><i class="fas fa-microphone"></i> Vocal</button>
+          <button id="startVocalRecordBtn" class="action-btn"><i class="fas fa-microphone"></i> Papot</button>
           <select id="vocalFilterSelect" class="action-btn" style="display: none; width: auto;">
             <option value="none">Sans filtre</option>
             <option value="pitch_up">Voix aiguë</option>
@@ -535,7 +535,7 @@ if (isset($_SESSION['user_id'])) {
     <div id="vocalPostModal" class="vocal-post-modal hidden">
       <div class="vocal-post-card">
         <button class="vocal-post-close">&times;</button>
-        <h2>Enregistrement vocal</h2>
+        <h2>Enregistrement Papot</h2>
         <p class="vocal-post-desc">Maximum 2 minutes - Vous pouvez appliquer un filtre vocal</p>
 
         <!-- Filtre vocal -->
