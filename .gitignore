@@ -7,8 +7,8 @@ pub/*
 
 story/*
 
-comments/*
-posts/*
+audio/comments/
+audio/posts/
 
 # Dépendances
 node_modules/
