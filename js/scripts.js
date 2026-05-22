@@ -1800,7 +1800,11 @@ async function loadUserPosts(userId) {
       userHasLiked: post.userHasLiked,
       timestamp: post.timestamp,
       user_id: post.user_id,
-      visibility: post.visibility
+      visibility: post.visibility,
+      post_audio_url: post.post_audio_url,
+      post_audio_duration: post.post_audio_duration,
+      post_audio_listens: post.post_audio_listens,
+      has_poll: post.has_poll
     })) || [];
     
   } catch (e) {
@@ -1925,58 +1929,72 @@ function updateProfileUI() {
     }
   }
 
-  // Grille des posts - Remplir avec les vraies publications
+  // Grille des posts - affichage selon le type
   const grid = document.getElementById("profilePostsGrid");
   if (grid) {
     if (!currentUserProfile.posts || currentUserProfile.posts.length === 0) {
-      grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 20px; font-size: 16px;">Aucune publication pour le moment</div>';
+      grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 20px;">Aucune publication pour le moment</div>';
     } else {
-      grid.innerHTML = ''; // Vider la grille
-      
+      grid.innerHTML = '';
       currentUserProfile.posts.forEach(post => {
-        const postImageUrl = post.image || post.images?.[0] || null;
-        
-        // Créer la structure attendue par le CSS
         const postCard = document.createElement('div');
         postCard.className = 'grid-post-card';
+        postCard.style.cursor = 'pointer';
         
-        if (postImageUrl) {
-          // Image
-          const img = document.createElement('img');
-          img.className = 'grid-post-image';
-          img.src = postImageUrl;
-          img.alt = 'post';
-          img.loading = 'lazy';
-          postCard.appendChild(img);
-        } else {
-          // Placeholder pour post sans image
-          const placeholder = document.createElement('div');
-          placeholder.className = 'grid-post-image';
-          placeholder.style.background = 'var(--hover-bg)';
-          placeholder.style.display = 'flex';
-          placeholder.style.alignItems = 'center';
-          placeholder.style.justifyContent = 'center';
-          placeholder.innerHTML = '<i class="fas fa-image" style="font-size: 40px; color: var(--text-secondary);"></i>';
-          postCard.appendChild(placeholder);
+        // Déterminer le type de contenu
+        let contentHtml = '';
+        let badgeHtml = '';
+        
+        if (post.post_audio_url) {
+          // Publication audio
+          contentHtml = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; background: var(--hover-bg);">
+              <i class="fas fa-microphone-alt" style="font-size: 48px; color: var(--emerald-500); margin-bottom: 12px;"></i>
+              <span style="font-size: 12px; color: var(--text-secondary);">${post.post_audio_listens || 0} écoute(s)</span>
+            </div>
+          `;
+          badgeHtml = `<span class="post-type-badge audio"><i class="fas fa-headphones"></i> Papot</span>`;
+        } 
+        else if (post.has_poll) {
+          // Sondage
+          contentHtml = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; background: var(--hover-bg);">
+              <i class="fas fa-chart-simple" style="font-size: 48px; color: var(--emerald-500); margin-bottom: 12px;"></i>
+              <span style="font-size: 12px; color: var(--text-secondary);">Face-Off</span>
+            </div>
+          `;
+          badgeHtml = `<span class="post-type-badge poll"><i class="fas fa-poll"></i> Face-Off</span>`;
+        }
+        else if (post.images && post.images.length > 0) {
+          // Image(s)
+          contentHtml = `<img src="${post.images[0]}" class="grid-post-image" alt="post" loading="lazy">`;
+          badgeHtml = `<span class="post-type-badge image"><i class="fas fa-image"></i> Photo</span>`;
+        }
+        else {
+          // Texte seul
+          const previewText = post.content.length > 80 ? post.content.substring(0, 80) + '...' : post.content;
+          contentHtml = `
+            <div style="padding: 16px; height: 200px; display: flex; align-items: center; justify-content: center; background: var(--hover-bg);">
+              <p style="margin: 0; font-size: 13px; color: var(--text-primary); text-align: center; line-height: 1.4;">${escapeHtml(previewText)}</p>
+            </div>
+          `;
+          badgeHtml = `<span class="post-type-badge text"><i class="fas fa-file-alt"></i> Texte</span>`;
         }
         
-        // Info section
-        const info = document.createElement('div');
-        info.className = 'grid-post-info';
-        info.innerHTML = `
-          <div class="grid-post-stats">
-            <span><i class="far fa-heart"></i> ${post.likes}</span>
-            <span><i class="far fa-comment"></i> ${post.comments}</span>
+        postCard.innerHTML = `
+          <div style="position: relative;">
+            ${contentHtml}
+            <div style="position: absolute; top: 8px; left: 8px;">${badgeHtml}</div>
+          </div>
+          <div class="grid-post-info">
+            <div class="grid-post-stats">
+              <span><i class="far fa-heart"></i> ${post.likes}</span>
+              <span><i class="far fa-comment"></i> ${post.comments}</span>
+            </div>
           </div>
         `;
-        postCard.appendChild(info);
         
-        // Click handler
-        postCard.style.cursor = 'pointer';
-        postCard.addEventListener('click', () => {
-          openPostDetailModal(post);
-        });
-        
+        postCard.addEventListener('click', () => openPostDetailModal(post));
         grid.appendChild(postCard);
       });
     }

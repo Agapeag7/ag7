@@ -2305,6 +2305,17 @@ class Router {
                     ];
                 }
                 
+                // Vérifier si le post a un sondage
+                $hasPoll = false;
+                try {
+                    $pollStmt = $this->db->prepare('SELECT COUNT(*) as count FROM polls WHERE poll_post_id = ?');
+                    $pollStmt->execute([$post['post_id']]);
+                    $pollResult = $pollStmt->fetch();
+                    $hasPoll = $pollResult['count'] > 0;
+                } catch (Exception $e) {
+                    $hasPoll = false;
+                }
+                
                 $enriched[] = [
                     'id' => $post['post_id'],
                     'author' => $post['user_name'],
@@ -2322,6 +2333,7 @@ class Router {
                     'post_audio_url' => $post['post_audio_url'],
                     'post_audio_duration' => (int)$post['post_audio_duration'],
                     'post_audio_listens' => (int)$post['post_audio_listens'],
+                    'has_poll' => $hasPoll
                 ];
             }
             

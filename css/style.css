@@ -5406,3 +5406,22 @@ body.dark .modal-comment-input::placeholder,
     font-size: 10px;
   }
 }
+
+/* ===== BADGES DE TYPE DE PUBLICATION ===== */
+.post-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.6);
+  color: white;
+}
+.post-type-badge.audio { background: rgba(16,185,129,0.9); }
+.post-type-badge.poll { background: rgba(245,158,11,0.9); }
+.post-type-badge.image { background: rgba(59,130,246,0.9); }
+.post-type-badge.text { background: rgba(100,116,139,0.9); }
+

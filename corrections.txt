@@ -1,0 +1,199 @@
+## ✅ Problème : sur le profil, tous les posts ressemblent à des images
+
+Actuellement, la grille du profil (`#profilePostsGrid`) affiche chaque publication avec une image (ou un placeholder) sans distinguer les types : texte seul, audio (Papot), sondage (Face-Off), image.  
+Il faut adapter l’affichage pour que chaque type soit reconnaissable.
+
+---
+
+## 🔧 Modifications à apporter
+
+### 1. Backend – `ag.class.php`
+
+Dans `actionGetUserPosts()`, ajoutez une colonne `has_poll` pour savoir si le post possède un sondage.
+
+**Localisation :** fonction `actionGetUserPosts()` (vers la fin du fichier).
+
+```php
+private function actionGetUserPosts() {
+    $user_id = $_GET['user_id'] ?? (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null);
+    $limit = (int)($_GET['limit'] ?? 50);
+    $offset = (int)($_GET['offset'] ?? 0);
+    
+    if (!$user_id) {
+        Utils::jsonResponse(['success' => false, 'message' => 'User ID manquant'], 400);
+    }
+    
+    try {
+        // Modifier la requête pour inclure has_poll
+        $sql = "SELECT p.*, 
+                EXISTS (SELECT 1 FROM polls WHERE poll_post_id = p.post_id) as has_poll,
+                u.user_name, u.user_username, u.user_photo_url 
+                FROM publications p 
+                JOIN utilisateurs u ON p.post_user_id = u.user_id 
+                WHERE p.post_user_id = ? AND p.post_visibility = 'public'
+                ORDER BY p.post_created_at DESC LIMIT ? OFFSET ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$user_id, (int)$limit, (int)$offset]);
+        $publications = $stmt->fetchAll();
+        
+        // ... le reste de la fonction (enrichissement)
+        foreach ($publications as $post) {
+            // ... récupérer images, likes, commentaires
+            $enriched[] = [
+                // ... champs existants
+                'post_audio_url' => $post['post_audio_url'],
+                'post_audio_duration' => (int)$post['post_audio_duration'],
+                'post_audio_listens' => (int)$post['post_audio_listens'],
+                'has_poll' => (bool)$post['has_poll']   // ← ajouter cette ligne
+            ];
+        }
+        // ...
+    }
+}
+```
+
+---
+
+### 2. Frontend – `scripts.js`
+
+#### a) Dans `loadUserPosts()`, stockez les informations supplémentaires
+
+```javascript
+async function loadUserPosts(userId) {
+  try {
+    const response = await fetch(`?action=getUserPosts&user_id=${userId}&limit=50`);
+    const result = await response.json();
+    if (result.success) {
+      currentUserProfile.posts = result.posts.map(post => ({
+        id: post.id,
+        author: post.author,
+        username: post.username,
+        avatar: post.avatar,
+        content: post.content,
+        image: post.images && post.images.length > 0 ? post.images[0] : null,
+        images: post.images || [],
+        likes: post.likes,
+        comments: post.comments,
+        userHasLiked: post.userHasLiked,
+        timestamp: post.timestamp,
+        user_id: post.user_id,
+        visibility: post.visibility,
+        // Ajout des champs pour audio et sondage
+        post_audio_url: post.post_audio_url,
+        post_audio_duration: post.post_audio_duration,
+        post_audio_listens: post.post_audio_listens,
+        has_poll: post.has_poll
+      }));
+    }
+  } catch(e) { ... }
+}
+```
+
+#### b) Modifier `updateProfileUI()` pour afficher chaque type différemment
+
+Remplacez la partie qui construit la grille des posts (`profilePostsGrid`) par le code suivant :
+
+```javascript
+// Grille des posts - affichage selon le type
+const grid = document.getElementById("profilePostsGrid");
+if (grid) {
+  if (!currentUserProfile.posts || currentUserProfile.posts.length === 0) {
+    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 20px;">Aucune publication pour le moment</div>';
+  } else {
+    grid.innerHTML = '';
+    currentUserProfile.posts.forEach(post => {
+      const postCard = document.createElement('div');
+      postCard.className = 'grid-post-card';
+      postCard.style.cursor = 'pointer';
+      
+      // Déterminer le type de contenu
+      let contentHtml = '';
+      let badgeHtml = '';
+      
+      if (post.post_audio_url) {
+        // Publication audio
+        contentHtml = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; background: var(--hover-bg);">
+            <i class="fas fa-microphone-alt" style="font-size: 48px; color: var(--emerald-500); margin-bottom: 12px;"></i>
+            <span style="font-size: 12px; color: var(--text-secondary);">${post.post_audio_listens || 0} écoute(s)</span>
+          </div>
+        `;
+        badgeHtml = `<span class="post-type-badge audio"><i class="fas fa-headphones"></i> Papot</span>`;
+      } 
+      else if (post.has_poll) {
+        // Sondage
+        contentHtml = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; background: var(--hover-bg);">
+            <i class="fas fa-chart-simple" style="font-size: 48px; color: var(--emerald-500); margin-bottom: 12px;"></i>
+            <span style="font-size: 12px; color: var(--text-secondary);">Face-Off</span>
+          </div>
+        `;
+        badgeHtml = `<span class="post-type-badge poll"><i class="fas fa-poll"></i> Face-Off</span>`;
+      }
+      else if (post.images && post.images.length > 0) {
+        // Image(s)
+        contentHtml = `<img src="${post.images[0]}" class="grid-post-image" alt="post" loading="lazy">`;
+        badgeHtml = `<span class="post-type-badge image"><i class="fas fa-image"></i> Photo</span>`;
+      }
+      else {
+        // Texte seul
+        const previewText = post.content.length > 80 ? post.content.substring(0, 80) + '...' : post.content;
+        contentHtml = `
+          <div style="padding: 16px; height: 200px; display: flex; align-items: center; justify-content: center; background: var(--hover-bg);">
+            <p style="margin: 0; font-size: 13px; color: var(--text-primary); text-align: center; line-height: 1.4;">${escapeHtml(previewText)}</p>
+          </div>
+        `;
+        badgeHtml = `<span class="post-type-badge text"><i class="fas fa-file-alt"></i> Texte</span>`;
+      }
+      
+      postCard.innerHTML = `
+        <div style="position: relative;">
+          ${contentHtml}
+          <div style="position: absolute; top: 8px; left: 8px;">${badgeHtml}</div>
+        </div>
+        <div class="grid-post-info">
+          <div class="grid-post-stats">
+            <span><i class="far fa-heart"></i> ${post.likes}</span>
+            <span><i class="far fa-comment"></i> ${post.comments}</span>
+          </div>
+        </div>
+      `;
+      
+      postCard.addEventListener('click', () => openPostDetailModal(post));
+      grid.appendChild(postCard);
+    });
+  }
+}
+```
+
+#### c) Ajouter les styles correspondants dans `style.css`
+
+```css
+.post-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.6);
+  color: white;
+}
+.post-type-badge.audio { background: rgba(16,185,129,0.9); }
+.post-type-badge.poll { background: rgba(245,158,11,0.9); }
+.post-type-badge.image { background: rgba(59,130,246,0.9); }
+.post-type-badge.text { background: rgba(100,116,139,0.9); }
+```
+
+---
+
+## ✅ Résultat attendu
+
+- **Audio** : icône micro + badge “Papot” + compteur d’écoutes.
+- **Sondage** : icône graphique + badge “Face-Off”.
+- **Image** : miniature de la première image + badge “Photo”.
+- **Texte seul** : aperçu du texte tronqué + badge “Texte”.
+
+Ainsi, sur le profil, chaque type de publication est immédiatement identifiable.

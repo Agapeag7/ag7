@@ -13,7 +13,7 @@ let actusState = {
   posts: [],
   isLoading: false,
   offset: 0,
-  limit: 50
+  limit: 5
 };
 
 // postImages et currentUserId sont déclarés globalement
@@ -379,6 +379,8 @@ async function loadActusFeed() {
   if (actusState.isLoading) return;
   
   actusState.isLoading = true;
+  actusState.offset = 0;
+  actusState.posts = [];
   
   try {
     const result = await ActusAPI.getFeed(actusState.limit, actusState.offset);
@@ -396,6 +398,7 @@ async function loadActusFeed() {
     
     actusState.posts = result.posts || [];
     renderActusFeed();
+    setupInfiniteScroll();
     
   } catch (error) {
     console.error('Erreur loadActusFeed:', error);
@@ -403,6 +406,79 @@ async function loadActusFeed() {
   }
   
   actusState.isLoading = false;
+}
+
+// ===== CHARGER PLUS DE POSTS =====
+async function loadMoreActus() {
+  if (actusState.isLoading) return;
+  
+  actusState.isLoading = true;
+  
+  try {
+    actusState.offset += actusState.limit;
+    const result = await ActusAPI.getFeed(actusState.limit, actusState.offset);
+    
+    if (!result.success) {
+      actusState.offset -= actusState.limit;
+      actusState.isLoading = false;
+      return;
+    }
+    
+    const newPosts = result.posts || [];
+    if (newPosts.length === 0) {
+      actusState.isLoading = false;
+      return;
+    }
+    
+    actusState.posts = [...actusState.posts, ...newPosts];
+    renderMoreActus(newPosts);
+    
+  } catch (error) {
+    console.error('Erreur loadMoreActus:', error);
+    actusState.offset -= actusState.limit;
+  }
+  
+  actusState.isLoading = false;
+}
+
+// ===== AJOUTER PLUS DE POSTS AU FEED =====
+function renderMoreActus(newPosts) {
+  const feedContainer = document.getElementById('feedContainer');
+  if (!feedContainer) return;
+  
+  newPosts.forEach((post) => {
+    feedContainer.appendChild(createPostElement(post));
+  });
+  
+  attachPostEvents();
+  enhanceAudioPlayers();
+}
+
+// ===== SCROLL INFINI =====
+function setupInfiniteScroll() {
+  const feedContainer = document.getElementById('feedContainer');
+  if (!feedContainer) return;
+  
+  // Supprimer le sentinel s'il existe
+  const oldSentinel = document.getElementById('feed-sentinel');
+  if (oldSentinel) oldSentinel.remove();
+  
+  // Créer un sentinel
+  const sentinel = document.createElement('div');
+  sentinel.id = 'feed-sentinel';
+  sentinel.style.height = '20px';
+  feedContainer.appendChild(sentinel);
+  
+  // Observer le sentinel
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        loadMoreActus();
+      }
+    });
+  }, { threshold: 0.1 });
+  
+  observer.observe(sentinel);
 }
 
 // ===== RENDRE LE FEED =====

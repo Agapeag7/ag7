@@ -796,14 +796,10 @@ if (isset($_SESSION['user_id'])) {
 </div> <!-- Fin app-section -->
 
 <!-- API Actus -->
-<script src="js/api-actus.js"></script>
-<!-- Intégration Actus Complète -->
-<script src="js/actus-complete.js"></script>
-
-<!-- API Stories (NOUVEAU) -->
-<script src="js/api-stories.js"></script>
-
-<script src="js/scripts.js"></script>
+<script src="js/api-actus.js" defer></script>
+<script src="js/actus-complete.js" defer></script>
+<script src="js/api-stories.js" defer></script>
+<script src="js/scripts.js" defer></script>
 
 <!-- Petite police système pour un rendu optimal -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
