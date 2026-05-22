@@ -162,7 +162,13 @@ function openVocalPostModal() {
     vocalRecorderStatusDiv = document.getElementById('vocalRecorderStatus');
     vocalPreviewSection = document.getElementById('vocalPreviewSection');
 
-    // Écouteurs
+    // === AJOUT POUR LE BOUTON DE FERMETURE ===
+    const vocalCloseBtn = document.querySelector('.vocal-post-close');
+    if (vocalCloseBtn) {
+      vocalCloseBtn.addEventListener('click', closeVocalModal);
+    }
+
+    // Écouteurs existants
     vocalStartBtn.addEventListener('click', startModalRecording);
     vocalStopBtn.addEventListener('click', stopModalRecording);
     vocalCancelBtn.addEventListener('click', closeVocalModal);
