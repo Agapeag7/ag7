@@ -13,7 +13,8 @@ let actusState = {
   posts: [],
   isLoading: false,
   offset: 0,
-  limit: 5
+  limit: 5,
+  isEndOfFeed: false
 };
 
 // postImages et currentUserId sont déclarés globalement
@@ -381,6 +382,7 @@ async function loadActusFeed() {
   actusState.isLoading = true;
   actusState.offset = 0;
   actusState.posts = [];
+  actusState.isEndOfFeed = false;
   
   try {
     const result = await ActusAPI.getFeed(actusState.limit, actusState.offset);
@@ -410,13 +412,19 @@ async function loadActusFeed() {
 
 // ===== CHARGER PLUS DE POSTS =====
 async function loadMoreActus() {
-  if (actusState.isLoading) return;
+  if (actusState.isLoading || actusState.isEndOfFeed) return;
   
   actusState.isLoading = true;
+  
+  // Afficher l'indicateur de chargement
+  showLoadingIndicator();
   
   try {
     actusState.offset += actusState.limit;
     const result = await ActusAPI.getFeed(actusState.limit, actusState.offset);
+    
+    // Supprimer l'indicateur de chargement
+    hideLoadingIndicator();
     
     if (!result.success) {
       actusState.offset -= actusState.limit;
@@ -425,7 +433,15 @@ async function loadMoreActus() {
     }
     
     const newPosts = result.posts || [];
+    
+    // Si moins de posts que la limite, on a atteint la fin
+    if (newPosts.length < actusState.limit) {
+      actusState.isEndOfFeed = true;
+    }
+    
     if (newPosts.length === 0) {
+      // Afficher le message de fin du feed
+      showEndOfFeedMessage();
       actusState.isLoading = false;
       return;
     }
@@ -433,12 +449,92 @@ async function loadMoreActus() {
     actusState.posts = [...actusState.posts, ...newPosts];
     renderMoreActus(newPosts);
     
+    // Si on a atteint la fin, afficher le message après 1 sec
+    if (actusState.isEndOfFeed) {
+      setTimeout(() => {
+        showEndOfFeedMessage();
+      }, 500);
+    }
+    
   } catch (error) {
     console.error('Erreur loadMoreActus:', error);
+    hideLoadingIndicator();
     actusState.offset -= actusState.limit;
   }
   
   actusState.isLoading = false;
+}
+
+// ===== AFFICHER INDICATEUR DE CHARGEMENT =====
+function showLoadingIndicator() {
+  const feedContainer = document.getElementById('feedContainer');
+  if (!feedContainer) return;
+  
+  // Vérifier si l'indicateur existe déjà
+  if (document.getElementById('feed-loading-indicator')) return;
+  
+  const loadingDiv = document.createElement('div');
+  loadingDiv.id = 'feed-loading-indicator';
+  loadingDiv.style.cssText = `
+    text-align: center;
+    padding: 24px;
+    color: var(--text-secondary);
+  `;
+  loadingDiv.innerHTML = `
+    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--emerald-500); margin-bottom: 12px; display: block;"></i>
+    <p style="margin: 8px 0; font-size: 14px;">Chargement...</p>
+  `;
+  feedContainer.appendChild(loadingDiv);
+}
+
+// ===== MASQUER INDICATEUR DE CHARGEMENT =====
+function hideLoadingIndicator() {
+  const indicator = document.getElementById('feed-loading-indicator');
+  if (indicator) indicator.remove();
+}
+
+// ===== AFFICHER MESSAGE FIN DU FEED =====
+function showEndOfFeedMessage() {
+  const feedContainer = document.getElementById('feedContainer');
+  if (!feedContainer) return;
+  
+  // Vérifier si le message existe déjà
+  if (document.getElementById('feed-end-message')) return;
+  
+  const endDiv = document.createElement('div');
+  endDiv.id = 'feed-end-message';
+  endDiv.style.cssText = `
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+  `;
+  endDiv.innerHTML = `
+    <div style="margin-bottom: 24px;">
+      <i class="fas fa-check-circle" style="font-size: 48px; color: var(--emerald-500); margin-bottom: 16px; display: block;"></i>
+      <p style="font-size: 16px; margin: 0 0 12px 0; font-weight: 600; color: var(--text-primary);">Vous avez déjà tout vu!</p>
+      <p style="font-size: 14px; margin: 0;">Il n'y a rien de nouveau pour le moment</p>
+    </div>
+    <div style="margin-top: 32px;">
+      <p style="font-size: 14px; margin: 0 0 16px 0;">Suivez d'autres utilisateurs pour découvrir plus de contenu</p>
+      <button class="btn-primary" id="discoverMoreButton" style="padding: 10px 24px; border-radius: 24px;">
+        <i class="fas fa-compass"></i> Découvrir des utilisateurs
+      </button>
+    </div>
+  `;
+  feedContainer.appendChild(endDiv);
+  
+  // Ajouter l'événement au bouton "Découvrir"
+  const discoverBtn = endDiv.querySelector('#discoverMoreButton');
+  if (discoverBtn) {
+    discoverBtn.addEventListener('click', () => {
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        if (item.getAttribute('data-view') === 'contacts') {
+          item.click();
+        }
+      });
+    });
+  }
 }
 
 // ===== AJOUTER PLUS DE POSTS AU FEED =====
@@ -472,7 +568,7 @@ function setupInfiniteScroll() {
   // Observer le sentinel
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-      if (entry.isIntersecting) {
+      if (entry.isIntersecting && !actusState.isEndOfFeed) {
         loadMoreActus();
       }
     });
