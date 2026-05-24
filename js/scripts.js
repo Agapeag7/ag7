@@ -76,6 +76,14 @@ function showConfirmation(title, message, onConfirm, onCancel = null) {
   cancelBtn.onclick = handleCancel;
 }
 
+let profilePostsState = {
+  offset: 0,
+  limit: 4,
+  hasMore: true,
+  isLoading: false,
+  userId: null
+};
+
 // ===== PROFIL GLOBAL =====
 // Initialize BEFORE the IIFE that needs it
 let currentUserProfile = {
@@ -463,9 +471,9 @@ let currentUserProfile = {
       
       // Charger le profil réel quand on accède à la section profil
       if (viewId === 'profile') {
-        loadCurrentProfile().then(() => {
-          updateProfileUI();
-        });
+        if (typeof loadProfilePosts === 'function') {
+          loadProfilePosts();  // reset = true par défaut
+        }
       }
       
       // Charger le feed Actus quand on accède à la section feed
@@ -1092,6 +1100,93 @@ let currentUserProfile = {
     // Notification de bienvenue (optionnelle)
   })();
 
+
+async function loadUserPosts(userId, limit = 4, offset = 0) {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'getUserPosts');
+    url.searchParams.set('user_id', userId);
+    url.searchParams.set('limit', limit);
+    url.searchParams.set('offset', offset);
+    const response = await fetch(url.toString());
+    const result = await response.json();
+    if (result.success) {
+      return result.posts.map(post => ({ ...post })); // adapter le format
+    }
+    return [];
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+let profileObserver = null;
+
+function setupProfileInfiniteScroll() {
+  if (profileObserver) profileObserver.disconnect();
+  const sentinel = document.getElementById('profile-sentinel');
+  if (sentinel) sentinel.remove();
+  const grid = document.getElementById('profilePostsGrid');
+  if (!grid) return;
+
+  const sentinelDiv = document.createElement('div');
+  sentinelDiv.id = 'profile-sentinel';
+  sentinelDiv.style.height = '20px';
+  grid.parentNode.appendChild(sentinelDiv);
+
+  profileObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && profilePostsState.hasMore && !profilePostsState.isLoading) {
+      loadProfilePosts(false);
+    }
+  }, { threshold: 0.1 });
+  profileObserver.observe(sentinelDiv);
+}
+
+async function loadProfilePosts(reset = true) {
+  if (!currentUserProfile.userid) return;
+  if (profilePostsState.isLoading) return;
+
+  if (reset) {
+    profilePostsState.offset = 0;
+    profilePostsState.hasMore = true;
+    profilePostsState.userId = currentUserProfile.userid;
+    const grid = document.getElementById('profilePostsGrid');
+    if (grid) grid.innerHTML = '';
+    profilePostsState.isLoading = false;
+  }
+
+  if (!profilePostsState.hasMore) return;
+
+  profilePostsState.isLoading = true;
+  const newPosts = await loadUserPosts(
+    profilePostsState.userId,
+    profilePostsState.limit,
+    profilePostsState.offset
+  );
+  profilePostsState.isLoading = false;
+
+  if (newPosts.length === 0) {
+    profilePostsState.hasMore = false;
+    return;
+  }
+
+  if (reset) {
+    currentUserProfile.posts = newPosts;
+  } else {
+    currentUserProfile.posts = [...currentUserProfile.posts, ...newPosts];
+  }
+
+  updateProfileUI();
+
+  profilePostsState.offset += profilePostsState.limit;
+  if (newPosts.length < profilePostsState.limit) {
+    profilePostsState.hasMore = false;
+  }
+
+  if (profilePostsState.hasMore) {
+    setupProfileInfiniteScroll();
+  }
+}
 
   // ========== GESTION DES STORIES ==========
 function closeStoryModal() {
@@ -1759,60 +1854,12 @@ async function loadCurrentProfile() {
     currentUserProfile.followers_count = profile.followers_count || 0;
     currentUserProfile.following_count = profile.following_count || 0;
     
-    // Charger les publications de l'utilisateur
-    await loadUserPosts(profile.user_id);
-    
     return true;
   } catch (e) {
     console.error('Erreur au chargement du profil:', e);
     return false;
   }
 }
-
-async function loadUserPosts(userId) {
-  try {
-    const response = await fetch(`?action=getUserPosts&user_id=${userId}&limit=50`);
-    
-    if (!response.ok) {
-      console.error('Erreur HTTP lors du chargement des posts:', response.status);
-      currentUserProfile.posts = [];
-      return;
-    }
-    
-    const result = await response.json();
-    if (!result.success) {
-      console.error('Erreur serveur:', result.message);
-      currentUserProfile.posts = [];
-      return;
-    }
-    
-    // Convertir les posts au format utilisé par la grille
-    currentUserProfile.posts = result.posts.map(post => ({
-      id: post.id,
-      author: post.author,
-      username: post.username,
-      avatar: post.avatar,
-      content: post.content,
-      image: post.images && post.images.length > 0 ? post.images[0] : null,
-      images: post.images || [],
-      likes: post.likes,
-      comments: post.comments,
-      userHasLiked: post.userHasLiked,
-      timestamp: post.timestamp,
-      user_id: post.user_id,
-      visibility: post.visibility,
-      post_audio_url: post.post_audio_url,
-      post_audio_duration: post.post_audio_duration,
-      post_audio_listens: post.post_audio_listens,
-      has_poll: post.has_poll
-    })) || [];
-    
-  } catch (e) {
-    console.error('Erreur au chargement des posts du profil:', e);
-    currentUserProfile.posts = [];
-  }
-}
-
 
 function openPostDetailModal(post) {
   const modal = document.getElementById('postDetailModal');

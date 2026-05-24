@@ -54,10 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupActusNavigation();
   
   setupActusUI();
-  
-  // FORCE LOAD THE FEED
-  await loadActusFeed();
-  
+    
   // Double-check modal initialization
   setTimeout(() => {
     setupDeleteModal();

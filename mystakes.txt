@@ -10,6 +10,16 @@
 - 
 
 
+Erreurs console navigateur :
+- [Violation] 'OMR' handler took 345ms
+ag7/:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" placeholder=​"Mot de passe" id=​"auth-password" required>​
+[Violation] 'setTimeout' handler took 101ms
+scripts.js:480 [Violation] 'click' handler took 300ms
+[Violation] 'requestIdleCallback' handler took 164ms
+
+- [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" placeholder=​"Mot de passe" id=​"auth-password" required>​
+
+
 
 * Post Production :
 - Signalement utilisateur : possibilité de signaler une publication vocale.

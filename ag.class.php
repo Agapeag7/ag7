@@ -65,6 +65,53 @@ class Utils {
     public static function verifyPassword($password, $hash) {
         return password_verify($password, $hash);
     }
+
+    public static function compressImage($sourcePath, $destPath, $maxSizeKB = 500, $maxWidth = 1200) {
+        if (!extension_loaded('gd')) {
+            error_log("GD extension not loaded, cannot compress image");
+            return false;
+        }
+    
+        $image = null;
+        $mime = mime_content_type($sourcePath);
+        switch ($mime) {
+            case 'image/jpeg': $image = imagecreatefromjpeg($sourcePath); break;
+            case 'image/png':  $image = imagecreatefrompng($sourcePath); break;
+            case 'image/gif':  $image = imagecreatefromgif($sourcePath); break;
+            case 'image/webp': $image = imagecreatefromwebp($sourcePath); break;
+            default: return false;
+        }
+        if (!$image) return false;
+
+        // Redimensionner si nécessaire
+        $width = imagesx($image);
+        $height = imagesy($image);
+        if ($width > $maxWidth) {
+            $newHeight = floor($height * ($maxWidth / $width));
+            $newImage = imagecreatetruecolor($maxWidth, $newHeight);
+            imagecopyresampled($newImage, $image, 0, 0, 0, 0, $maxWidth, $newHeight, $width, $height);
+            imagedestroy($image);
+            $image = $newImage;
+        }
+
+        // Compression progressive
+        $quality = 85;
+        $tempFile = $destPath . '.tmp';
+        do {
+            if ($mime == 'image/png') {
+                imagepng($image, $tempFile, 9); // 9 = max compression
+            } else {
+                imagejpeg($image, $tempFile, $quality);
+            }
+            $size = filesize($tempFile) / 1024;
+            if ($size <= $maxSizeKB) break;
+            $quality -= 10;
+        } while ($quality >= 30);
+
+        rename($tempFile, $destPath);
+        imagedestroy($image);
+        return true;
+    }
     
     public static function uploadProfilePhoto($file) {
         // Accepter l'extension comme fallback si MIME échoue (pattern KelFoncia)
@@ -116,14 +163,19 @@ class Utils {
         // Générer nom unique TEMPORAIRE
         $tempName = 'profile_' . time() . '_' . uniqid() . '.' . $ext;
         $uploadPath = $uploadDir . '/' . $tempName;
-        
-        // Sauvegarder le fichier
+
         if (@move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            error_log("Photo uploadée: $tempName");
-            return $tempName; // Retourner juste le nom du fichier
+            // Compression
+            $finalPath = $uploadDir . '/' . $tempName;
+            if (self::compressImage($uploadPath, $finalPath, 500, 1200)) {
+                @unlink($uploadPath); // supprimer l'original temporaire
+                error_log("Photo compressée: $tempName");
+                return $tempName;
+            } else {
+                // Si la compression échoue, on garde l'original
+                return $tempName;
+            }
         }
-        
-        error_log("move_uploaded_file échoué: tmp=" . $file['tmp_name'] . ", dest=" . $uploadPath);
         return false;
     }
     
