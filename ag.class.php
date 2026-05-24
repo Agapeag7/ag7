@@ -180,81 +180,61 @@ class Utils {
     }
     
     public static function uploadPostImage($tmpName, $fileName) {
-        // Accepter l'extension comme fallback si MIME échoue
         $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        
         if (!in_array($ext, $allowedExt)) {
             error_log("Upload image échouée: Extension .{$ext} non autorisée");
             return false;
         }
-        
-        // Créer le dossier pub/ s'il n'existe pas
+
         $uploadDir = __DIR__ . '/pub';
-        if (!is_dir($uploadDir)) {
-            if (!@mkdir($uploadDir, 0777, true)) {
-                error_log("Impossible de créer dossier pub");
-                return false;
-            }
-        }
-        
-        // Vérifier permissions d'écriture
-        if (!is_writable($uploadDir)) {
-            chmod($uploadDir, 0777);
-            if (!is_writable($uploadDir)) {
-                error_log("Dossier pub n'est pas writable");
-                return false;
-            }
-        }
-        
-        // Générer nom unique - prefix "post_" pour les images de publications
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        if (!is_writable($uploadDir)) chmod($uploadDir, 0777);
+
         $imageName = 'post_' . time() . '_' . uniqid() . '.' . $ext;
-        $uploadPath = $uploadDir . '/' . $imageName;
-        
-        // Sauvegarder le fichier
-        if (@move_uploaded_file($tmpName, $uploadPath)) {
-            error_log("Image de post uploadée: $imageName");
-            return $imageName; // Retourner juste le nom du fichier
+        $tempPath = $uploadDir . '/' . $imageName . '.tmp';
+        $finalPath = $uploadDir . '/' . $imageName;
+
+        if (@move_uploaded_file($tmpName, $tempPath)) {
+            if (self::compressImage($tempPath, $finalPath, 500, 1200)) {
+                @unlink($tempPath);
+                error_log("Image de post compressée: $imageName");
+                return $imageName;
+            } else {
+                // Si la compression échoue, on garde l'original (renommer le temp)
+                rename($tempPath, $finalPath);
+                return $imageName;
+            }
         }
-        
-        error_log("move_uploaded_file échoué pour image de post: tmp=" . $tmpName . ", dest=" . $uploadPath);
         return false;
     }
 
     public static function uploadStoryImage($tmpName, $fileName) {
         $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        
         if (!in_array($ext, $allowedExt)) {
             error_log("Upload story échoué: Extension .{$ext} non autorisée");
             return false;
         }
-        
+
         $uploadDir = __DIR__ . '/story';
-        if (!is_dir($uploadDir)) {
-            if (!@mkdir($uploadDir, 0777, true)) {
-                error_log("Impossible de créer dossier story");
-                return false;
-            }
-        }
-        
-        if (!is_writable($uploadDir)) {
-            chmod($uploadDir, 0777);
-            if (!is_writable($uploadDir)) {
-                error_log("Dossier story n'est pas writable");
-                return false;
-            }
-        }
-        
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        if (!is_writable($uploadDir)) chmod($uploadDir, 0777);
+
         $imageName = 'story_' . time() . '_' . uniqid() . '.' . $ext;
-        $uploadPath = $uploadDir . '/' . $imageName;
-        
-        if (@move_uploaded_file($tmpName, $uploadPath)) {
-            error_log("Story uploadée: $imageName");
-            return $imageName;
+        $tempPath = $uploadDir . '/' . $imageName . '.tmp';
+        $finalPath = $uploadDir . '/' . $imageName;
+
+        if (@move_uploaded_file($tmpName, $tempPath)) {
+            if (self::compressImage($tempPath, $finalPath, 500, 1200)) {
+                @unlink($tempPath);
+                error_log("Story compressée: $imageName");
+                return $imageName;
+            } else {
+                rename($tempPath, $finalPath);
+                return $imageName;
+            }
         }
-        
-        error_log("move_uploaded_file échoué pour story: tmp=" . $tmpName . ", dest=" . $uploadPath);
         return false;
     }
 
