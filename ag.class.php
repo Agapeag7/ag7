@@ -11,6 +11,9 @@
  * Usage: include 'ag.class.php' in endpoint scripts and call AG7\Router::handle()
  */
 
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/php_errors.log');
+
 // Session is already started by index.php - verify it's active
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -68,22 +71,32 @@ class Utils {
 
     public static function compressImage($sourcePath, $destPath, $maxSizeKB = 500, $maxWidth = 1200) {
         if (!extension_loaded('gd')) {
-            error_log("GD extension not loaded, cannot compress image");
+            error_log("compressImage: GD extension not loaded");
             return false;
         }
-    
+
         $image = null;
         $mime = mime_content_type($sourcePath);
+        if (!$mime) {
+            error_log("compressImage: cannot detect mime type for $sourcePath");
+            return false;
+        }
+
         switch ($mime) {
             case 'image/jpeg': $image = imagecreatefromjpeg($sourcePath); break;
             case 'image/png':  $image = imagecreatefrompng($sourcePath); break;
             case 'image/gif':  $image = imagecreatefromgif($sourcePath); break;
             case 'image/webp': $image = imagecreatefromwebp($sourcePath); break;
-            default: return false;
+            default:
+                error_log("compressImage: unsupported mime $mime for $sourcePath");
+                return false;
         }
-        if (!$image) return false;
+        if (!$image) {
+            error_log("compressImage: failed to create image from $sourcePath");
+            return false;
+        }
 
-        // Redimensionner si nécessaire
+        // Redimensionner
         $width = imagesx($image);
         $height = imagesy($image);
         if ($width > $maxWidth) {
@@ -92,25 +105,68 @@ class Utils {
             imagecopyresampled($newImage, $image, 0, 0, 0, 0, $maxWidth, $newHeight, $width, $height);
             imagedestroy($image);
             $image = $newImage;
+            error_log("compressImage: resized from {$width}x{$height} to {$maxWidth}x{$newHeight}");
         }
 
-        // Compression progressive
+        // Compression agressive
         $quality = 85;
         $tempFile = $destPath . '.tmp';
+        $targetSizeBytes = $maxSizeKB * 1024;
+        $maxAttempts = 20;
+        $attempt = 0;
+
         do {
             if ($mime == 'image/png') {
-                imagepng($image, $tempFile, 9); // 9 = max compression
+                // Pour PNG, on essaie d'abord la compression max, puis on convertit en JPEG si trop gros
+                imagepng($image, $tempFile, 9);
+                $size = filesize($tempFile);
+                if ($size > $targetSizeBytes) {
+                    // Convertir en JPEG
+                    $tempJpeg = $destPath . '_jpeg_tmp.jpg';
+                    imagejpeg($image, $tempJpeg, 75);
+                    rename($tempJpeg, $tempFile);
+                    $mime = 'image/jpeg'; // changer le type pour la suite
+                    $quality = 75;
+                }
             } else {
                 imagejpeg($image, $tempFile, $quality);
             }
-            $size = filesize($tempFile) / 1024;
-            if ($size <= $maxSizeKB) break;
-            $quality -= 10;
-        } while ($quality >= 30);
 
-        rename($tempFile, $destPath);
-        imagedestroy($image);
-        return true;
+            $size = filesize($tempFile);
+            if ($size <= $targetSizeBytes) break;
+
+            if ($mime != 'image/png') {
+                $quality -= 10;
+                if ($quality < 10) $quality = 10;
+            }
+            $attempt++;
+        } while ($attempt < $maxAttempts);
+
+        if ($size > $targetSizeBytes) {
+            error_log("compressImage: final size {$size} bytes > {$targetSizeBytes} bytes after $attempt attempts");
+            // Dernier recours : redimensionner plus petit
+            $width = imagesx($image);
+            $height = imagesy($image);
+            $newWidth = $width * 0.7;
+            $newHeight = $height * 0.7;
+            $newImage = imagecreatetruecolor($newWidth, $newHeight);
+            imagecopyresampled($newImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            imagedestroy($image);
+            $image = $newImage;
+            imagejpeg($image, $tempFile, 70);
+            $size = filesize($tempFile);
+            error_log("compressImage: second resize to {$newWidth}x{$newHeight}, new size {$size} bytes");
+        }
+
+        if (rename($tempFile, $destPath)) {
+            imagedestroy($image);
+            error_log("compressImage: success, final size " . round($size/1024) . " KB");
+            return true;
+        } else {
+            error_log("compressImage: failed to rename temp file to $destPath");
+            imagedestroy($image);
+            return false;
+        }
     }
     
     public static function uploadProfilePhoto($file) {
