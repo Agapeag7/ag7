@@ -58,7 +58,7 @@ if (isset($_SESSION['user_id'])) {
       <!-- Champ Nom (caché en mode connexion) -->
       <div id="name-field" class="input-group" style="display: none;">
         <i class="fas fa-user"></i>
-        <input type="text" placeholder="Nom" id="signup-name">
+        <input type="text" placeholder="Nom" id="signup-name" autocomplete="name">
       </div>
       
       <!-- Sélecteur photo profil (caché en mode connexion) -->
@@ -74,11 +74,11 @@ if (isset($_SESSION['user_id'])) {
       
       <div class="input-group">
         <i class="fas fa-user-tag"></i>
-        <input type="text" placeholder="Pseudo" id="auth-username" required>
+        <input type="text" placeholder="Pseudo" id="auth-username" required autocomplete="username">
       </div>
       <div class="input-group">
         <i class="fas fa-lock"></i>
-        <input type="password" placeholder="Mot de passe" id="auth-password" required>
+        <input type="password" placeholder="Mot de passe" id="auth-password" required autocomplete="current-password">
       </div>
       <button type="submit" class="login-btn" id="auth-submit-btn">Se connecter</button>
     </form>
