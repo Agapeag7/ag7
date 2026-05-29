@@ -764,6 +764,10 @@ if (isset($_SESSION['user_id'])) {
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <h2 id="userProfileName" style="margin: 0;">Nom utilisateur</h2>
             <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: none; padding: 6px 16px; border-radius: 24px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;">Suivre</button>
+            <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
+            <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
+              <i class="fas fa-comment-dots"></i> Message
+            </button>
           </div>
           <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@username</p>
           <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;"></p>
@@ -799,6 +803,11 @@ if (isset($_SESSION['user_id'])) {
 <script src="js/api-actus.js" defer></script>
 <script src="js/actus-complete.js" defer></script>
 <script src="js/api-stories.js" defer></script>
+
+<!-- API Conversations (Messagerie) -->
+<script src="js/api-conversations.js" defer></script>
+<script src="js/messaging-manager.js" defer></script>
+
 <script src="js/scripts.js" defer></script>
 
 <!-- Petite police système pour un rendu optimal -->

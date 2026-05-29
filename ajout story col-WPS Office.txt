@@ -1,0 +1,152 @@
+﻿ajout story collaborative dans AG7.
+
+Actuellement, chaque story est liée à un seul utilisateur (story_user_id). Pour la rendre collaborative, il faut :
+
+· Créer une notion d’événement (ou de groupe de stories).
+· Permettre à plusieurs utilisateurs d’ajouter des médias à une même timeline publique.
+· Gérer les droits (invités, propriétaires, contributeurs).
+
+---
+
+📦 Modifications de la base de données
+
+Ajoutons deux tables :
+
+1. Table story_events (les événements collaboratifs)
+
+```sql
+CREATE TABLE story_events (
+    event_id INT PRIMARY KEY AUTO_INCREMENT,
+    event_name VARCHAR(255) NOT NULL,
+    event_description TEXT,
+    event_cover_url VARCHAR(255),
+    created_by INT NOT NULL, -- user_id du créateur
+    is_public BOOLEAN DEFAULT TRUE,
+    invite_code VARCHAR(32) UNIQUE, -- code d'invitation pour les amis
+    start_date DATETIME,
+    end_date DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES utilisateurs(user_id) ON DELETE CASCADE
+);
+```
+
+2. Table story_event_members (qui peut contribuer / voir)
+
+```sql
+CREATE TABLE story_event_members (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role ENUM('owner', 'contributor', 'viewer') DEFAULT 'contributor',
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY event_user (event_id, user_id),
+    FOREIGN KEY (event_id) REFERENCES story_events(event_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES utilisateurs(user_id) ON DELETE CASCADE
+);
+```
+
+3. Adapter la table stories existante
+
+Ajoutons deux colonnes optionnelles pour lier une story à un événement :
+
+```sql
+ALTER TABLE stories ADD COLUMN event_id INT NULL,
+                    ADD COLUMN is_collaborative BOOLEAN DEFAULT FALSE,
+                    ADD FOREIGN KEY (event_id) REFERENCES story_events(event_id) ON DELETE SET NULL;
+```
+
+Ainsi, une story peut être individuelle (event_id = NULL) ou appartenir à un événement collaboratif.
+
+---
+
+🧠 Fonctionnalités à implémenter
+
+Côté backend (PHP – dans ag.class.php)
+
+Ajouter des actions :
+
+· actionCreateEventStory : créer un événement et générer un code d’invitation unique.
+· actionJoinEventStory : rejoindre un événement via un code.
+· actionAddStoryToEvent : ajouter une photo/vidéo à l’événement (vérifier que l’utilisateur est contributor ou owner).
+· actionGetEventStories : récupérer toutes les stories d’un événement (triées par date, visibles uniquement par les membres ou si public).
+· actionDeleteEventStory : seul l’auteur de la story ou le propriétaire de l’événement peut supprimer.
+
+Côté frontend (JS – dans scripts.js & actus-complete.js)
+
+· Nouvelle modale "Créer un événement story" (nom, description, image de couverture, date de début/fin).
+· Génération d’un code d’invitation affiché (ex. AG7-EVENT-ABC123).
+· Formulaire "Rejoindre un événement" par code.
+· Dans le feed / stories, afficher une section "Événements collaboratifs" avec les événements auxquels l’utilisateur participe.
+· Lorsqu’on clique sur un événement, afficher un carrousel de stories des contributeurs, avec le nom de l’auteur en overlay.
+
+---
+
+🔒 Idées de sécurité & optimisation
+
+1. Contrôle d’accès strict
+
+· Vérifier à chaque appel API que l’utilisateur est bien member de l’événement (rôle contributor ou owner) avant d’ajouter une story.
+· Pour la visualisation : si l’événement est is_public = FALSE, seuls les membres (même viewer) peuvent voir.
+
+2. Éviter le spam de stories
+
+· Limiter le nombre de stories par utilisateur par événement (ex. 10 max).
+· Ajouter un délai entre deux ajouts (rate limiting).
+
+3. Gestion des codes d’invitation
+
+· Générer un code aléatoire sécurisé (bin2hex(random_bytes(16))) stocké dans invite_code.
+· Permettre au propriétaire de régénérer le code (invalide l’ancien).
+· Option : définir une date d’expiration pour le code.
+
+4. Modération
+
+· Permettre au créateur de l’événement de supprimer n’importe quelle story de l’événement.
+· Pouvoir bannir un utilisateur de l’événement (DELETE FROM story_event_members).
+
+5. Optimisation des requêtes
+
+· Indexer event_id sur la table stories.
+· Pour l’affichage, charger les stories par lots (pagination / scroll infini) comme pour le feed normal.
+· Mettre en cache les informations de l’événement (peu modifiables) via Redis ou APCu.
+
+6. Respect de la vie privée
+
+· Option "public / privé" à la création.
+· Si l’événement est public, tout le monde peut voir les stories mais seuls les membres peuvent contribuer.
+· Ne pas exposer les adresses e‑mail ou les données sensibles dans les réponses JSON.
+
+7. Validation des médias
+
+· Réutiliser la compression d’image existante (500 KB max, 1200 px).
+· Vérifier le type MIME pour éviter les fichiers dangereux.
+· Limiter la taille totale des stories par événement (ex. 50 Mo).
+
+---
+
+🧩 Exemple d’API REST (actions AJAX)
+
+· POST ?action=createEventStory
+    { event_name, event_description, cover_image, is_public, start_date, end_date }
+    → retourne event_id et invite_code.
+· POST ?action=joinEventStory
+    { invite_code } → ajoute l’utilisateur comme contributor.
+· POST ?action=addStoryToEvent
+    { event_id, story_image (file), story_text } → enregistre la story.
+· GET ?action=getEventStories&event_id=XX&limit=10&offset=0
+    → liste des stories de l’événement avec pagination.
+· POST ?action=deleteEventStory
+    { story_id } → suppression (vérification des droits).
+
+---
+
+🚀 Avantages pour AG7
+
+· Social : renforce l’interaction entre amis.
+· Viral : le code d’invitation peut être partagé facilement.
+· Monétisable : événements premium (plus de stockage, durée illimitée).
+· Flexible : on peut étendre plus tard aux vidéos courtes.
+
+
+

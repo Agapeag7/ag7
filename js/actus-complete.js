@@ -1664,6 +1664,52 @@ async function displayUserProfile(userId) {
         // Gestion du bouton "Suivre"
         const followBtn = document.getElementById('userProfileFollowBtn');
         const currentUserId = window.currentUserId || (currentUserProfile?.userid);
+        
+        // Récupérer le bouton "Message"
+        const messageBtn = document.getElementById('userProfileMessageBtn');
+        if (messageBtn) {
+            if (!currentUserId || parseInt(currentUserId) === parseInt(userId)) {
+                messageBtn.style.display = 'none';
+            } else {
+                messageBtn.style.display = 'flex';
+                // Supprimer les anciens écouteurs pour éviter les doublons
+                const newMessageBtn = messageBtn.cloneNode(true);
+                messageBtn.parentNode.replaceChild(newMessageBtn, messageBtn);
+                const updatedMsgBtn = document.getElementById('userProfileMessageBtn');
+                
+                updatedMsgBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    // Envoyer un premier message (ou ouvrir la conversation)
+                    try {
+                        // 1. Envoyer un message d’accueil (le destinataire recevra une notification)
+                        const result = await ConversationsAPI.sendMessage(userId, '👋 Bonjour !');
+                        if (result.success && result.conv_id) {
+                            // 2. Basculer vers l’onglet Chat
+                            const chatNav = document.querySelector('.nav-item[data-view="chat"]');
+                            if (chatNav) chatNav.click();
+                            
+                            // 3. Sélectionner la conversation dans la messagerie
+                            if (typeof MessagingManager !== 'undefined' && MessagingManager.selectConversation) {
+                                // Attendre un court instant que la vue chat soit active
+                                setTimeout(() => {
+                                    MessagingManager.selectConversation(result.conv_id, userId, document.getElementById('userProfileName').innerText);
+                                }, 300);
+                            }
+                            // 4. Fermer la modale
+                            const modal = document.getElementById('userProfileModal');
+                            if (modal) modal.classList.add('hidden');
+                            
+                            showNotification('success', 'Message envoyé', 'La conversation a été ouverte');
+                        } else {
+                            showNotification('error', 'Erreur', result.message || 'Impossible de créer la conversation');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showNotification('error', 'Erreur', 'Une erreur est survenue');
+                    }
+                };
+            }
+        }
 
         if (!currentUserId || parseInt(currentUserId) === parseInt(userId)) {
             followBtn.style.display = 'none';

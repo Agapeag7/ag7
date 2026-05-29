@@ -2522,46 +2522,6 @@ class Router {
         }
     }
     
-    private function actionSendMessage() {
-        if (!isset($_SESSION['user_id'])) {
-            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
-        }
-        
-        $recipient_id = $_POST['recipient_id'] ?? null;
-        $content = $_POST['msg_content'] ?? '';
-        
-        if (!$recipient_id || empty($content)) {
-            Utils::jsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
-        }
-        
-        $conv = new ConversationModel($this->db);
-        $conv_id = $conv->create($_SESSION['user_id'], $recipient_id);
-        
-        $msg = new MessageModel($this->db);
-        $msg_id = $msg->send([
-            'msg_conv_id' => $conv_id,
-            'msg_sender_id' => $_SESSION['user_id'],
-            'msg_recipient_id' => $recipient_id,
-            'msg_content' => $content
-        ]);
-        
-        Utils::jsonResponse(['success' => true, 'message' => 'Message envoyé', 'msg_id' => $msg_id], 201);
-    }
-    
-    private function actionGetConversations() {
-        if (!isset($_SESSION['user_id'])) {
-            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
-        }
-        
-        $limit = (int)($_GET['limit'] ?? 50);
-        $offset = (int)($_GET['offset'] ?? 0);
-        
-        $conv = new ConversationModel($this->db);
-        $conversations = $conv->getByUserId($_SESSION['user_id'], $limit, $offset);
-        
-        Utils::jsonResponse(['success' => true, 'conversations' => $conversations]);
-    }
-    
     private function actionUploadUserPhoto() {
         if (!isset($_SESSION['user_id'])) {
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
@@ -2801,6 +2761,182 @@ class Router {
         } else {
             Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'archivage'], 400);
         }
+    }
+
+    private function actionSendMessage() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $recipient_id = (int)($_POST['recipient_id'] ?? 0);
+        $content = trim($_POST['msg_content'] ?? '');
+        if (!$recipient_id || $content === '') {
+            Utils::jsonResponse(['success' => false, 'message' => 'Destinataire ou message manquant'], 400);
+        }
+        // Limiter la taille du message (5000 caractères)
+        $content = substr($content, 0, 5000);
+        
+        $convModel = new ConversationModel($this->db);
+        $conv_id = $convModel->create($_SESSION['user_id'], $recipient_id);
+        if (!$conv_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Impossible de créer la conversation'], 500);
+        }
+
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM messages WHERE msg_sender_id = ? AND msg_sent_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)');
+        $stmt->execute([$_SESSION['user_id']]);
+        if ($stmt->fetchColumn() > 10) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Trop de messages, veuillez patienter'], 429);
+        }
+        
+        $msgModel = new MessageModel($this->db);
+        $msg_id = $msgModel->send([
+            'msg_conv_id' => $conv_id,
+            'msg_sender_id' => $_SESSION['user_id'],
+            'msg_recipient_id' => $recipient_id,
+            'msg_content' => $content
+        ]);
+        if ($msg_id) {
+            // Mettre à jour le updated_at de la conversation
+            $stmt = $this->db->prepare('UPDATE conversations SET last_message = ?, last_message_time = NOW() WHERE conv_id = ?');
+            $stmt->execute([$content, $conv_id]);
+            
+            Utils::jsonResponse(['success' => true, 'message' => 'Message envoyé', 'msg_id' => $msg_id, 'conv_id' => $conv_id]);
+        } else {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors de l\'envoi'], 500);
+        }
+    }
+
+    private function actionGetConversations() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $limit = (int)($_GET['limit'] ?? 20);
+        $offset = (int)($_GET['offset'] ?? 0);
+        $user_id = $_SESSION['user_id'];
+        
+        // Requête optimisée : jointure pour récupérer l'autre utilisateur, le dernier message, et le compteur de non-lus
+        $sql = "
+            SELECT 
+                c.conv_id,
+                c.updated_at,
+                CASE WHEN c.conv_user1_id = ? THEN u2.user_id ELSE u1.user_id END as other_user_id,
+                CASE WHEN c.conv_user1_id = ? THEN u2.user_name ELSE u1.user_name END as other_user_name,
+                CASE WHEN c.conv_user1_id = ? THEN u2.user_username ELSE u1.user_username END as other_user_username,
+                CASE WHEN c.conv_user1_id = ? THEN u2.user_photo_url ELSE u1.user_photo_url END as other_user_photo,
+                (SELECT msg_content FROM messages WHERE msg_conv_id = c.conv_id ORDER BY msg_sent_at DESC LIMIT 1) as last_message,
+                (SELECT msg_sent_at FROM messages WHERE msg_conv_id = c.conv_id ORDER BY msg_sent_at DESC LIMIT 1) as last_message_time,
+                (SELECT COUNT(*) FROM messages WHERE msg_conv_id = c.conv_id AND msg_recipient_id = ? AND msg_read = FALSE) as unread_count
+            FROM conversations c
+            JOIN utilisateurs u1 ON c.conv_user1_id = u1.user_id
+            JOIN utilisateurs u2 ON c.conv_user2_id = u2.user_id
+            WHERE c.conv_user1_id = ? OR c.conv_user2_id = ?
+            ORDER BY c.updated_at DESC
+            LIMIT ? OFFSET ?
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $limit, $offset]);
+        $conversations = $stmt->fetchAll();
+        
+        // Formater les dates et URLs
+        foreach ($conversations as &$conv) {
+            $conv['last_message_time'] = $conv['last_message_time'] ? date('c', strtotime($conv['last_message_time'])) : null;
+            $conv['other_user_photo'] = $conv['other_user_photo'] ? 'imgApp/' . $conv['other_user_photo'] : null;
+        }
+        Utils::jsonResponse(['success' => true, 'conversations' => $conversations]);
+    }
+
+    private function actionGetMessages() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $conv_id = (int)($_GET['conv_id'] ?? 0);
+        $limit = (int)($_GET['limit'] ?? 50);
+        $offset = (int)($_GET['offset'] ?? 0);
+        if (!$conv_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Conversation ID manquant'], 400);
+        }
+        
+        // Vérifier que l'utilisateur appartient à cette conversation
+        $convModel = new ConversationModel($this->db);
+        $conv = $convModel->getById($conv_id);
+        if (!$conv || ($conv['conv_user1_id'] != $_SESSION['user_id'] && $conv['conv_user2_id'] != $_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Accès non autorisé'], 403);
+        }
+        
+        // Récupérer les messages avec infos de l'expéditeur
+        $sql = "
+            SELECT m.*, u.user_name, u.user_username, u.user_photo_url
+            FROM messages m
+            JOIN utilisateurs u ON m.msg_sender_id = u.user_id
+            WHERE m.msg_conv_id = ?
+            ORDER BY m.msg_sent_at DESC
+            LIMIT ? OFFSET ?
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$conv_id, $limit, $offset]);
+        $messages = $stmt->fetchAll();
+        $messages = array_reverse($messages); // ordre chronologique
+        
+        // Marquer les messages reçus comme lus (optimisation : mise à jour groupée)
+        $updateStmt = $this->db->prepare('UPDATE messages SET msg_read = TRUE, msg_read_at = NOW() WHERE msg_conv_id = ? AND msg_recipient_id = ? AND msg_read = FALSE');
+        $updateStmt->execute([$conv_id, $_SESSION['user_id']]);
+        
+        // Formater les URLs des photos
+        foreach ($messages as &$msg) {
+            $msg['user_photo_url'] = $msg['user_photo_url'] ? 'imgApp/' . $msg['user_photo_url'] : null;
+            $msg['msg_sent_at'] = date('c', strtotime($msg['msg_sent_at']));
+        }
+        
+        Utils::jsonResponse(['success' => true, 'messages' => $messages, 'conv_id' => $conv_id]);
+    }
+
+    private function actionMarkConversationRead() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $conv_id = (int)($_POST['conv_id'] ?? 0);
+        if (!$conv_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Conversation ID manquant'], 400);
+        }
+        $msgModel = new MessageModel($this->db);
+        $result = $msgModel->markConversationRead($conv_id, $_SESSION['user_id']);
+        Utils::jsonResponse(['success' => $result]);
+    }
+
+    private function actionGetUnreadCount() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $msgModel = new MessageModel($this->db);
+        $count = $msgModel->getUnreadCount($_SESSION['user_id']);
+        Utils::jsonResponse(['success' => true, 'unread_count' => $count]);
+    }
+
+    private function actionDeleteMessage() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $msg_id = (int)($_POST['msg_id'] ?? 0);
+        if (!$msg_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Message ID manquant'], 400);
+        }
+        $msgModel = new MessageModel($this->db);
+        $msg = $msgModel->getById($msg_id);
+        if (!$msg || $msg['msg_sender_id'] != $_SESSION['user_id']) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Action non autorisée'], 403);
+        }
+        $result = $msgModel->delete($msg_id);
+        Utils::jsonResponse(['success' => $result]);
+    }
+
+    private function getCachedConversations($user_id, $limit, $offset) {
+        $cacheKey = "conv_{$user_id}_{$limit}_{$offset}";
+        if (function_exists('apcu_fetch')) {
+            $data = apcu_fetch($cacheKey, $success);
+            if ($success) return $data;
+        }
+        $data = $this->fetchConversationsFromDB($user_id, $limit, $offset);
+        if (function_exists('apcu_store')) apcu_store($cacheKey, $data, 30);
+        return $data;
     }
     
     private function actionGetUserStats() {

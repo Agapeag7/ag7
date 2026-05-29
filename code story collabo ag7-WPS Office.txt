@@ -1,0 +1,599 @@
+﻿Voici le code frontend à intégrer dans AG7 pour gérer les stories collaboratives par événement, sans backend.
+
+Il comprend :
+
+· De nouvelles modales HTML/CSS (création / rejoindre / affichage d’un événement).
+· Des fonctions JavaScript pour créer, inviter, ajouter des stories et les visualiser (les appels API sont simulés, à remplacer par vos endpoints).
+· L’intégration dans la section « Actus » (ou un onglet dédié « Événements »).
+
+---
+
+1. Ajouts dans index.php (HTML)
+
+Insérez ces éléments dans le conteneur principal de #app-section, par exemple avant la fermeture de .main-view.
+
+a) Modale de création d’un événement
+
+```html
+<!-- Modal Créer un événement story -->
+<div id="createEventModal" class="modal hidden">
+  <div class="modal-card event-modal-card">
+    <div class="modal-header">
+      <h2>Créer un événement collaboratif</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <form id="createEventForm">
+      <input type="text" id="eventName" placeholder="Nom de l'événement (ex: Anniversaire de Léa)" required>
+      <textarea id="eventDesc" placeholder="Description (optionnelle)" rows="2"></textarea>
+      <div class="event-date-range">
+        <label>Du : <input type="datetime-local" id="eventStartDate" required></label>
+        <label>Au : <input type="datetime-local" id="eventEndDate" required></label>
+      </div>
+      <div class="event-privacy">
+        <label><input type="radio" name="eventPrivacy" value="public" checked> Public (visible par tous)</label>
+        <label><input type="radio" name="eventPrivacy" value="private"> Privé (visible par les invités)</label>
+      </div>
+      <div class="event-cover">
+        <label>Photo de couverture (optionnelle)</label>
+        <input type="file" id="eventCover" accept="image/*">
+        <img id="eventCoverPreview" style="display: none; max-width: 100%; margin-top: 8px;">
+      </div>
+      <button type="submit" class="btn-primary">Créer l'événement</button>
+    </form>
+  </div>
+</div>
+```
+
+b) Modale pour rejoindre un événement (code d’invitation)
+
+```html
+<!-- Modal Rejoindre un événement -->
+<div id="joinEventModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Rejoindre un événement</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <form id="joinEventForm">
+      <input type="text" id="inviteCode" placeholder="Code d'invitation (ex: AG7-EVENT-ABC123)" required>
+      <button type="submit" class="btn-primary">Rejoindre</button>
+    </form>
+  </div>
+</div>
+```
+
+c) Modale d’affichage des stories collaboratives (carrousel)
+
+```html
+<!-- Modal Stories collaboratives d'un événement -->
+<div id="collabStoryModal" class="story-modal hidden">
+  <div class="story-modal-content">
+    <button class="story-close">&times;</button>
+    <div class="collab-story-header">
+      <h3 id="collabEventTitle"></h3>
+      <div id="collabEventMeta"></div>
+    </div>
+    <div class="story-viewer collab-viewer">
+      <img id="collabStoryImage" src="" alt="Story">
+      <div class="story-caption" id="collabStoryCaption"></div>
+      <div class="story-author" id="collabStoryAuthor"></div>
+      <div class="story-controls">
+        <button class="story-prev"><i class="fas fa-chevron-left"></i></button>
+        <button class="story-next"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="story-progress-bar"><div class="story-progress-fill"></div></div>
+    </div>
+    <div class="collab-add-story" id="collabAddStoryBtn" style="display: none;">
+      <button class="btn-primary"><i class="fas fa-plus"></i> Ajouter ma story</button>
+    </div>
+  </div>
+</div>
+```
+
+d) Bouton d’accès dans la vue des stories (par exemple dans #storiesContainer ou un onglet dédié)
+
+Ajoutez un bouton pour ouvrir l’interface des événements :
+
+```html
+<!-- Dans la vue feed, à côté de "Votre story" -->
+<div class="story-item" id="collabEventsBtn">
+  <div class="story-avatar add-story" style="background: #9b59b6;">
+    <i class="fas fa-users"></i>
+  </div>
+  <span class="story-name">Événements</span>
+</div>
+```
+
+e) Panneau latéral pour lister les événements de l’utilisateur (optionnel)
+
+```html
+<!-- Sidebar ou popup pour lister les événements rejoints/créés -->
+<div id="collabEventsListModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Mes événements collaboratifs</h2>
+      <button class="modal-close">&times;</button>
+      <button id="createNewEventBtn" class="btn-secondary" style="margin-left: auto;">Créer un événement</button>
+    </div>
+    <div id="myEventsContainer" class="events-list">
+      <!-- Liste générée dynamiquement -->
+    </div>
+    <hr>
+    <div>
+      <h3>Rejoindre un événement</h3>
+      <div class="join-event-input">
+        <input type="text" id="quickInviteCode" placeholder="Code d'invitation">
+        <button id="quickJoinBtn" class="btn-primary">Rejoindre</button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+---
+
+2. Ajouts dans style.css
+
+Ajoutez ces styles pour les nouveaux composants :
+
+```css
+/* Modales événements */
+.event-modal-card {
+  width: 90%;
+  max-width: 500px;
+}
+.event-date-range {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
+}
+.event-date-range label {
+  flex: 1;
+}
+.event-privacy {
+  margin: 12px 0;
+  display: flex;
+  gap: 24px;
+}
+.modal-card .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+}
+.events-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 16px 0;
+}
+.event-item {
+  background: var(--hover-bg);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.event-item:hover {
+  background: var(--border-light);
+}
+.collab-story-header {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+  text-shadow: 0 1px 2px black;
+  z-index: 15;
+}
+.collab-story-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+#collabEventMeta {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+.story-author {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  color: white;
+  background: rgba(0,0,0,0.5);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.collab-add-story {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 15;
+}
+.story-controls {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  padding: 0 16px;
+  pointer-events: none;
+}
+.story-controls button {
+  pointer-events: auto;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.story-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.3);
+}
+.story-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: white;
+  transition: width 0.1s linear;
+}
+.join-event-input {
+  display: flex;
+  gap: 8px;
+}
+```
+
+---
+
+3. Code JavaScript (scripts.js – à intégrer)
+
+Ajoutez ces variables et fonctions dans la portée globale (après la déclaration de currentUserProfile).
+
+a) État et variables globales
+
+```javascript
+let currentEventStories = [];      // stories de l'événement en cours
+let currentEventId = null;
+let currentEventIndex = 0;
+let eventStoryTimer = null;
+let myEvents = [];                 // événements rejoints/créés par l'utilisateur
+
+// Références DOM
+const collabStoryModal = document.getElementById('collabStoryModal');
+const createEventModal = document.getElementById('createEventModal');
+const joinEventModal = document.getElementById('joinEventModal');
+const collabEventsListModal = document.getElementById('collabEventsListModal');
+```
+
+b) Initialisation des écouteurs
+
+```javascript
+function initCollabStories() {
+  // Bouton "Événements" dans la barre stories
+  const collabBtn = document.getElementById('collabEventsBtn');
+  if (collabBtn) collabBtn.addEventListener('click', () => openMyEventsList());
+  
+  // Bouton créer événement dans la liste
+  const createNewBtn = document.getElementById('createNewEventBtn');
+  if (createNewBtn) createNewBtn.addEventListener('click', () => openCreateEventModal());
+  
+  // Fermeture des modales
+  document.querySelectorAll('.modal-close').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.target.closest('.modal').classList.add('hidden');
+    });
+  });
+  
+  // Gestion du formulaire création événement
+  const createForm = document.getElementById('createEventForm');
+  if (createForm) {
+    createForm.addEventListener('submit', handleCreateEvent);
+  }
+  
+  // Formulaire rejoindre événement (modale dédiée ou rapide)
+  const joinForm = document.getElementById('joinEventForm');
+  if (joinForm) joinForm.addEventListener('submit', handleJoinEvent);
+  const quickJoinBtn = document.getElementById('quickJoinBtn');
+  if (quickJoinBtn) quickJoinBtn.addEventListener('click', () => {
+    const code = document.getElementById('quickInviteCode').value;
+    if (code) handleJoinEventByCode(code);
+  });
+  
+  // Aperçu cover
+  const coverInput = document.getElementById('eventCover');
+  if (coverInput) {
+    coverInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const preview = document.getElementById('eventCoverPreview');
+          preview.src = ev.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  
+  // Contrôles du carrousel collaboratif
+  const prevBtn = collabStoryModal?.querySelector('.story-prev');
+  const nextBtn = collabStoryModal?.querySelector('.story-next');
+  if (prevBtn) prevBtn.addEventListener('click', () => navigateCollabStory(-1));
+  if (nextBtn) nextBtn.addEventListener('click', () => navigateCollabStory(1));
+  
+  const addBtn = collabStoryModal?.querySelector('#collabAddStoryBtn');
+  if (addBtn) addBtn.addEventListener('click', () => openAddStoryToEvent(currentEventId));
+  
+  // Fermeture modale story
+  const storyClose = collabStoryModal?.querySelector('.story-close');
+  if (storyClose) storyClose.addEventListener('click', () => closeCollabStoryModal());
+}
+```
+
+c) Gestion des événements (appels API simulés – à remplacer)
+
+```javascript
+// Remplacer les fetch par vos véritables endpoints
+async function loadMyEvents() {
+  try {
+    // GET /api/events/my
+    const response = await fetch('?action=getMyEvents');
+    const data = await response.json();
+    if (data.success) {
+      myEvents = data.events;
+      renderMyEventsList();
+    }
+  } catch (error) {
+    console.error('Erreur chargement événements', error);
+    // Fallback données de test
+    myEvents = [
+      { id: 1, name: 'Anniversaire Léa', role: 'owner', cover: null, start_date: '2025-06-10' },
+      { id: 2, name: 'Soirée plage', role: 'contributor', cover: null, start_date: '2025-06-15' }
+    ];
+    renderMyEventsList();
+  }
+}
+
+async function handleCreateEvent(e) {
+  e.preventDefault();
+  const formData = new FormData();
+  formData.append('action', 'createEvent');
+  formData.append('name', document.getElementById('eventName').value);
+  formData.append('description', document.getElementById('eventDesc').value);
+  formData.append('start_date', document.getElementById('eventStartDate').value);
+  formData.append('end_date', document.getElementById('eventEndDate').value);
+  formData.append('is_public', document.querySelector('input[name="eventPrivacy"]:checked').value === 'public' ? 1 : 0);
+  const coverFile = document.getElementById('eventCover').files[0];
+  if (coverFile) formData.append('cover_image', coverFile);
+  
+  try {
+    const response = await fetch(window.location.href, { method: 'POST', body: formData });
+    const result = await response.json();
+    if (result.success) {
+      showNotification('success', 'Événement créé', `Code d'invitation : ${result.invite_code}`);
+      createEventModal.classList.add('hidden');
+      await loadMyEvents();
+    } else {
+      showNotification('error', 'Erreur', result.message);
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification('error', 'Erreur', 'Impossible de créer l’événement');
+  }
+}
+
+async function handleJoinEvent(e) {
+  e.preventDefault();
+  const code = document.getElementById('inviteCode').value;
+  await handleJoinEventByCode(code);
+}
+
+async function handleJoinEventByCode(code) {
+  const formData = new FormData();
+  formData.append('action', 'joinEvent');
+  formData.append('invite_code', code);
+  try {
+    const response = await fetch(window.location.href, { method: 'POST', body: formData });
+    const result = await response.json();
+    if (result.success) {
+      showNotification('success', 'Rejoint', `Vous participez maintenant à ${result.event_name}`);
+      joinEventModal?.classList.add('hidden');
+      collabEventsListModal?.classList.add('hidden');
+      await loadMyEvents();
+    } else {
+      showNotification('error', 'Erreur', result.message);
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification('error', 'Erreur', 'Impossible de rejoindre');
+  }
+}
+
+function renderMyEventsList() {
+  const container = document.getElementById('myEventsContainer');
+  if (!container) return;
+  if (myEvents.length === 0) {
+    container.innerHTML = '<p>Aucun événement pour le moment.</p>';
+    return;
+  }
+  container.innerHTML = myEvents.map(ev => `
+    <div class="event-item" data-event-id="${ev.id}">
+      <strong>${escapeHtml(ev.name)}</strong><br>
+      <small>${ev.role === 'owner' ? 'Créateur' : 'Invité'} – ${new Date(ev.start_date).toLocaleDateString()}</small>
+    </div>
+  `).join('');
+  container.querySelectorAll('.event-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const eventId = parseInt(item.dataset.eventId);
+      openEventStories(eventId);
+    });
+  });
+}
+
+async function openEventStories(eventId) {
+  currentEventId = eventId;
+  // Charger les stories de l'événement
+  try {
+    const response = await fetch(`?action=getEventStories&event_id=${eventId}`);
+    const data = await response.json();
+    if (data.success) {
+      currentEventStories = data.stories; // tableau d'objets { id, user_name, user_photo, image_url, text, created_at }
+      displayCollabStory(0);
+      collabStoryModal.classList.remove('hidden');
+      // Afficher/masquer bouton ajouter selon droit
+      const addBtn = document.getElementById('collabAddStoryBtn');
+      if (addBtn) addBtn.style.display = (data.can_contribute) ? 'block' : 'none';
+      // Mettre à jour l'entête
+      document.getElementById('collabEventTitle').innerText = data.event_name;
+      document.getElementById('collabEventMeta').innerText = `${data.stories_count} stories · ${data.members_count} participants`;
+    } else {
+      showNotification('error', 'Erreur', data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification('error', 'Erreur', 'Impossible de charger les stories');
+  }
+}
+
+function displayCollabStory(index) {
+  if (currentEventStories.length === 0) {
+    document.getElementById('collabStoryImage').src = '';
+    document.getElementById('collabStoryCaption').innerText = 'Aucune story pour le moment. Soyez le premier à ajouter !';
+    document.getElementById('collabStoryAuthor').innerText = '';
+    return;
+  }
+  const story = currentEventStories[index];
+  currentEventIndex = index;
+  const imgElement = document.getElementById('collabStoryImage');
+  imgElement.src = story.image_url ? `story/${story.image_url}` : '';
+  document.getElementById('collabStoryCaption').innerText = story.text || '';
+  document.getElementById('collabStoryAuthor').innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(story.user_name)}`;
+  
+  // Démarrer le timer de progression (5 secondes)
+  if (eventStoryTimer) clearInterval(eventStoryTimer);
+  const fill = document.querySelector('.story-progress-fill');
+  fill.style.width = '0%';
+  let startTime = Date.now();
+  eventStoryTimer = setInterval(() => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const percent = (elapsed / 5) * 100;
+    fill.style.width = Math.min(percent, 100) + '%';
+    if (elapsed >= 5) {
+      clearInterval(eventStoryTimer);
+      navigateCollabStory(1);
+    }
+  }, 50);
+}
+
+function navigateCollabStory(direction) {
+  if (currentEventStories.length === 0) return;
+  let newIndex = currentEventIndex + direction;
+  if (newIndex < 0) newIndex = 0;
+  if (newIndex >= currentEventStories.length) {
+    closeCollabStoryModal();
+    return;
+  }
+  displayCollabStory(newIndex);
+}
+
+function closeCollabStoryModal() {
+  if (eventStoryTimer) clearInterval(eventStoryTimer);
+  collabStoryModal.classList.add('hidden');
+}
+
+async function openAddStoryToEvent(eventId) {
+  // Utiliser la modale existante de création de story (createStoryModal) mais en mode événement
+  // Pour simplifier, on affiche la modale de story normale et on ajoute un champ caché event_id
+  const storyModal = document.getElementById('createStoryModal');
+  if (!storyModal) return;
+  // Ajouter un champ hidden dans le formulaire
+  let hiddenInput = document.getElementById('storyEventId');
+  if (!hiddenInput) {
+    hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = 'storyEventId';
+    storyModal.querySelector('.create-story-form').appendChild(hiddenInput);
+  }
+  hiddenInput.value = eventId;
+  // Modifier le bouton de publication pour envoyer vers l'événement
+  const originalPublish = document.getElementById('publishStoryBtn');
+  const newPublish = originalPublish.cloneNode(true);
+  originalPublish.parentNode.replaceChild(newPublish, originalPublish);
+  newPublish.addEventListener('click', async () => {
+    const text = document.getElementById('storyText').value;
+    const imageFile = selectedStoryFile;
+    const formData = new FormData();
+    formData.append('action', 'addEventStory');
+    formData.append('event_id', eventId);
+    if (text) formData.append('story_text', text);
+    if (imageFile) formData.append('story_image', imageFile);
+    try {
+      const response = await fetch(window.location.href, { method: 'POST', body: formData });
+      const result = await response.json();
+      if (result.success) {
+        showNotification('success', 'Story ajoutée', 'Votre contribution est en ligne');
+        storyModal.classList.add('hidden');
+        await openEventStories(eventId); // recharger
+      } else {
+        showNotification('error', 'Erreur', result.message);
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification('error', 'Erreur', 'Impossible d’ajouter la story');
+    }
+  });
+  storyModal.classList.remove('hidden');
+}
+
+function openMyEventsList() {
+  loadMyEvents();
+  collabEventsListModal.classList.remove('hidden');
+}
+
+function openCreateEventModal() {
+  createEventModal.classList.remove('hidden');
+}
+```
+
+d) Appel de l’initialisation
+
+Ajoutez dans le DOMContentLoaded ou à la fin de scripts.js :
+
+```javascript
+initCollabStories();
+```
+
+---
+
+4. Intégration avec le backend existant (à faire côté serveur)
+
+Les actions suivantes devront être implémentées dans ag.class.php :
+
+· actionCreateEvent
+· actionJoinEvent
+· actionGetMyEvents
+· actionGetEventStories
+· actionAddEventStory
+
+Le frontend utilise les mêmes conventions (FormData, JSON). Les endpoints doivent retourner des objets avec success, message, et les données nécessaires (invite_code, event_name, stories, can_contribute).
+
+---
+
+✅ Résultat
+· Les utilisateurs peuvent créer des événements collaboratifs.
+· D’autres rejoignent via un code d’invitation.
+· Chaque membre peut poster des stories dans l’événement.
+· Les stories s’affichent en carrousel avec progression automatique, nom de l’auteur et bouton d’
+· Toute la logique est modulaire et s’intègre parfaitement dans l’existant.
