@@ -467,12 +467,4 @@ const MessagingManager = {
   }
 };
 
-// Initialiser au chargement du DOM
-document.addEventListener('DOMContentLoaded', () => {
-  // Vérifier que les API et scripts nécessaires sont chargés
-  if (typeof ConversationsAPI !== 'undefined' && typeof ActusAPI !== 'undefined') {
-    MessagingManager.init();
-  } else {
-    console.error('ConversationsAPI ou ActusAPI non chargé');
-  }
-});
+

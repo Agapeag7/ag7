@@ -130,48 +130,7 @@ if (isset($_SESSION['user_id'])) {
             <button><i class="fas fa-search"></i></button>
           </div>
           <ul class="conversation-list">
-            <li class="conversation-item-chat active">
-              <div class="avatar"><i class="fas fa-users"></i></div>
-              <div class="conversation-info">
-                <div class="conversation-name">Équipe Design</div>
-                <div class="conversation-lastmsg">Claire : Les maquettes sont prêtes !</div>
-              </div>
-              <div class="conversation-meta">
-                <div class="timestamp">12:30</div>
-                <span class="unread-badge">3</span>
-              </div>
-            </li>
-            <li class="conversation-item-chat">
-              <div class="avatar">ML</div>
-              <div class="conversation-info">
-                <div class="conversation-name">Marie Lambert</div>
-                <div class="conversation-lastmsg">On se voit demain ?</div>
-              </div>
-              <div class="conversation-meta">
-                <div class="timestamp">09:15</div>
-              </div>
-            </li>
-            <li class="conversation-item-chat">
-              <div class="avatar">TD</div>
-              <div class="conversation-info">
-                <div class="conversation-name">Thomas Dubois</div>
-                <div class="conversation-lastmsg">Merci pour les infos !</div>
-              </div>
-              <div class="conversation-meta">
-                <div class="timestamp">Hier</div>
-                <span class="unread-badge">1</span>
-              </div>
-            </li>
-            <li class="conversation-item-chat">
-              <div class="avatar"><i class="fas fa-code"></i></div>
-              <div class="conversation-info">
-                <div class="conversation-name">Projet Ag7</div>
-                <div class="conversation-lastmsg">Commit final pushé</div>
-              </div>
-              <div class="conversation-meta">
-                <div class="timestamp">Lun</div>
-              </div>
-            </li>
+            <!-- Les conversations seront chargées dynamiquement par MessagingManager -->
           </ul>
         </div>
         <!-- Zone de discussion -->
@@ -764,7 +723,6 @@ if (isset($_SESSION['user_id'])) {
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <h2 id="userProfileName" style="margin: 0;">Nom utilisateur</h2>
             <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: none; padding: 6px 16px; border-radius: 24px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;">Suivre</button>
-            <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
             <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
               <i class="fas fa-comment-dots"></i> Message
             </button>

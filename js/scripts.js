@@ -295,16 +295,19 @@ let currentUserProfile = {
           setTimeout(async () => {
             loginSection.classList.add('hidden');
             appSection.classList.remove('hidden');
-            
-            // Charger les données réelles du profil depuis le serveur
+
             await loadCurrentProfile();
             updateProfileUI();
-
             await loadStories();
-            
+
+            // ===== AJOUTER ICI =====
+            if (typeof MessagingManager !== 'undefined' && MessagingManager.stopAutoRefresh) {
+              MessagingManager.stopAutoRefresh();
+            }
+
             authForm.reset();
             setAuthMode(true);
-            selectedProfilePhoto = null; // Réinitialiser
+            selectedProfilePhoto = null;
           }, 1500);
         } else {
           // Gestion des erreurs dans la réponse JSON
@@ -1557,12 +1560,7 @@ function renderDiscoverGrid() {
         ${isFollowing ? '<i class="fas fa-check"></i> Suivi(e)' : '<i class="fas fa-user-plus"></i> Suivre'}
       </button>
     `;
-    
-    // // Clic sur la carte → ouvrir le profil (sauf si on clique sur le bouton follow)
-    // userCard.addEventListener('click', (e) => {
-    //   if (e.target.closest('.discover-follow-btn')) return; // ignorer si c'est le bouton
-    //   displayUserProfile(user.id);
-    // });
+
     
     // Gestion du bouton follow (avec stopPropagation pour ne pas ouvrir le profil)
     const followBtn = userCard.querySelector('.discover-follow-btn');
