@@ -984,77 +984,6 @@ let currentUserProfile = {
       restorePrimaryColor();
     }
 
-    // ---------- QUELQUES INTERACTIONS SUPPLÉMENTAIRES (simulation) ----------
-    // Rendre fonctionnel l'envoi de message (simulation)
-    const sendBtn = document.querySelector('.conversation-form-submit');
-    const messageInput = document.querySelector('.conversation-form-input');
-    const messagesContainer = document.querySelector('.messages-container');
-
-    // Auto-resize du textarea
-    if (messageInput) {
-      messageInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-      });
-    }
-
-    if (sendBtn && messageInput && messagesContainer) {
-      function addMessage(text, isMe = true) {
-        if (!text.trim()) return;
-        const bubble = document.createElement('div');
-        bubble.className = `message-bubble ${isMe ? 'me' : ''}`;
-        bubble.innerHTML = `${text}<div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>`;
-        messagesContainer.appendChild(bubble);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
-      }
-
-      sendBtn.addEventListener('click', () => addMessage(messageInput.value, true));
-      messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          addMessage(messageInput.value, true);
-        }
-      });
-    }
-
-    // ========== GESTION DES ACTIONS DE MESSAGE ==========
-    function initMessageActions() {
-      const messageActionBtns = document.querySelectorAll('.message-action-btn');
-      
-      messageActionBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const action = btn.getAttribute('data-action');
-          const messageBubble = btn.closest('.message-bubble');
-          const messageText = messageBubble.textContent.split('\n')[0].trim();
-          
-          if (action === 'reply') {
-            // Répondre : ajouter la réponse au input
-            const messageInput = document.querySelector('.conversation-form-input');
-            if (messageInput) {
-              messageInput.value = `> ${messageText}\n\n`;
-              messageInput.focus();
-            }
-          } else if (action === 'share') {
-            // Partager
-            alert(`Partager le message : "${messageText}"`);
-            // À implémenter : modale de partage ou copier le lien
-          } else if (action === 'transfer') {
-            // Transférer dans une autre conversation
-            const transferTo = prompt('Transférer vers quelle conversation ?');
-            if (transferTo) {
-              alert(`Message transféré à : ${transferTo}`);
-              // À implémenter : logique de transfert
-            }
-          }
-        });
-      });
-    }
-
-    // Initialiser les actions au chargement
-    initMessageActions();
 
     // Réinit après chaque ajout de message
     const originalAddMessage = window.addMessage;
@@ -1063,41 +992,6 @@ let currentUserProfile = {
         originalAddMessage(text, isMe);
         initMessageActions();
       };
-    }
-
-    // Clic sur conversations (simulation)
-    const chatSidebarList = document.querySelector('.chat-sidebar-list');
-    const chatConversationArea = document.querySelector('.chat-conversation-area');
-    const backBtn = document.getElementById('backToList');
-
-    function showConversation() {
-      if (window.innerWidth <= 768) {
-        chatSidebarList.classList.add('hidden');
-        chatConversationArea.classList.add('active-chat');
-      }
-    }
-
-    function backToList() {
-      if (window.innerWidth <= 768) {
-        chatSidebarList.classList.remove('hidden');
-        chatConversationArea.classList.remove('active-chat');
-      }
-    }
-
-    document.querySelectorAll('.conversation-item-chat').forEach(item => {
-      item.addEventListener('click', function() {
-        document.querySelectorAll('.conversation-item-chat').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
-        showConversation();
-      });
-    });
-
-    // Bouton retour
-    if (backBtn) {
-      backBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        backToList();
-      });
     }
 
     // Notification de bienvenue (optionnelle)
