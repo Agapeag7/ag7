@@ -16,15 +16,37 @@ const MessagingManager = {
   conversationsRefreshInterval: null,
   lastMessageCount: 0,
 
+  showEmptyState() {
+    const header = document.querySelector('.conversation-header');
+    const form = document.querySelector('.conversation-form');
+    const container = document.querySelector('.messages-container');
+    if (header) header.style.display = 'none';
+    if (form) form.style.display = 'none';
+    if (container) {
+      container.innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 20px;">
+          <div>
+            <i class="fas fa-comments" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
+            <p style="font-size: 16px;">Veuillez sélectionner une conversation</p>
+          </div>
+        </div>
+      `;
+    }
+  },
+
+  showConversationArea() {
+    const header = document.querySelector('.conversation-header');
+    const form = document.querySelector('.conversation-form');
+    if (header) header.style.display = '';
+    if (form) form.style.display = '';
+  },
+
   /**
    * Initialiser le gestionnaire de messagerie
    */
   async init() {
     console.log('MessagingManager init...');
-    
-    // Récupérer l'ID utilisateur courant depuis le backend
     this.currentUserId = await this.getCurrentUserId();
-    
     if (!this.currentUserId) {
       console.error('Impossible de récupérer l\'ID utilisateur');
       return;
@@ -32,6 +54,7 @@ const MessagingManager = {
 
     this.attachEventListeners();
     await this.loadConversations();
+    this.showEmptyState();
     this.startAutoRefresh();
     this.updateUnreadCount();
   },
@@ -159,6 +182,7 @@ const MessagingManager = {
    */
   async selectConversation(convId, userId, userName) {
     this.currentConvId = convId;
+    this.showConversationArea();
 
     // Mettre à jour l'UI
     document.querySelectorAll('.conversation-item-chat').forEach(item => {
@@ -344,6 +368,8 @@ const MessagingManager = {
         }
         
         this.lastMessageCount = count;
+
+
       }
     } catch (error) {
       console.error('Erreur updateUnreadCount:', error);
@@ -418,6 +444,9 @@ const MessagingManager = {
           sidebar.style.display = 'block';
           area.style.display = 'none';
         }
+        
+        this.showEmptyState();
+        this.currentConvId = null;
       });
     }
 
