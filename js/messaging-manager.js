@@ -20,17 +20,32 @@ const MessagingManager = {
     const header = document.querySelector('.conversation-header');
     const form = document.querySelector('.conversation-form');
     const container = document.querySelector('.messages-container');
+
     if (header) header.style.display = 'none';
     if (form) form.style.display = 'none';
+
+    // Gestion de l'affichage mobile
+    const sidebar = document.querySelector('.chat-sidebar-list');
+    const area = document.querySelector('.chat-conversation-area');
+    if (sidebar && area) {
+      sidebar.classList.remove('hidden');
+      area.classList.remove('active-chat');
+    }
+
     if (container) {
-      container.innerHTML = `
-        <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 20px;">
-          <div>
-            <i class="fas fa-comments" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
-            <p style="font-size: 16px;">Veuillez sélectionner une conversation</p>
+      // Sur mobile, ne pas afficher le message (la zone est masquée)
+      if (window.innerWidth <= 768) {
+        container.innerHTML = ''; // vide
+      } else {
+        container.innerHTML = `
+          <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 20px;">
+            <div>
+              <i class="fas fa-comments" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
+              <p style="font-size: 16px;">Veuillez sélectionner une conversation</p>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     }
   },
 
@@ -181,7 +196,21 @@ const MessagingManager = {
    */
   async selectConversation(convId, userId, userName) {
     this.currentConvId = convId;
-    this.showConversationArea();
+
+    // --- NOUVEAU : Gestion de l'affichage mobile ---
+    const sidebar = document.querySelector('.chat-sidebar-list');
+    const area = document.querySelector('.chat-conversation-area');
+    if (sidebar && area) {
+      // Sur tous les écrans, on peut s'assurer que la sidebar n'a pas la classe 'hidden'
+      sidebar.classList.remove('hidden');
+      area.classList.add('active-chat');
+      // Sur mobile, on masque la sidebar (le CSS fera le reste avec la media query)
+      if (window.innerWidth <= 768) {
+        sidebar.classList.add('hidden');
+      }
+    }
+
+    this.showConversationArea(); // Affiche header et formulaire
 
     // Mettre à jour l'UI
     document.querySelectorAll('.conversation-item-chat').forEach(item => {
@@ -204,9 +233,7 @@ const MessagingManager = {
 
     // Supprimer le badge non-lus
     const convItem = document.querySelector(`[data-conv-id="${convId}"] .unread-badge`);
-    if (convItem) {
-      convItem.remove();
-    }
+    if (convItem) convItem.remove();
   },
 
   /**
@@ -410,14 +437,11 @@ const MessagingManager = {
    * Attacher les écouteurs d'événements
    */
   attachEventListeners() {
-    // Bouton submit (papier avion)
     const submitBtn = document.querySelector('.conversation-form-submit');
     if (submitBtn) {
       submitBtn.addEventListener('click', () => {
         const textarea = document.querySelector('.conversation-form-input');
-        if (textarea) {
-          this.sendMessage(textarea.value);
-        }
+        if (textarea) this.sendMessage(textarea.value);
       });
     }
 
@@ -436,32 +460,16 @@ const MessagingManager = {
     const backBtn = document.querySelector('#backToList');
     if (backBtn) {
       backBtn.addEventListener('click', () => {
-        // Sur mobile, afficher la liste et cacher la conversation
         const sidebar = document.querySelector('.chat-sidebar-list');
         const area = document.querySelector('.chat-conversation-area');
         if (sidebar && area) {
-          sidebar.style.display = 'block';
-          area.style.display = 'none';
+          sidebar.classList.remove('hidden');
+          area.classList.remove('active-chat');
         }
-
         this.showEmptyState();
         this.currentConvId = null;
       });
     }
-
-    // Click sur conversation item pour afficher la zone de discussion (mobile)
-    document.addEventListener('click', (e) => {
-      const convItem = e.target.closest('.conversation-item-chat');
-      if (convItem && window.innerWidth < 768) {
-        // Sur mobile, cacher la liste et afficher la conversation
-        const sidebar = document.querySelector('.chat-sidebar-list');
-        const area = document.querySelector('.chat-conversation-area');
-        if (sidebar && area) {
-          sidebar.style.display = 'none';
-          area.style.display = 'flex';
-        }
-      }
-    });
   },
 
   /**
