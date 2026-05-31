@@ -5,24 +5,21 @@
 ✓ Afficher le profil d'un utilisateur (pour juste le consulter) quand on clique sur : <div class="post-author"></div> et <div class="post-avatar" style="background-image: url('imgApp/image.jpg'); background-size: cover; background-position: center;"></div>
 ✓ Ajout de la possibilité de liker de commentaire et afficher les données réel de nombre de like de commentaire sur Frontend
 
-* A Realiser :
-- Limitation de durée de post vocale : vous pouvez ajouter une minuterie pour limiter l’enregistrement à 2 minutes par exemple.
+* À Realiser :
+• Modale pour visualiser un profil pour la section "Decouvrir" n'est plus, donc à remettre en marche 
+• Pour la section messagerie il faut : 
+- permettre à un utilisateur de supprimer de messages et de transférer des messages à d'autres utilisateurs(autres conversations)
+- permette  aux utilisateurs de créer de canal ( pour créer un canal il faut d'abord avoir au-moins 3 membres (utilisateurs (uniquement ceux qui font partie des abonnés et abonnement)) à ajouter à ce canal
+- créer un canal éphèmère : Discussions d'un canal qui s'auto-suppriment(avec tout les messages de ce canal) après une date butoir 
 - 
 
-
 Erreurs console navigateur :
-- [Violation] 'OMR' handler took 345ms
-ag7/:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" placeholder=​"Mot de passe" id=​"auth-password" required>​
-[Violation] 'setTimeout' handler took 101ms
-scripts.js:480 [Violation] 'click' handler took 300ms
-[Violation] 'requestIdleCallback' handler took 164ms
 
-- [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" placeholder=​"Mot de passe" id=​"auth-password" required>​
 
 
 
 * Post Production :
-- Signalement utilisateur : possibilité de signaler une publication vocale.
+- Signalement utilisateur : possibilité aux utilisateurs de signaler une publication
 - Modération humaine ciblée : auditer uniquement les contenus signalés
 - 
 

@@ -297,6 +297,13 @@ const MessagingManager = {
         deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
         deleteBtn.addEventListener('click', () => this.deleteMessage(msg.msg_id));
 
+        const forwardBtn = document.createElement('button');
+        forwardBtn.className = 'message-action-btn';
+        forwardBtn.title = 'Transférer';
+        forwardBtn.innerHTML = '<i class="fas fa-share"></i>';
+        forwardBtn.addEventListener('click', () => this.showForwardModal(msg.msg_id, msg.msg_content));
+        actionsDiv.appendChild(forwardBtn);
+
         actionsDiv.appendChild(deleteBtn);
         bubble.appendChild(actionsDiv);
       }
@@ -352,27 +359,66 @@ const MessagingManager = {
    * Supprimer un message
    */
   async deleteMessage(msgId) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
-      return;
+    if (!confirm('Supprimer ce message ?')) return;
+    const result = await ConversationsAPI.deleteMessage(msgId);
+    if (result.success) {
+        document.querySelector(`[data-msg-id="${msgId}"]`)?.remove();
+        showNotification('success', 'Supprimé', 'Message supprimé');
+    } else {
+        showNotification('error', 'Erreur', result.message);
     }
+  },
 
-    try {
-      const result = await ConversationsAPI.deleteMessage(msgId);
-      
-      if (!result.success) {
-        showNotification('error', 'Erreur', result.message || 'Erreur lors de la suppression');
-        return;
-      }
-
-      // Retirer le message du DOM
-      const bubble = document.querySelector(`[data-msg-id="${msgId}"]`);
-      if (bubble) bubble.remove();
-
-      showNotification('success', 'Succès', 'Message supprimé');
-    } catch (error) {
-      console.error('Erreur deleteMessage:', error);
-      showNotification('error', 'Erreur', error.message);
+  async forwardMessage(msgId, content, targetConvId) {
+    const result = await ConversationsAPI.forwardMessage(msgId, content, targetConvId);
+    if (result.success) {
+        showNotification('success', 'Transféré', 'Message transféré');
+    } else {
+        showNotification('error', 'Erreur', result.message);
     }
+  },
+
+  // Ouvrir la modale de transfert
+showForwardModal(msgId, content) {
+    const modal = document.createElement('div');
+    modal.className = 'forward-modal';
+    modal.innerHTML = `
+        <div class="forward-modal-content">
+            <h3>Transférer vers</h3>
+            <select id="forwardConvSelect">
+                <option value="">Choisir une conversation...</option>
+            </select>
+            <div class="forward-actions">
+                <button class="btn-secondary cancel-forward">Annuler</button>
+                <button class="btn-primary confirm-forward">Transférer</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Charger les conversations
+    ConversationsAPI.getConversations(50, 0).then(res => {
+        const select = modal.querySelector('#forwardConvSelect');
+        if (res.conversations) {
+            res.conversations.forEach(conv => {
+                const option = document.createElement('option');
+                option.value = conv.conv_id;
+                option.textContent = conv.other_user_name;
+                select.appendChild(option);
+            });
+        }
+    });
+    
+    modal.querySelector('.confirm-forward').onclick = () => {
+        const targetConvId = modal.querySelector('#forwardConvSelect').value;
+        if (!targetConvId) {
+            showNotification('warning', 'Attention', 'Sélectionnez une conversation');
+            return;
+        }
+        this.forwardMessage(msgId, content, targetConvId);
+        modal.remove();
+    };
+    modal.querySelector('.cancel-forward').onclick = () => modal.remove();
   },
 
   /**

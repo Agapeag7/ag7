@@ -1432,7 +1432,13 @@ function renderDiscoverGrid() {
     const isFollowing = followingUsers.has(user.id);
     const userCard = document.createElement('div');
     userCard.className = 'discover-card';
-    userCard.style.cursor = 'pointer';  // Indique que c'est cliquable
+    userCard.style.cursor = 'pointer';
+
+    userCard.addEventListener('click', (e) => {
+        if (!e.target.closest('.discover-follow-btn')) {
+            openUserProfile(user.id);
+        }
+    });
     
     const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     
@@ -1501,6 +1507,113 @@ function renderDiscoverGrid() {
     
     discoverGrid.appendChild(userCard);
   });
+}
+
+async function openUserProfile(userId) {
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('action', 'getUserProfile');
+        url.searchParams.set('user_id', userId);
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        
+        if (!data.success || !data.profile) {
+            showNotification('error', 'Erreur', 'Profil introuvable');
+            return;
+        }
+        
+        const profile = data.profile;
+        const modal = document.getElementById('userProfileModal');
+        const followBtn = document.getElementById('userProfileFollowBtn');
+        const messageBtn = document.getElementById('userProfileMessageBtn');
+        const isOwnProfile = (currentUserProfile.userid == userId);
+        
+        // Remplir les infos
+        document.getElementById('userProfileName').innerText = profile.user_name;
+        document.getElementById('userProfileUsername').innerText = '@' + profile.user_username;
+        document.getElementById('userProfileBio').innerText = profile.user_bio || 'Pas de bio';
+        document.getElementById('userProfileLocation').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${profile.user_location || 'Non renseigné'}`;
+        document.getElementById('userProfileMemberSince').innerHTML = `<i class="fas fa-calendar"></i> Membre depuis ${profile.member_since || 'inconnue'}`;
+        document.getElementById('userProfileFollowersCount').innerText = profile.followers_count || 0;
+        document.getElementById('userProfileFollowingCount').innerText = profile.following_count || 0;
+        
+        // Avatar
+        const avatarDiv = document.getElementById('userProfileAvatar');
+        if (profile.user_photo_url) {
+            avatarDiv.style.backgroundImage = `url('imgApp/${profile.user_photo_url}')`;
+            avatarDiv.style.backgroundSize = 'cover';
+            avatarDiv.innerText = '';
+        } else {
+            const initials = profile.user_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+            avatarDiv.style.backgroundImage = 'none';
+            avatarDiv.innerText = initials;
+        }
+        
+        // Cover
+        const coverDiv = document.getElementById('userProfileCover');
+        if (profile.user_cover_photo_url) {
+            coverDiv.style.backgroundImage = `url('imgApp/${profile.user_cover_photo_url}')`;
+        } else {
+            coverDiv.style.backgroundImage = `url('https://picsum.photos/id/104/1200/400')`;
+        }
+        
+        // Gestion boutons (suivre / message)
+        if (!isOwnProfile) {
+            followBtn.style.display = 'block';
+            messageBtn.style.display = 'block';
+            const isFollowing = profile.is_following || false;
+            followBtn.innerText = isFollowing ? '✓ Suivi(e)' : 'Suivre';
+            followBtn.classList.toggle('following', isFollowing);
+            
+            // Événement follow
+            followBtn.onclick = async () => {
+                const action = isFollowing ? 'unfollowUser' : 'followUser';
+                const formData = new FormData();
+                formData.append('action', action);
+                formData.append('followed_id', userId);
+                const res = await fetch(window.location.href, { method: 'POST', body: formData });
+                const result = await res.json();
+                if (result.success) {
+                    showNotification('success', isFollowing ? 'Désabonné' : 'Abonné', '');
+                    openUserProfile(userId); // refresh
+                    loadCurrentProfile(); // update global counts
+                    updateProfileUI();
+                } else {
+                    showNotification('error', 'Erreur', result.message);
+                }
+            };
+            
+            // Événement message
+            messageBtn.onclick = async () => {
+                // Créer ou récupérer conversation
+                const formData = new FormData();
+                formData.append('action', 'getOrCreateConversation');
+                formData.append('user_id', userId);
+                const res = await fetch(window.location.href, { method: 'POST', body: formData });
+                const result = await res.json();
+                if (result.success && result.conv_id) {
+                    // Basculer vers la vue Chat et sélectionner la conversation
+                    switchView('chat');
+                    setTimeout(() => {
+                        if (typeof MessagingManager !== 'undefined') {
+                            MessagingManager.selectConversation(result.conv_id, userId, profile.user_name);
+                        }
+                    }, 300);
+                    modal.classList.add('hidden');
+                } else {
+                    showNotification('error', 'Erreur', result.message || 'Impossible de créer la conversation');
+                }
+            };
+        } else {
+            followBtn.style.display = 'none';
+            messageBtn.style.display = 'none';
+        }
+        
+        modal.classList.remove('hidden');
+    } catch (err) {
+        console.error(err);
+        showNotification('error', 'Erreur', 'Impossible de charger le profil');
+    }
 }
 
 // Gestion de la recherche d'utilisateurs

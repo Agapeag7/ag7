@@ -234,5 +234,71 @@ const ConversationsAPI = {
       console.error('Erreur archiveConversation:', error);
       return { success: false, message: error.message };
     }
+  },
+
+  async forwardMessage(msg_id, content, target_conv_id) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'forwardMessage');
+        formData.append('msg_id', msg_id);
+        formData.append('target_conv_id', target_conv_id);
+        formData.append('content', content);
+        
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Erreur lors du transfert');
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('forwardMessage error:', error);
+        return { success: false, message: error.message };
+    }
+  },
+
+  async createChannel(name, description, members, isEphemeral, expiresAt) {
+    const formData = new FormData();
+    formData.append('action', 'createChannel');
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('members', JSON.stringify(members));
+    formData.append('is_ephemeral', isEphemeral);
+    if (expiresAt) formData.append('expires_at', expiresAt);
+    const response = await fetch(window.location.href, { method: 'POST', body: formData });
+    return await response.json();
+  },
+
+  async getChannels() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'getChannels');
+    const response = await fetch(url.toString());
+    return await response.json();
+  },
+  async sendChannelMessage(canal_id, content) {
+      const formData = new FormData();
+      formData.append('action', 'sendChannelMessage');
+      formData.append('canal_id', canal_id);
+      formData.append('content', content);
+      const response = await fetch(window.location.href, { method: 'POST', body: formData });
+      return await response.json();
+  },
+  async getChannelMessages(canal_id, limit = 50, offset = 0) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('action', 'getChannelMessages');
+      url.searchParams.set('canal_id', canal_id);
+      url.searchParams.set('limit', limit);
+      url.searchParams.set('offset', offset);
+      const response = await fetch(url.toString());
+      return await response.json();
+  },
+  async deleteChannel(canal_id) {
+      const formData = new FormData();
+      formData.append('action', 'deleteChannel');
+      formData.append('canal_id', canal_id);
+      const response = await fetch(window.location.href, { method: 'POST', body: formData });
+      return await response.json();
   }
 };

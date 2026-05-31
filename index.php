@@ -160,6 +160,28 @@ if (isset($_SESSION['user_id'])) {
           </div>
         </div>
       </div>
+
+      <!-- Modale création canal -->
+      <div id="createChannelModal" class="create-channel-modal hidden">
+        <div class="create-channel-card">
+          <button class="create-channel-close">&times;</button>
+          <h2>Nouveau canal</h2>
+          <input type="text" id="channelName" placeholder="Nom du canal">
+          <textarea id="channelDesc" placeholder="Description (optionnel)"></textarea>
+          <div id="channelMembersSelect">
+            <label>Sélectionner au moins 2 membres (vos abonnés/abonnements)</label>
+            <div class="members-checkboxes" id="membersCheckboxes"></div>
+          </div>
+          <div>
+            <label><input type="checkbox" id="channelEphemeral"> Canal éphémère</label>
+            <div id="ephemeralDate" style="display:none;">
+              <label>Date d'expiration :</label>
+              <input type="datetime-local" id="channelExpiresAt">
+            </div>
+          </div>
+          <button id="confirmCreateChannel" class="btn-primary">Créer le canal</button>
+        </div>
+      </div>
     </div>
 
     <!-- ========== VUE DÉCOUVRIR (SUIVRE UTILISATEURS) ========== -->

@@ -2783,6 +2783,49 @@ class Router {
         }
     }
 
+    private function actionForwardMessage() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $source_msg_id = (int)($_POST['msg_id'] ?? 0);
+        $target_conv_id = (int)($_POST['target_conv_id'] ?? 0);
+        $content = trim($_POST['content'] ?? '');
+        
+        if (!$source_msg_id || !$target_conv_id || !$content) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
+        }
+        
+        // Vérifier que l'utilisateur est bien membre de la conversation source ET cible
+        $convModel = new ConversationModel($this->db);
+        $sourceConv = $convModel->getById($source_msg_id);
+        $targetConv = $convModel->getById($target_conv_id);
+        if (!$sourceConv || !$targetConv) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Conversation invalide'], 400);
+        }
+        $user_id = $_SESSION['user_id'];
+        if (($sourceConv['conv_user1_id'] != $user_id && $sourceConv['conv_user2_id'] != $user_id) ||
+            ($targetConv['conv_user1_id'] != $user_id && $targetConv['conv_user2_id'] != $user_id)) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Action non autorisée'], 403);
+        }
+        
+        // Déterminer le destinataire de la conversation cible
+        $recipient_id = ($targetConv['conv_user1_id'] == $user_id) ? $targetConv['conv_user2_id'] : $targetConv['conv_user1_id'];
+        
+        $msgModel = new MessageModel($this->db);
+        $new_msg_id = $msgModel->send([
+            'msg_conv_id' => $target_conv_id,
+            'msg_sender_id' => $user_id,
+            'msg_recipient_id' => $recipient_id,
+            'msg_content' => "[Transféré] " . $content
+        ]);
+        
+        if ($new_msg_id) {
+            Utils::jsonResponse(['success' => true, 'message' => 'Message transféré']);
+        } else {
+            Utils::jsonResponse(['success' => false, 'message' => 'Erreur lors du transfert'], 500);
+        }
+    }
+
     private function actionSendMessage() {
         if (!isset($_SESSION['user_id'])) {
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
@@ -2957,6 +3000,125 @@ class Router {
         $data = $this->fetchConversationsFromDB($user_id, $limit, $offset);
         if (function_exists('apcu_store')) apcu_store($cacheKey, $data, 30);
         return $data;
+    }
+
+    // Créer un canal
+    private function actionCreateChannel() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $name = trim($_POST['name'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $members = json_decode($_POST['members'] ?? '[]', true); // array of user_ids
+        $is_ephemeral = isset($_POST['is_ephemeral']) ? (bool)$_POST['is_ephemeral'] : false;
+        $expires_at = $_POST['expires_at'] ?? null;
+        
+        if (!$name || count($members) < 2) { // + le créateur = 3 membres min
+            Utils::jsonResponse(['success' => false, 'message' => 'Nom requis et au moins 2 autres membres'], 400);
+        }
+        // Vérifier que les membres sont bien suivis par l'utilisateur (abonnés ou abonnements)
+        $followModel = new AbonnementModel($this->db);
+        foreach ($members as $mid) {
+            if (!$followModel->isFollowing($_SESSION['user_id'], $mid) && !$followModel->isFollowing($mid, $_SESSION['user_id'])) {
+                Utils::jsonResponse(['success' => false, 'message' => "L'utilisateur $mid n'est pas dans vos relations"], 400);
+            }
+        }
+        $members[] = $_SESSION['user_id']; // ajouter le créateur
+        $members = array_unique($members);
+        
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare("INSERT INTO canaux (canal_name, canal_description, created_by, is_ephemeral, expires_at) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $description, $_SESSION['user_id'], $is_ephemeral, $expires_at]);
+            $canal_id = $this->db->lastInsertId();
+            
+            $stmtM = $this->db->prepare("INSERT INTO canal_membres (canal_id, user_id, role) VALUES (?, ?, ?)");
+            foreach ($members as $uid) {
+                $role = ($uid == $_SESSION['user_id']) ? 'admin' : 'member';
+                $stmtM->execute([$canal_id, $uid, $role]);
+            }
+            $this->db->commit();
+            Utils::jsonResponse(['success' => true, 'canal_id' => $canal_id]);
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            Utils::jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // Lister les canaux d'un utilisateur (avec dernier message)
+    private function actionGetChannels() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $sql = "SELECT c.*, 
+                    (SELECT msg_content FROM messages_canal WHERE canal_id = c.canal_id ORDER BY sent_at DESC LIMIT 1) as last_message,
+                    (SELECT sent_at FROM messages_canal WHERE canal_id = c.canal_id ORDER BY sent_at DESC LIMIT 1) as last_message_time
+                FROM canaux c
+                JOIN canal_membres cm ON c.canal_id = cm.canal_id
+                WHERE cm.user_id = ?
+                ORDER BY c.updated_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$_SESSION['user_id']]);
+        $channels = $stmt->fetchAll();
+        Utils::jsonResponse(['success' => true, 'channels' => $channels]);
+    }
+
+    // Envoyer un message dans un canal
+    private function actionSendChannelMessage() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $canal_id = (int)($_POST['canal_id'] ?? 0);
+        $content = trim($_POST['content'] ?? '');
+        if (!$canal_id || !$content) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Données manquantes'], 400);
+        }
+        // Vérifier que l'utilisateur est membre
+        $stmt = $this->db->prepare("SELECT 1 FROM canal_membres WHERE canal_id = ? AND user_id = ?");
+        $stmt->execute([$canal_id, $_SESSION['user_id']]);
+        if (!$stmt->fetch()) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Vous n\'êtes pas membre de ce canal'], 403);
+        }
+        $stmtIns = $this->db->prepare("INSERT INTO messages_canal (canal_id, sender_id, msg_content) VALUES (?, ?, ?)");
+        $stmtIns->execute([$canal_id, $_SESSION['user_id'], $content]);
+        // Mettre à jour le updated_at du canal
+        $this->db->prepare("UPDATE canaux SET updated_at = NOW() WHERE canal_id = ?")->execute([$canal_id]);
+        Utils::jsonResponse(['success' => true, 'msg_id' => $this->db->lastInsertId()]);
+    }
+
+    // Récupérer les messages d'un canal
+    private function actionGetChannelMessages() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $canal_id = (int)($_GET['canal_id'] ?? 0);
+        $limit = (int)($_GET['limit'] ?? 50);
+        $offset = (int)($_GET['offset'] ?? 0);
+        $stmt = $this->db->prepare("SELECT m.*, u.user_name, u.user_photo_url 
+            FROM messages_canal m
+            JOIN utilisateurs u ON m.sender_id = u.user_id
+            WHERE m.canal_id = ?
+            ORDER BY m.sent_at DESC LIMIT ? OFFSET ?");
+        $stmt->execute([$canal_id, $limit, $offset]);
+        $messages = array_reverse($stmt->fetchAll());
+        Utils::jsonResponse(['success' => true, 'messages' => $messages]);
+    }
+
+    // Supprimer un canal (admin seulement)
+    private function actionDeleteChannel() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $canal_id = (int)($_POST['canal_id'] ?? 0);
+        // Vérifier admin
+        $stmt = $this->db->prepare("SELECT role FROM canal_membres WHERE canal_id = ? AND user_id = ?");
+        $stmt->execute([$canal_id, $_SESSION['user_id']]);
+        $role = $stmt->fetchColumn();
+        if ($role !== 'admin') {
+            Utils::jsonResponse(['success' => false, 'message' => 'Seul l\'admin peut supprimer le canal'], 403);
+        }
+        $this->db->prepare("DELETE FROM canaux WHERE canal_id = ?")->execute([$canal_id]);
+        Utils::jsonResponse(['success' => true]);
     }
     
     private function actionGetUserStats() {
