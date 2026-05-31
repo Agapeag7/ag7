@@ -369,29 +369,6 @@ let currentUserProfile = {
           showNotification('success', 'Déconnecté', 'À bientôt !');
           
           // Réinitialiser toutes les données du profil
-          currentUserProfile = {
-            name: "Utilisateur",
-            username: "@user",
-            bio: "Pas de bio",
-            location: "Localisation inconnue",
-            memberSince: "Janvier 2024",
-            avatarInitials: "U",
-            profilePhoto: null,
-            coverPhoto: null,
-            postsCount: 0,
-            followers_count: 0,
-            following_count: 0,
-            followers: [],
-            following: [],
-            posts: [
-              { id: 1, image: "https://picsum.photos/id/10/400/300", likes: 34, comments: 5 },
-              { id: 2, image: "https://picsum.photos/id/20/400/300", likes: 78, comments: 12 },
-              { id: 3, image: "https://picsum.photos/id/30/400/300", likes: 45, comments: 8 },
-              { id: 4, image: "https://picsum.photos/id/40/400/300", likes: 22, comments: 3 },
-              { id: 5, image: "https://picsum.photos/id/50/400/300", likes: 91, comments: 17 },
-              { id: 6, image: "https://picsum.photos/id/60/400/300", likes: 56, comments: 9 }
-            ]
-          };
           
           setTimeout(() => {
             appSection.classList.add('hidden');
@@ -403,30 +380,7 @@ let currentUserProfile = {
           console.error('Erreur logout:', err);
           showNotification('error', 'Erreur', 'Une erreur s\'est produite lors de la déconnexion');
           
-          // Réinitialiser les données du profil même en cas d'erreur
-          currentUserProfile = {
-            name: "Utilisateur",
-            username: "@user",
-            bio: "Pas de bio",
-            location: "Localisation inconnue",
-            memberSince: "Janvier 2024",
-            avatarInitials: "U",
-            profilePhoto: null,
-            coverPhoto: null,
-            postsCount: 0,
-            followers_count: 0,
-            following_count: 0,
-            followers: [],
-            following: [],
-            posts: [
-              { id: 1, image: "https://picsum.photos/id/10/400/300", likes: 34, comments: 5 },
-              { id: 2, image: "https://picsum.photos/id/20/400/300", likes: 78, comments: 12 },
-              { id: 3, image: "https://picsum.photos/id/30/400/300", likes: 45, comments: 8 },
-              { id: 4, image: "https://picsum.photos/id/40/400/300", likes: 22, comments: 3 },
-              { id: 5, image: "https://picsum.photos/id/50/400/300", likes: 91, comments: 17 },
-              { id: 6, image: "https://picsum.photos/id/60/400/300", likes: 56, comments: 9 }
-            ]
-          };
+          // Réinitialiser les données du profil même en cas d'erreur            
           
           // Quand même rediriger vers le login
           setTimeout(() => {
@@ -2309,7 +2263,7 @@ document.querySelector(".edit-profile-btn")?.addEventListener("click", () => {
   if (currentUserProfile.coverPhoto) {
     coverPhotoPreview.src = currentUserProfile.coverPhoto;
   } else {
-    coverPhotoPreview.src = 'https://picsum.photos/id/104/1200/400';
+    coverPhotoPreview.src = 'ico/AG7.png'; // Image de couverture par défaut
   }
   
   // Réinitialiser les fichiers sélectionnés
