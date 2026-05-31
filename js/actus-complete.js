@@ -1678,36 +1678,38 @@ async function displayUserProfile(userId) {
                 const updatedMsgBtn = document.getElementById('userProfileMessageBtn');
                 
                 updatedMsgBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    // Envoyer un premier message (ou ouvrir la conversation)
-                    try {
-                        // 1. Envoyer un message d’accueil (le destinataire recevra une notification)
-                        const result = await ConversationsAPI.sendMessage(userId, '👋 Bonjour !');
-                        if (result.success && result.conv_id) {
-                            // 2. Basculer vers l’onglet Chat
-                            const chatNav = document.querySelector('.nav-item[data-view="chat"]');
-                            if (chatNav) chatNav.click();
-                            
-                            // 3. Sélectionner la conversation dans la messagerie
-                            if (typeof MessagingManager !== 'undefined' && MessagingManager.selectConversation) {
-                                // Attendre un court instant que la vue chat soit active
-                                setTimeout(() => {
-                                    MessagingManager.selectConversation(result.conv_id, userId, document.getElementById('userProfileName').innerText);
-                                }, 300);
-                            }
-                            // 4. Fermer la modale
-                            const modal = document.getElementById('userProfileModal');
-                            if (modal) modal.classList.add('hidden');
-                            
-                            showNotification('success', 'Message envoyé', 'La conversation a été ouverte');
-                        } else {
-                            showNotification('error', 'Erreur', result.message || 'Impossible de créer la conversation');
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        showNotification('error', 'Erreur', 'Une erreur est survenue');
-                    }
-                };
+                  e.preventDefault();
+                  try {
+                      const formData = new FormData();
+                      formData.append('action', 'getOrCreateConversation');
+                      formData.append('user_id', userId);
+                      const response = await fetch(window.location.href, {
+                          method: 'POST',
+                          body: formData
+                      });
+                      const result = await response.json();
+                      if (result.success && result.conv_id) {
+                          // 2. Basculer vers l’onglet Chat
+                          const chatNav = document.querySelector('.nav-item[data-view="chat"]');
+                          if (chatNav) chatNav.click();
+                          // 3. Sélectionner la conversation dans la messagerie
+                          if (typeof MessagingManager !== 'undefined' && MessagingManager.selectConversation) {
+                              setTimeout(() => {
+                                  MessagingManager.selectConversation(result.conv_id, userId, document.getElementById('userProfileName').innerText);
+                              }, 300);
+                          }
+                          // 4. Fermer la modale
+                          const modal = document.getElementById('userProfileModal');
+                          if (modal) modal.classList.add('hidden');
+                          showNotification('success', 'Conversation ouverte', 'Vous pouvez maintenant envoyer un message');
+                      } else {
+                          showNotification('error', 'Erreur', result.message || 'Impossible de créer la conversation');
+                      }
+                  } catch (err) {
+                      console.error(err);
+                      showNotification('error', 'Erreur', 'Une erreur est survenue');
+                  }
+              };
             }
         }
 

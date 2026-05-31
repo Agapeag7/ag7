@@ -5433,10 +5433,28 @@ body.dark .modal-comment-input::placeholder,
 .post-type-badge.text { background: rgba(100,116,139,0.9); }
 
 /* ========== AVATARS AVEC IMAGES ========== */
+/* Correction des avatars dans la messagerie */
 .avatar {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Pour les initiales (sans photo) */
+.avatar:not(:has(img)) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  background: var(--emerald-500);
+  color: white;
 }
 
 .avatar[style*="background-image"] {

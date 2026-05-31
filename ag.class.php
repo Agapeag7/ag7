@@ -2763,6 +2763,26 @@ class Router {
         }
     }
 
+    private function actionGetOrCreateConversation() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+        $other_user_id = (int)($_POST['user_id'] ?? 0);
+        if (!$other_user_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Utilisateur ID manquant'], 400);
+        }
+        if ($other_user_id == $_SESSION['user_id']) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Vous ne pouvez pas créer une conversation avec vous-même'], 400);
+        }
+        $convModel = new ConversationModel($this->db);
+        $conv_id = $convModel->create($_SESSION['user_id'], $other_user_id);
+        if ($conv_id) {
+            Utils::jsonResponse(['success' => true, 'conv_id' => $conv_id]);
+        } else {
+            Utils::jsonResponse(['success' => false, 'message' => 'Impossible de créer la conversation'], 500);
+        }
+    }
+
     private function actionSendMessage() {
         if (!isset($_SESSION['user_id'])) {
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);

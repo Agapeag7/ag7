@@ -301,8 +301,8 @@ let currentUserProfile = {
             await loadStories();
 
             // ===== AJOUTER ICI =====
-            if (typeof MessagingManager !== 'undefined' && MessagingManager.stopAutoRefresh) {
-              MessagingManager.stopAutoRefresh();
+            if (typeof MessagingManager !== 'undefined') {
+              MessagingManager.init();
             }
 
             authForm.reset();

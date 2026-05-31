@@ -148,42 +148,7 @@ if (isset($_SESSION['user_id'])) {
             </div>
           </div>
           <div class="messages-container">
-            <div class="message-bubble">
-              Salut tout le monde ! Prêts pour la review ?
-              <div class="message-time">10:15</div>
-              <div class="message-actions">
-                <button class="message-action-btn" title="Répondre" data-action="reply"><i class="fas fa-reply"></i></button>
-                <button class="message-action-btn" title="Partager" data-action="share"><i class="fas fa-share"></i></button>
-                <button class="message-action-btn" title="Transférer" data-action="transfer"><i class="fas fa-arrow-right"></i></button>
-              </div>
-            </div>
-            <div class="message-bubble me">
-              Hello ! Oui, j'ai préparé les slides et le prototype.
-              <div class="message-time">10:18</div>
-              <div class="message-actions">
-                <button class="message-action-btn" title="Répondre" data-action="reply"><i class="fas fa-reply"></i></button>
-                <button class="message-action-btn" title="Partager" data-action="share"><i class="fas fa-share"></i></button>
-                <button class="message-action-btn" title="Transférer" data-action="transfer"><i class="fas fa-arrow-right"></i></button>
-              </div>
-            </div>
-            <div class="message-bubble">
-              Parfait, on se connecte à 14h. J'ai partagé le lien Meet.
-              <div class="message-time">10:20</div>
-              <div class="message-actions">
-                <button class="message-action-btn" title="Répondre" data-action="reply"><i class="fas fa-reply"></i></button>
-                <button class="message-action-btn" title="Partager" data-action="share"><i class="fas fa-share"></i></button>
-                <button class="message-action-btn" title="Transférer" data-action="transfer"><i class="fas fa-arrow-right"></i></button>
-              </div>
-            </div>
-            <div class="message-bubble me">
-              Super, à tout à l'heure !
-              <div class="message-time">10:21</div>
-              <div class="message-actions">
-                <button class="message-action-btn" title="Répondre" data-action="reply"><i class="fas fa-reply"></i></button>
-                <button class="message-action-btn" title="Partager" data-action="share"><i class="fas fa-share"></i></button>
-                <button class="message-action-btn" title="Transférer" data-action="transfer"><i class="fas fa-arrow-right"></i></button>
-              </div>
-            </div>
+            <!-- Les messages seront injectés ici dynamiquement -->
           </div>
           <div class="conversation-form">
             <button type="button" class="conversation-form-button"><i class="fas fa-face-smile"></i></button>
@@ -606,7 +571,6 @@ if (isset($_SESSION['user_id'])) {
     </div>
 
     <!-- Modale création sondage -->
-    <!-- Modale création sondage -->
     <div id="createPollModal" class="create-poll-modal hidden">
       <div class="create-poll-card">
         <button class="create-poll-close">&times;</button>
@@ -724,7 +688,7 @@ if (isset($_SESSION['user_id'])) {
             <h2 id="userProfileName" style="margin: 0;">Nom utilisateur</h2>
             <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: none; padding: 6px 16px; border-radius: 24px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;">Suivre</button>
             <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
-              <i class="fas fa-comment-dots"></i> Message
+              <i class="fas fa-comment-dots"></i>
             </button>
           </div>
           <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@username</p>
