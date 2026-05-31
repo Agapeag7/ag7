@@ -135,12 +135,12 @@ if (isset($_SESSION['user_id'])) {
         </div>
         <!-- Zone de discussion -->
         <div class="chat-conversation-area">
-          <div class="conversation-header">
+          <div class="conversation-header" style="display: none;">
             <button class="back-btn" id="backToList"><i class="fas fa-arrow-left"></i></button>
             <div class="avatar" style="width:44px;height:44px;margin-right:14px;"><i class="fas fa-comments"></i></div>
             <div>
-              <div class="conversation-name">Équipe Design</div>
-              <div style="font-size:13px;color:var(--text-secondary);"><span class="status-dot online"></span> En ligne · 4 membres</div>
+              <div class="conversation-name"></div>
+              <div style="font-size:13px;color:var(--text-secondary);"><span class="status-dot online"></span> <span class="conversation-status"></span></div>
             </div>
             <div style="margin-left: auto; display: flex; gap: 12px;">
               <i class="fas fa-phone-alt" style="color: var(--text-secondary); cursor: pointer;"></i>

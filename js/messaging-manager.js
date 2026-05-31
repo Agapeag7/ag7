@@ -45,7 +45,6 @@ const MessagingManager = {
    * Initialiser le gestionnaire de messagerie
    */
   async init() {
-    console.log('MessagingManager init...');
     this.currentUserId = await this.getCurrentUserId();
     if (!this.currentUserId) {
       console.error('Impossible de récupérer l\'ID utilisateur');
@@ -444,7 +443,7 @@ const MessagingManager = {
           sidebar.style.display = 'block';
           area.style.display = 'none';
         }
-        
+
         this.showEmptyState();
         this.currentConvId = null;
       });
