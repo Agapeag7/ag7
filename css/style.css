@@ -5714,37 +5714,210 @@ body.dark .messages-container::-webkit-scrollbar-thumb:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  transition: opacity 0.2s ease;
 }
 .create-channel-card {
   background: var(--card-bg);
-  border-radius: 24px;
+  border-radius: 32px;
   width: 90%;
-  max-width: 500px;
-  padding: 24px;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px 32px 32px;
   position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-light);
+  animation: fadeInUp 0.25s ease;
 }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .create-channel-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
+  top: 20px;
+  right: 24px;
+  background: var(--hover-bg);
   border: none;
-  font-size: 24px;
+  font-size: 26px;
+  font-weight: 500;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
+
+.create-channel-close:hover {
+  background: var(--border-light);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.create-channel-card h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.create-channel-card input[type="text"],
+.create-channel-card textarea {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  background: var(--bg-container);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: 0.2s;
+  color: var(--text-primary);
+}
+
+.create-channel-card input:focus,
+.create-channel-card textarea:focus {
+  outline: none;
+  border-color: var(--emerald-500);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.2);
+}
+
+.create-channel-card textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+#channelMembersSelect label {
+  font-weight: 500;
+  margin-bottom: 12px;
+  display: block;
+  color: var(--text-primary);
+}
+
 .members-checkboxes {
+  background: var(--hover-bg);
+  border-radius: 24px;
+  padding: 16px;
   max-height: 200px;
   overflow-y: auto;
-  margin: 12px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-light);
 }
+
+.members-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  font-weight: normal;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.members-checkboxes label:last-child {
+  border-bottom: none;
+}
+
+.members-checkboxes input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--emerald-500);
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Option canal éphémère */
+.create-channel-card > div:has(#channelEphemeral) {
+  margin-bottom: 28px;
+  background: var(--hover-bg);
+  padding: 16px;
+  border-radius: 24px;
+  border: 1px solid var(--border-light);
+}
+
+#channelEphemeral {
+  margin-right: 10px;
+  transform: scale(1.1);
+  accent-color: var(--emerald-500);
+}
+
+#ephemeralDate {
+  margin-top: 16px;
+  padding-left: 26px;
+}
+
+#ephemeralDate label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+#channelExpiresAt {
+  width: 100%;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--bg-container);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+#confirmCreateChannel {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--emerald-500);
+  border: none;
+  border-radius: 40px;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-top: 8px;
+}
+
+#confirmCreateChannel:hover {
+  background: var(--emerald-600);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(4, 120, 87, 0.3);
+}
+
+/* Scrollbar personnalisée pour les checkboxes */
+.members-checkboxes::-webkit-scrollbar {
+  width: 6px;
+}
+
+.members-checkboxes::-webkit-scrollbar-track {
+  background: var(--border-light);
+  border-radius: 10px;
+}
+
+.members-checkboxes::-webkit-scrollbar-thumb {
+  background: var(--emerald-500);
+  border-radius: 10px;
+}
+
 .conversation-separator {
   padding: 12px 20px;
   font-weight: bold;

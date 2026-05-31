@@ -483,6 +483,18 @@ const MessagingManager = {
     }
 
     const modal = document.getElementById('createChannelModal');
+    const closeBtn = modal.querySelector('.create-channel-close');
+
+    closeBtn.onclick = () => {
+      modal.classList.add('hidden');
+    };
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    };
+
     const checkboxesContainer = document.getElementById('membersCheckboxes');
     if (!modal || !checkboxesContainer) return;
 
