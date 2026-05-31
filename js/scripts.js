@@ -1435,9 +1435,9 @@ function renderDiscoverGrid() {
     userCard.style.cursor = 'pointer';
 
     userCard.addEventListener('click', (e) => {
-        if (!e.target.closest('.discover-follow-btn')) {
-            openUserProfile(user.id);
-        }
+      if (!e.target.closest('.discover-follow-btn')) {
+        openUserProfile(user.id);
+      }
     });
     
     const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -1511,15 +1511,15 @@ function renderDiscoverGrid() {
 
 async function openUserProfile(userId) {
     try {
-        const url = new URL(window.location.href);
-        url.searchParams.set('action', 'getUserProfile');
-        url.searchParams.set('user_id', userId);
-        const response = await fetch(url.toString());
-        const data = await response.json();
+      const url = new URL(window.location.href);
+      url.searchParams.set('action', 'getUserProfile');
+      url.searchParams.set('user_id', userId);
+      const response = await fetch(url.toString());
+      const data = await response.json();
         
         if (!data.success || !data.profile) {
-            showNotification('error', 'Erreur', 'Profil introuvable');
-            return;
+          showNotification('error', 'Erreur', 'Profil introuvable');
+          return;
         }
         
         const profile = data.profile;
@@ -1611,8 +1611,8 @@ async function openUserProfile(userId) {
         
         modal.classList.remove('hidden');
     } catch (err) {
-        console.error(err);
-        showNotification('error', 'Erreur', 'Impossible de charger le profil');
+      console.error(err);
+      showNotification('error', 'Erreur', 'Impossible de charger le profil');
     }
 }
 

@@ -5707,3 +5707,55 @@ body.dark .messages-container::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 
+/* Modale création canal */
+.create-channel-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.create-channel-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  width: 90%;
+  max-width: 500px;
+  padding: 24px;
+  position: relative;
+}
+.create-channel-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+.members-checkboxes {
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.conversation-separator {
+  padding: 12px 20px;
+  font-weight: bold;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-light);
+  margin-top: 12px;
+}
+.ephemeral-badge {
+  background: rgba(239,68,68,0.2);
+  color: #ef4444;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+}

@@ -12,6 +12,7 @@
 const MessagingManager = {
   currentConvId: null,
   currentUserId: null,
+  currentIsChannel: false,
   messageRefreshInterval: null,
   conversationsRefreshInterval: null,
   lastMessageCount: 0,
@@ -65,9 +66,8 @@ const MessagingManager = {
       console.error('Impossible de récupérer l\'ID utilisateur');
       return;
     }
-
     this.attachEventListeners();
-    await this.loadConversations();
+    await this.loadConversationsAndChannels(); // ← REMPLACER loadConversations()
     this.showEmptyState();
     this.startAutoRefresh();
     this.updateUnreadCount();
@@ -236,6 +236,41 @@ const MessagingManager = {
     if (convItem) convItem.remove();
   },
 
+  async selectChannel(canalId, channelName) {
+  this.currentConvId = canalId;
+  this.currentIsChannel = true; // nouvelle propriété
+
+  // Même gestion mobile que selectConversation
+  const sidebar = document.querySelector('.chat-sidebar-list');
+  const area = document.querySelector('.chat-conversation-area');
+  if (sidebar && area) {
+    sidebar.classList.remove('hidden');
+    area.classList.add('active-chat');
+    if (window.innerWidth <= 768) sidebar.classList.add('hidden');
+  }
+
+  this.showConversationArea();
+
+  // Mettre à jour le header
+  const header = document.querySelector('.conversation-header');
+    if (header) {
+      header.querySelector('.conversation-name').textContent = channelName;
+      // éventuellement ajouter une icône "canal"
+    }
+
+    // Charger les messages du canal
+    await this.loadChannelMessages(canalId);
+
+    // Pas de marquage de lecture pour les canaux (optionnel)
+  },
+
+  async loadChannelMessages(canalId, limit = 50) {
+    const result = await ConversationsAPI.getChannelMessages(canalId, limit);
+    if (result.success) {
+      this.displayMessages(result.messages, true); // paramètre isChannel = true
+    }
+  },
+
   /**
    * Charger et afficher les messages d'une conversation
    */
@@ -257,7 +292,7 @@ const MessagingManager = {
   /**
    * Afficher les messages dans la zone de conversation
    */
-  displayMessages(messages) {
+  displayMessages(messages, isChannel = false) {
     const container = document.querySelector('.messages-container');
     if (!container) return;
 
@@ -325,10 +360,24 @@ const MessagingManager = {
     }
 
     try {
+      if (this.currentIsChannel) {
+        const result = await ConversationsAPI.sendChannelMessage(this.currentConvId, content);
+        if (!result.success) {
+          showNotification('error', 'Erreur', result.message || 'Erreur lors de l\'envoi');
+          return;
+        }
+        // Réinitialiser l'input
+        const textarea = document.querySelector('.conversation-form-input');
+        if (textarea) textarea.value = '';
+        // Recharger les messages du canal
+        await this.loadChannelMessages(this.currentConvId);
+        showNotification('success', 'Succès', 'Message envoyé');
+        return;
+      }
+
       // Récupérer l'ID du destinataire depuis la conversation sélectionnée
       const convItem = document.querySelector(`[data-conv-id="${this.currentConvId}"]`);
       const recipientId = convItem?.dataset.userId;
-
       if (!recipientId) {
         showNotification('error', 'Erreur', 'Destinataire non identifié');
         return;
@@ -379,7 +428,7 @@ const MessagingManager = {
   },
 
   // Ouvrir la modale de transfert
-showForwardModal(msgId, content) {
+  showForwardModal(msgId, content) {
     const modal = document.createElement('div');
     modal.className = 'forward-modal';
     modal.innerHTML = `
@@ -421,6 +470,59 @@ showForwardModal(msgId, content) {
     modal.querySelector('.cancel-forward').onclick = () => modal.remove();
   },
 
+  async openCreateChannelModal() {
+    // Récupérer les utilisateurs (abonnés / abonnements)
+    const url = new URL(window.location.href);
+    url.searchParams.set('action', 'getDiscoverUsers');
+    url.searchParams.set('limit', 50);
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (!data.success || !data.users) {
+      showNotification('error', 'Erreur', 'Impossible de charger les membres');
+      return;
+    }
+
+    const modal = document.getElementById('createChannelModal');
+    const checkboxesContainer = document.getElementById('membersCheckboxes');
+    if (!modal || !checkboxesContainer) return;
+
+    checkboxesContainer.innerHTML = '';
+    data.users.forEach(user => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" value="${user.id}"> ${user.name} (@${user.username})`;
+      checkboxesContainer.appendChild(label);
+    });
+
+    const ephemeralCheck = document.getElementById('channelEphemeral');
+    const ephemeralDateDiv = document.getElementById('ephemeralDate');
+    ephemeralCheck.addEventListener('change', () => {
+      ephemeralDateDiv.style.display = ephemeralCheck.checked ? 'block' : 'none';
+    });
+
+    const confirmBtn = document.getElementById('confirmCreateChannel');
+    confirmBtn.onclick = async () => {
+      const name = document.getElementById('channelName').value.trim();
+      const desc = document.getElementById('channelDesc').value.trim();
+      const members = Array.from(checkboxesContainer.querySelectorAll('input:checked')).map(cb => parseInt(cb.value));
+      const isEphemeral = ephemeralCheck.checked;
+      const expiresAt = isEphemeral ? document.getElementById('channelExpiresAt').value : null;
+
+      if (!name || members.length < 2) {
+        showNotification('warning', 'Attention', 'Nom requis et au moins 2 autres membres');
+        return;
+      }
+      const result = await ConversationsAPI.createChannel(name, desc, members, isEphemeral, expiresAt);
+      if (result.success) {
+        showNotification('success', 'Canal créé', '');
+        modal.classList.add('hidden');
+        await this.loadChannels(); // recharger la liste
+      } else {
+        showNotification('error', 'Erreur', result.message);
+      }
+    };
+    modal.classList.remove('hidden');
+  },
+
   /**
    * Mettre à jour le badge de messages non-lus
    */
@@ -446,6 +548,65 @@ showForwardModal(msgId, content) {
     } catch (error) {
       console.error('Erreur updateUnreadCount:', error);
     }
+  },
+
+  // Après le chargement des conversations privées, charger les canaux
+  async loadConversationsAndChannels() {
+    await this.loadConversations(); // privées
+    await this.loadChannels();      // canaux
+  },
+
+  async loadChannels() {
+    const result = await ConversationsAPI.getChannels();
+    if (result.success && result.channels) {
+      this.displayChannels(result.channels);
+    }
+  },
+
+  displayChannels(channels) {
+    const conversationList = document.querySelector('.conversation-list');
+    if (!conversationList) return;
+
+    // Ajouter un séparateur ou un titre "Canaux"
+    const separator = document.createElement('li');
+    separator.className = 'conversation-separator';
+    separator.textContent = 'Canaux';
+    conversationList.appendChild(separator);
+
+    channels.forEach(channel => {
+      const li = document.createElement('li');
+      li.className = `conversation-item-chat ${channel.canal_id === this.currentConvId ? 'active' : ''}`;
+      li.dataset.convId = channel.canal_id;
+      li.dataset.isChannel = 'true';   // marqueur pour différencier
+
+      // Avatar de canal (icône groupe)
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'avatar';
+      avatarDiv.innerHTML = '<i class="fas fa-users"></i>';
+
+      // Info canal
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'conversation-info';
+      infoDiv.innerHTML = `
+        <div class="conversation-name">${escapeHtml(channel.canal_name)}</div>
+        <div class="conversation-lastmsg">${escapeHtml(channel.last_message || 'Nouveau canal')}</div>
+      `;
+
+      // Meta (timestamp éphémère)
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'conversation-meta';
+      if (channel.is_ephemeral && channel.expires_at) {
+        metaDiv.innerHTML = `<span class="ephemeral-badge"><i class="fas fa-hourglass-half"></i> Éphémère</span>`;
+      } else {
+        metaDiv.innerHTML = `<span class="timestamp">${this.formatTimestamp(channel.last_message_time)}</span>`;
+      }
+
+      li.appendChild(avatarDiv);
+      li.appendChild(infoDiv);
+      li.appendChild(metaDiv);
+      li.addEventListener('click', () => this.selectChannel(channel.canal_id, channel.canal_name));
+      conversationList.appendChild(li);
+    });
   },
 
   /**
@@ -515,6 +676,11 @@ showForwardModal(msgId, content) {
         this.showEmptyState();
         this.currentConvId = null;
       });
+    }
+
+    const newChannelBtn = document.getElementById('newChannelBtn');
+    if (newChannelBtn) {
+      newChannelBtn.addEventListener('click', () => this.openCreateChannelModal());
     }
   },
 

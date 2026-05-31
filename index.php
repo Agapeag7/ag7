@@ -129,6 +129,11 @@ if (isset($_SESSION['user_id'])) {
             <input type="text" placeholder="Rechercher une conversation...">
             <button><i class="fas fa-search"></i></button>
           </div>
+          
+          <button id="newChannelBtn" class="btn-secondary" style="margin: 12px; width: calc(100% - 24px);">
+            <i class="fas fa-plus-circle"></i> Nouveau canal
+          </button>
+
           <ul class="conversation-list">
             <!-- Les conversations seront chargées dynamiquement par MessagingManager -->
           </ul>
