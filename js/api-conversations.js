@@ -24,7 +24,8 @@ const ConversationsAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -61,7 +62,8 @@ const ConversationsAPI = {
       url.searchParams.set('offset', offset);
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+        method: 'GET',
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -96,7 +98,8 @@ const ConversationsAPI = {
       url.searchParams.set('offset', offset);
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+        method: 'GET',
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -131,7 +134,8 @@ const ConversationsAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -157,7 +161,8 @@ const ConversationsAPI = {
       url.searchParams.set('action', 'getUnreadCount');
 
       const response = await fetch(url.toString(), {
-        method: 'GET'
+        method: 'GET',
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -191,7 +196,8 @@ const ConversationsAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -220,7 +226,8 @@ const ConversationsAPI = {
 
       const response = await fetch(window.location.href, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -246,7 +253,8 @@ const ConversationsAPI = {
         
         const response = await fetch(window.location.href, {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
         const data = await response.json();
         if (!response.ok || !data.success) {
@@ -267,7 +275,11 @@ const ConversationsAPI = {
     formData.append('members', JSON.stringify(members));
     formData.append('is_ephemeral', isEphemeral);
     if (expiresAt) formData.append('expires_at', expiresAt);
-    const response = await fetch(window.location.href, { method: 'POST', body: formData });
+    const response = await fetch(window.location.href, { 
+      method: 'POST', 
+      body: formData, 
+      credentials: 'include' 
+    });
     return await response.json();
   },
 
@@ -282,7 +294,11 @@ const ConversationsAPI = {
       formData.append('action', 'sendChannelMessage');
       formData.append('canal_id', canal_id);
       formData.append('content', content);
-      const response = await fetch(window.location.href, { method: 'POST', body: formData });
+      const response = await fetch(window.location.href, { 
+        method: 'POST', 
+        body: formData,
+        credentials: 'include'
+      });
       return await response.json();
   },
   async getChannelMessages(canal_id, limit = 50, offset = 0) {
@@ -298,7 +314,11 @@ const ConversationsAPI = {
       const formData = new FormData();
       formData.append('action', 'deleteChannel');
       formData.append('canal_id', canal_id);
-      const response = await fetch(window.location.href, { method: 'POST', body: formData });
+      const response = await fetch(window.location.href, { 
+        method: 'POST', 
+        body: formData, 
+        credentials: 'include' 
+      });
       return await response.json();
   }
 };

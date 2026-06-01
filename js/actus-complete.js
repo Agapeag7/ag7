@@ -59,6 +59,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   setTimeout(() => {
     setupDeleteModal();
   }, 100);
+
+  document.addEventListener('click', (e) => {
+    const closeBtn = e.target.closest('.user-profile-close');
+    if (closeBtn) {
+        const modal = closeBtn.closest('.user-profile-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+  });
   
 });
 
@@ -337,7 +345,8 @@ function showRecordedAudioInPreview(blob, duration) {
 async function fetchCurrentUser() {
   try {
     const response = await fetch(`${window.location.href}?action=getCurrentProfile`, {
-      method: 'GET'
+      method: 'GET',
+      credentials: 'include'
     });
     
     // Vérifier le statut de la réponse
@@ -1619,7 +1628,8 @@ async function displayUserProfile(userId) {
 
         // Récupérer les infos utilisateur
         const response = await fetch(`${window.location.href}?action=getUserProfile&user_id=${userId}`, {
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         });
 
         const data = await response.json();
@@ -1685,7 +1695,8 @@ async function displayUserProfile(userId) {
                       formData.append('user_id', userId);
                       const response = await fetch(window.location.href, {
                           method: 'POST',
-                          body: formData
+                          body: formData,
+                          credentials: 'include'
                       });
                       const result = await response.json();
                       if (result.success && result.conv_id) {
@@ -1738,7 +1749,8 @@ async function displayUserProfile(userId) {
 
                     const response = await fetch(window.location.href, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        credentials: 'include'
                     });
                     const result = await response.json();
 
@@ -2147,7 +2159,8 @@ async function loadPollForPost(postId) {
   try {
     // Get poll by post_id
     const response = await fetch(`?action=getPollByPost&post_id=${postId}`, {
-      method: 'GET'
+      method: 'GET',
+      credentials: 'include'
     });
     const data = await response.json();
     return data.success && data.poll ? data.poll : null;
@@ -2208,12 +2221,10 @@ async function handlePollVote(postElement, optionId, pollId) {
   
   try {
     const response = await fetch(`?action=votePoll`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        poll_id: pollId,
-        option_id: optionId
-      })
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ poll_id: pollId, option_id: optionId }),
+        credentials: 'include'
     });
     
     const data = await response.json();

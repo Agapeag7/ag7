@@ -1,21 +1,21 @@
 <?php
-// ===== BACKEND - AJAX Handler =====
 // Configurer et démarrer la session AVANT tout
 if (session_status() === PHP_SESSION_NONE) {
+    $is_secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
-        'secure' => false,
+        'secure' => $is_secure,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
     session_start();
 }
 
-// Inclure la classe au démarrage pour les appels AJAX
+// Inclure la classe pour les appels AJAX (la session est déjà démarrée)
 if ((($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET') && isset($_REQUEST['action']))) {
     include 'ag.class.php';
-    exit; // Le auto-router d'ag.class.php va s'exécuter et appeler exit
+    exit;
 }
 
 // Vérifier si utilisateur déjà connecté

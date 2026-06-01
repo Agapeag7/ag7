@@ -63,11 +63,11 @@ const MessagingManager = {
   async init() {
     this.currentUserId = await this.getCurrentUserId();
     if (!this.currentUserId) {
-      console.error('Impossible de récupérer l\'ID utilisateur');
-      return;
+        console.warn('MessagingManager: utilisateur non connecté, initialisation reportée');
+        return;
     }
     this.attachEventListeners();
-    await this.loadConversationsAndChannels(); // ← REMPLACER loadConversations()
+    await this.loadConversationsAndChannels();
     this.showEmptyState();
     this.startAutoRefresh();
     this.updateUnreadCount();
@@ -700,12 +700,12 @@ const MessagingManager = {
    * Démarrer l'auto-refresh des conversations et des non-lus
    */
   startAutoRefresh() {
-    // Rafraîchir les conversations toutes les 30s
+    if (!this.currentUserId) return;
+
     this.conversationsRefreshInterval = setInterval(() => {
-      this.loadConversations();
+        this.loadConversations();
     }, 30000);
 
-    // Rafraîchir les non-lus toutes les 10s
     setInterval(() => {
       this.updateUnreadCount();
     }, 10000);

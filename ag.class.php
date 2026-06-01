@@ -14,10 +14,6 @@
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 
-// Session is already started by index.php - verify it's active
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 class Database {
     private $pdo;
@@ -2908,6 +2904,8 @@ class Router {
     }
 
     private function actionGetMessages() {
+        error_log("getMessages - session user_id: " . ($_SESSION['user_id'] ?? 'NULL'));
+
         if (!isset($_SESSION['user_id'])) {
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
         }

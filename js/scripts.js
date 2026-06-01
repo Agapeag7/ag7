@@ -1351,7 +1351,10 @@ async function loadDiscoverUsers() {
     url.searchParams.set('action', 'getDiscoverUsers');
     url.searchParams.set('limit', 20);
     
-    const response = await fetch(url.toString(), { method: 'GET' });
+    const response = await fetch(url.toString(), { 
+      method: 'GET',
+      credentials: 'include'
+    });
     const data = await response.json();
     
     if (data.success) {
@@ -1431,7 +1434,8 @@ function renderDiscoverGrid() {
         
         const response = await fetch(window.location.href, {
           method: 'POST',
-          body: formData
+          body: formData,
+          credentials: 'include'
         });
         
         const data = await response.json();
@@ -1634,19 +1638,27 @@ async function loadCurrentProfile() {
     formData.append('action', 'getCurrentProfile');
     
     const response = await fetch(window.location.href, {
-      method: 'POST',
-      body: formData
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
     });
     
     if (!response.ok) {
       console.error('Erreur HTTP:', response.status);
+      if (response.status === 401) {
+        showNotification('error', 'Session expirée', 'Veuillez vous reconnecter');
+        // Déconnecter l'utilisateur et afficher l'écran de login
+        document.getElementById('app-section').classList.add('hidden');
+        document.getElementById('login-section').classList.remove('hidden');
+        return false;
+      }
       return false;
     }
     
     const result = await response.json();
     if (!result.success) {
-      console.error('Erreur serveur:', result.message);
-      return false;
+        console.error('Erreur serveur:', result.message);
+        return false;
     }
     
     const profile = result.profile;
@@ -1655,6 +1667,8 @@ async function loadCurrentProfile() {
     currentUserProfile.profilePhoto = null;
     currentUserProfile.coverPhoto = null;
     currentUserProfile.posts = []; // Réinitialiser les posts
+
+    currentUserProfile = { ...currentUserProfile, posts: [] };
     
     // Mettre à jour currentUserProfile avec les vraies données
     currentUserProfile.name = profile.user_name || "User";
@@ -1901,9 +1915,10 @@ async function handlePollVoteDetail(pollContainer, optionId, pollId, postId) {
   }
   try {
     const response = await fetch(`?action=votePoll`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ poll_id: pollId, option_id: optionId })
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ poll_id: pollId, option_id: optionId }),
+        credentials: 'include'
     });
     const data = await response.json();
     if (data.success && data.poll) {
@@ -2083,7 +2098,10 @@ async function openFollowModal(type, userId = null) {
         url.searchParams.set('limit', 50);
         url.searchParams.set('offset', 0);
 
-        const response = await fetch(url.toString(), { method: 'GET' });
+        const response = await fetch(url.toString(), { 
+          method: 'GET',
+          credentials: 'include'
+        });
         const data = await response.json();
 
         if (!data.success) {
@@ -2143,7 +2161,8 @@ async function openFollowModal(type, userId = null) {
 
                     const response = await fetch(window.location.href, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        credentials: 'include'
                     });
                     const result = await response.json();
 
@@ -2355,7 +2374,8 @@ editProfileForm.addEventListener('submit', async (e) => {
     
     const response = await fetch(window.location.href, {
       method: 'POST',
-      body: formData
+      body: formData,
+      credentials: 'include'
     });
     
     const result = await response.json();
@@ -2533,7 +2553,7 @@ publishPollBtn.addEventListener('click', async () => {
 
     const url = new URL(window.location.href);
     url.searchParams.set('action', 'createPoll');
-    const pollResponse = await fetch(url.toString(), { method: 'POST', body: pollFormData });
+    const pollResponse = await fetch(url.toString(), { method: 'POST', body: pollFormData, credentials: 'include' });
     const pollData = await pollResponse.json();
 
     if (!pollData.success) {
@@ -2627,7 +2647,8 @@ if (changeCoverBtn) {
 
             const response = await fetch(window.location.href, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'include'
             });
 
             const result = await response.json();
