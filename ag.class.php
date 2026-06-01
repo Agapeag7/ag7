@@ -1534,7 +1534,30 @@ class Router {
         $_SESSION['user_id'] = $userData['user_id'];
         $_SESSION['user_username'] = $userData['user_username'];
         
-        Utils::jsonResponse(['success' => true, 'message' => 'Connexion réussie', 'user' => $userData]);
+        error_log('Login successful for user: ' . $userData['user_id']);
+        
+        // Récupérer les stats complètes pour retourner immédiatement
+        $follow = new AbonnementModel($this->db);
+        $pub = new PublicationModel($this->db);
+        
+        $userData['posts_count'] = $pub->getCountByUser($userData['user_id']);
+        $userData['followers_count'] = $follow->getFollowersCount($userData['user_id']);
+        $userData['following_count'] = $follow->getFollowingCount($userData['user_id']);
+        
+        // Formater la date
+        if (!empty($userData['created_at'])) {
+            $dateObj = new DateTime($userData['created_at']);
+            $userData['member_since'] = $dateObj->format('F Y');
+            $enToFr = [
+                'January' => 'Janvier', 'February' => 'Février', 'March' => 'Mars',
+                'April' => 'Avril', 'May' => 'Mai', 'June' => 'Juin',
+                'July' => 'Juillet', 'August' => 'Août', 'September' => 'Septembre',
+                'October' => 'Octobre', 'November' => 'Novembre', 'December' => 'Décembre'
+            ];
+            $userData['member_since'] = strtr($userData['member_since'], $enToFr);
+        }
+        
+        Utils::jsonResponse(['success' => true, 'message' => 'Connexion réussie', 'user' => $userData, 'profile' => $userData]);
     }
     
     private function actionLogout() {
@@ -3325,6 +3348,11 @@ class Router {
 
 // Auto-router pour les appels AJAX
 if (php_sapi_name() !== 'cli' && !defined('AG7_NO_AUTO_ROUTER')) {
+    // Assurez-vous que la session est démarrée AVANT de traiter les actions
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
     if (isset($_REQUEST['action'])) {
         (new Router())->handle();
     }

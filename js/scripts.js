@@ -321,6 +321,46 @@ let currentUserProfile = {
             showNotification('error', 'Erreur', data.message || 'Une erreur est survenue');
           }
         }
+        
+        // Succès du login: utiliser les données du profil retournées pour éviter un appel supplémentaire
+        if (data.success && isLoginMode && data.profile) {
+          setTimeout(async () => {
+            // Charger le profil directement depuis la réponse du login
+            const profile = data.profile;
+            currentUserProfile = {
+              name: profile.user_name || "User",
+              username: '@' + (profile.user_username || "user"),
+              bio: profile.user_bio || "Pas de bio",
+              location: profile.user_location || "Localisation inconnue",
+              memberSince: profile.member_since || "Janvier 2024",
+              userid: profile.user_id,
+              avatarInitials: profile.user_name
+                ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                : 'U',
+              profilePhoto: profile.user_photo_url ? getPhotoURL(profile.user_photo_url) : null,
+              coverPhoto: profile.user_cover_photo_url ? getPhotoURL(profile.user_cover_photo_url) : null,
+              postsCount: profile.posts_count || 0,
+              followers_count: profile.followers_count || 0,
+              following_count: profile.following_count || 0,
+              posts: []
+            };
+            
+            loginSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+
+            updateProfileUI();
+            await loadStories();
+
+            // ===== AJOUTER ICI =====
+            if (typeof MessagingManager !== 'undefined') {
+              MessagingManager.init();
+            }
+
+            authForm.reset();
+            setAuthMode(true);
+            selectedProfilePhoto = null;
+          }, 1500);
+        }
       })
       .catch(err => {
         // Les erreurs sont déjà affichées en notification, pas besoin de log console
@@ -1646,12 +1686,18 @@ async function loadCurrentProfile() {
     if (!response.ok) {
       console.error('Erreur HTTP:', response.status);
       if (response.status === 401) {
+        console.warn('Session non valide ou expirée. Retour au login.');
         showNotification('error', 'Session expirée', 'Veuillez vous reconnecter');
         // Déconnecter l'utilisateur et afficher l'écran de login
-        document.getElementById('app-section').classList.add('hidden');
-        document.getElementById('login-section').classList.remove('hidden');
+        const appSection = document.getElementById('app-section');
+        const loginSection = document.getElementById('login-section');
+        if (appSection && loginSection) {
+          appSection.classList.add('hidden');
+          loginSection.classList.remove('hidden');
+        }
         return false;
       }
+      console.error('Erreur serveur:', response.statusText);
       return false;
     }
     
@@ -1662,43 +1708,51 @@ async function loadCurrentProfile() {
     }
     
     const profile = result.profile;
+    if (!profile) {
+        console.error('Profil vide reçu du serveur');
+        return false;
+    }
     
     // IMPORTANT : Réinitialiser TOUS les champs pour éviter les données fantômes lors d'un changement de compte
-    currentUserProfile.profilePhoto = null;
-    currentUserProfile.coverPhoto = null;
-    currentUserProfile.posts = []; // Réinitialiser les posts
-
-    currentUserProfile = { ...currentUserProfile, posts: [] };
-    
-    // Mettre à jour currentUserProfile avec les vraies données
-    currentUserProfile.name = profile.user_name || "User";
-    currentUserProfile.username = '@' + (profile.user_username || "user");
-    currentUserProfile.bio = profile.user_bio || "Pas de bio";
-    currentUserProfile.location = profile.user_location || "Localisation inconnue";
-    currentUserProfile.memberSince = profile.member_since || "Janvier 2024";
-    currentUserProfile.userid = profile.user_id; // Stocker l'ID utilisateur
-    currentUserProfile.avatarInitials = profile.user_name
-      ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-      : 'U';
-    
-    // Définir la photo de profil
-    if (profile.user_photo_url) {
-      currentUserProfile.profilePhoto = getPhotoURL(profile.user_photo_url);
-    }
-    
-    // Définir la photo de couverture
-    if (profile.user_cover_photo_url) {
-      currentUserProfile.coverPhoto = getPhotoURL(profile.user_cover_photo_url);
-    }
-    
-    // Mettre à jour les stats RÉELLES de la base de données
-    currentUserProfile.postsCount = profile.posts_count || 0;
-    currentUserProfile.followers_count = profile.followers_count || 0;
-    currentUserProfile.following_count = profile.following_count || 0;
+    currentUserProfile = {
+      name: profile.user_name || "User",
+      username: '@' + (profile.user_username || "user"),
+      bio: profile.user_bio || "Pas de bio",
+      location: profile.user_location || "Localisation inconnue",
+      memberSince: profile.member_since || "Janvier 2024",
+      userid: profile.user_id,
+      avatarInitials: profile.user_name
+        ? profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        : 'U',
+      profilePhoto: profile.user_photo_url ? getPhotoURL(profile.user_photo_url) : null,
+      coverPhoto: profile.user_cover_photo_url ? getPhotoURL(profile.user_cover_photo_url) : null,
+      postsCount: profile.posts_count || 0,
+      followers_count: profile.followers_count || 0,
+      following_count: profile.following_count || 0,
+      posts: [] // Toujours initialiser comme array
+    };
     
     return true;
   } catch (e) {
     console.error('Erreur au chargement du profil:', e);
+    // S'assurer que currentUserProfile reste valide même en cas d'erreur
+    if (!currentUserProfile) {
+      currentUserProfile = {
+        name: "User",
+        username: "@user",
+        bio: "Pas de bio",
+        location: "Localisation inconnue",
+        memberSince: "Janvier 2024",
+        userid: null,
+        avatarInitials: "U",
+        profilePhoto: null,
+        coverPhoto: null,
+        postsCount: 0,
+        followers_count: 0,
+        following_count: 0,
+        posts: []
+      };
+    }
     return false;
   }
 }
@@ -2028,14 +2082,15 @@ function updateProfileUI() {
           `;
           badgeHtml = `<span class="post-type-badge poll"><i class="fas fa-poll"></i> Face-Off</span>`;
         }
-        else if (post.images && post.images.length > 0) {
+        else if (post.images && Array.isArray(post.images) && post.images.length > 0) {
           // Image(s)
           contentHtml = `<img src="${post.images[0]}" class="grid-post-image" alt="post" loading="lazy">`;
           badgeHtml = `<span class="post-type-badge image"><i class="fas fa-image"></i> Photo</span>`;
         }
         else {
           // Texte seul
-          const previewText = post.content.length > 80 ? post.content.substring(0, 80) + '...' : post.content;
+          const contentText = post.content || "Publication";
+          const previewText = contentText.length > 80 ? contentText.substring(0, 80) + '...' : contentText;
           contentHtml = `
             <div style="padding: 16px; height: 200px; display: flex; align-items: center; justify-content: center; background: var(--hover-bg);">
               <p style="margin: 0; font-size: 13px; color: var(--text-primary); text-align: center; line-height: 1.4;">${escapeHtml(previewText)}</p>
@@ -2411,17 +2466,19 @@ editProfileForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Initialisation - Charger le profil réel d'abord
+// Initialização - Charger le profil réel d'abord
 if (typeof loadCurrentProfile === 'function') {
-  loadCurrentProfile().then(() => {
-    updateProfileUI();
+  loadCurrentProfile().then((success) => {
+    // Atualizar UI somente se loadCurrentProfile foi bem-sucedido
+    if (success) {
+      updateProfileUI();
+    }
   }).catch(err => {
     console.error('Impossible de charger le profil:', err);
-    // Mettre à jour quand même avec les données par défaut
+    // Inicializar com dados padrão e ainda atualizar UI
     updateProfileUI();
   });
 } else {
-  
   updateProfileUI();
 }
 
