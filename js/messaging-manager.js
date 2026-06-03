@@ -94,6 +94,10 @@ const MessagingManager = {
     }
 
     if (type === 'channel') {
+      // Charger les messages du canal
+      const msgs = await ConversationsAPI.getChannelMessages(id, 50);
+      if (msgs.success) this.displayMessages(msgs.messages, true);
+      
       let deleteBtn = header?.querySelector('.channel-delete-btn');
       if (!deleteBtn) {
         deleteBtn = document.createElement('button');
@@ -255,82 +259,6 @@ const MessagingManager = {
     });
   },
 
-
-  /**
-   * Sélectionner une conversation et charger ses messages
-   */
-  // async selectConversation(convId, userId, userName) {
-  //   this.currentConvId = convId;
-
-  //   // --- NOUVEAU : Gestion de l'affichage mobile ---
-  //   const sidebar = document.querySelector('.chat-sidebar-list');
-  //   const area = document.querySelector('.chat-conversation-area');
-  //   if (sidebar && area) {
-  //     // Sur tous les écrans, on peut s'assurer que la sidebar n'a pas la classe 'hidden'
-  //     sidebar.classList.remove('hidden');
-  //     area.classList.add('active-chat');
-  //     // Sur mobile, on masque la sidebar (le CSS fera le reste avec la media query)
-  //     if (window.innerWidth <= 768) {
-  //       sidebar.classList.add('hidden');
-  //     }
-  //   }
-
-  //   this.showConversationArea(); // Affiche header et formulaire
-
-  //   // Mettre à jour l'UI
-  //   document.querySelectorAll('.conversation-item-chat').forEach(item => {
-  //     item.classList.remove('active');
-  //   });
-  //   document.querySelector(`[data-conv-id="${convId}"]`)?.classList.add('active');
-
-  //   // Mettre à jour le header
-  //   const header = document.querySelector('.conversation-header');
-  //   if (header) {
-  //     const nameEl = header.querySelector('.conversation-name');
-  //     if (nameEl) nameEl.textContent = userName;
-  //   }
-
-  //   const msgs = await ConversationsAPI.getMessages(convId, 50, 0);
-  //   if (msgs.success) {
-  //     this.displayMessages(msgs.messages || []);
-  //   }
-
-  //   // Marquer comme lue
-  //   await ConversationsAPI.markConversationRead(convId);
-
-  //   // Supprimer le badge non-lus
-  //   const convItem = document.querySelector(`[data-conv-id="${convId}"] .unread-badge`);
-  //   if (convItem) convItem.remove();
-  // },
-
-  // async selectChannel(canalId, channelName) {
-  //   this.currentConvId = canalId;
-  //   this.currentIsChannel = true; // nouvelle propriété
-
-  //   // Même gestion mobile que selectConversation
-  //   const sidebar = document.querySelector('.chat-sidebar-list');
-  //   const area = document.querySelector('.chat-conversation-area');
-  //   if (sidebar && area) {
-  //     sidebar.classList.remove('hidden');
-  //     area.classList.add('active-chat');
-  //     if (window.innerWidth <= 768) sidebar.classList.add('hidden');
-  //   }
-
-  //   this.showConversationArea();
-
-  //   // Mettre à jour le header
-  //   const header = document.querySelector('.conversation-header');
-  //   if (header) {
-  //     header.querySelector('.conversation-name').textContent = channelName;
-  //     // éventuellement ajouter une icône "canal"
-  //   }
-
-  //   const msgs = await ConversationsAPI.getChannelMessages(canalId, 50);
-  //   if (msgs.success) {
-  //     this.displayMessages(msgs.messages, true);
-  //   }
-  // },
-
   /**
    * Afficher les messages dans la zone de conversation
    */
@@ -411,9 +339,9 @@ const MessagingManager = {
         // Réinitialiser l'input
         const textarea = document.querySelector('.conversation-form-input');
         if (textarea) textarea.value = '';
-      // Recharger les messages du canal (appel API direct)
-      const msgs = await ConversationsAPI.getChannelMessages(this.currentConvId, 50);
-      if (msgs.success) this.displayMessages(msgs.messages, true);
+        // Recharger les messages du canal (appel API direct)
+        const msgs = await ConversationsAPI.getChannelMessages(this.currentConvId, 50);
+        if (msgs.success) this.displayMessages(msgs.messages, true);
         showNotification('success', 'Succès', 'Message envoyé');
         return;
       }
@@ -693,13 +621,6 @@ const MessagingManager = {
     }
   },
 
-  // async loadChannels() {
-  //   const channelsResult = await ConversationsAPI.getChannels();
-  //   if (channelsResult.success && channelsResult.channels) {
-  //     this.displayConversationList(channels, 'channel');
-  //   }
-  // },
-
   /**
    * Formater le timestamp pour affichage
    */
@@ -802,8 +723,15 @@ const MessagingManager = {
     this.messageRefreshInterval = setInterval(async () => {
       if (this.currentConvId) {
         if (this.currentIsChannel) {
+          const result = await ConversationsAPI.sendChannelMessage(this.currentConvId, content);
+          if (!result.success) return;
+          const textarea = document.querySelector('.conversation-form-input');
+          if (textarea) textarea.value = '';
+          // Recharger les messages (correctement indenté)
           const msgs = await ConversationsAPI.getChannelMessages(this.currentConvId, 50);
           if (msgs.success) this.displayMessages(msgs.messages, true);
+          showNotification('success', 'Succès', 'Message envoyé');
+          return;
         } else {
           const msgs = await ConversationsAPI.getMessages(this.currentConvId, 50, 0);
           if (msgs.success) this.displayMessages(msgs.messages || []);
