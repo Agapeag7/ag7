@@ -231,7 +231,14 @@ class Utils {
         return false;
     }
     
-    public static function uploadPostImage($tmpName, $fileName) {
+    /**
+     * Upload une image (post ou story)
+     * @param string $tmpName - Path temporaire du fichier
+     * @param string $fileName - Nom original du fichier
+     * @param string $type - Type: 'post' ou 'story'
+     * @return string|false - Nom du fichier ou false
+     */
+    public static function uploadImage($tmpName, $fileName, $type = 'post') {
         $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         if (!in_array($ext, $allowedExt)) {
@@ -239,18 +246,22 @@ class Utils {
             return false;
         }
 
-        $uploadDir = __DIR__ . '/pub';
+        // Déterminer le répertoire et le préfixe selon le type
+        $uploadDir = ($type === 'story') ? __DIR__ . '/story' : __DIR__ . '/pub';
+        $prefix = ($type === 'story') ? 'story_' : 'post_';
+        $typeLabel = ($type === 'story') ? 'Story' : 'Post';
+        
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
         if (!is_writable($uploadDir)) chmod($uploadDir, 0777);
 
-        $imageName = 'post_' . time() . '_' . uniqid() . '.' . $ext;
+        $imageName = $prefix . time() . '_' . uniqid() . '.' . $ext;
         $tempPath = $uploadDir . '/' . $imageName . '.tmp';
         $finalPath = $uploadDir . '/' . $imageName;
 
         if (@move_uploaded_file($tmpName, $tempPath)) {
             if (self::compressImage($tempPath, $finalPath, 500, 1200)) {
                 @unlink($tempPath);
-                error_log("Image de post compressée: $imageName");
+                error_log("Image de $typeLabel compressée: $imageName");
                 return $imageName;
             } else {
                 // Si la compression échoue, on garde l'original (renommer le temp)
@@ -261,129 +272,82 @@ class Utils {
         return false;
     }
 
+    // DEPRECATED: Utilisez uploadImage($tmpName, $fileName, 'post')
+    public static function uploadPostImage($tmpName, $fileName) {
+        return self::uploadImage($tmpName, $fileName, 'post');
+    }
+
+    // DEPRECATED: Utilisez uploadImage($tmpName, $fileName, 'story')
     public static function uploadStoryImage($tmpName, $fileName) {
-        $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        return self::uploadImage($tmpName, $fileName, 'story');
+    }
+
+    /**
+     * Upload un fichier audio vocal (commentaire ou publication)
+     * @param string $tmpName - Path temporaire du fichier
+     * @param string $fileName - Nom original du fichier
+     * @param string $type - Type: 'comment' ou 'post'
+     * @return string|false - Nom du fichier ou false
+     */
+    public static function uploadVocalFile($tmpName, $fileName, $type = 'post') {
+        $allowedExt = ['mp3', 'wav', 'ogg', 'webm', 'm4a'];
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        
         if (!in_array($ext, $allowedExt)) {
-            error_log("Upload story échoué: Extension .{$ext} non autorisée");
+            error_log("Upload audio échoué: Extension .{$ext} non autorisée");
             return false;
         }
-
-        $uploadDir = __DIR__ . '/story';
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-        if (!is_writable($uploadDir)) chmod($uploadDir, 0777);
-
-        $imageName = 'story_' . time() . '_' . uniqid() . '.' . $ext;
-        $tempPath = $uploadDir . '/' . $imageName . '.tmp';
-        $finalPath = $uploadDir . '/' . $imageName;
-
-        if (@move_uploaded_file($tmpName, $tempPath)) {
-            if (self::compressImage($tempPath, $finalPath, 500, 1200)) {
-                @unlink($tempPath);
-                error_log("Story compressée: $imageName");
-                return $imageName;
-            } else {
-                rename($tempPath, $finalPath);
-                return $imageName;
+        
+        // Vérifier le type MIME
+        $allowedMimes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4'];
+        $fileMime = mime_content_type($tmpName);
+        if (!in_array($fileMime, $allowedMimes)) {
+            error_log("Warning: MIME type {$fileMime} pour audio, mais extension .{$ext} acceptée");
+        }
+        
+        // Déterminer le répertoire et le préfixe selon le type
+        $uploadDir = ($type === 'comment') ? __DIR__ . '/audio/comments' : __DIR__ . '/audio/posts';
+        $prefix = ($type === 'comment') ? 'comment_' : 'post_';
+        $typeLabel = ($type === 'comment') ? 'Commentaire vocal' : 'Publication vocale';
+        
+        if (!is_dir($uploadDir)) {
+            if (!@mkdir($uploadDir, 0777, true)) {
+                error_log("Impossible de créer dossier $uploadDir");
+                return false;
             }
         }
+        
+        // Vérifier permissions d'écriture
+        if (!is_writable($uploadDir)) {
+            chmod($uploadDir, 0777);
+            if (!is_writable($uploadDir)) {
+                error_log("Dossier $uploadDir n'est pas writable");
+                return false;
+            }
+        }
+        
+        // Générer nom unique
+        $audioName = $prefix . time() . '_' . uniqid() . '.' . $ext;
+        $uploadPath = $uploadDir . '/' . $audioName;
+        
+        // Sauvegarder le fichier
+        if (@move_uploaded_file($tmpName, $uploadPath)) {
+            error_log("$typeLabel uploadée: $audioName");
+            return $audioName;
+        }
+        
+        error_log("move_uploaded_file échoué pour $typeLabel: tmp=" . $tmpName . ", dest=" . $uploadPath);
         return false;
     }
 
+    // DEPRECATED: Utilisez uploadVocalFile($tmpName, $fileName, 'comment')
     public static function uploadVocalComment($tmpName, $fileName) {
-        $allowedExt = ['mp3', 'wav', 'ogg', 'webm', 'm4a'];
-        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        
-        if (!in_array($ext, $allowedExt)) {
-            error_log("Upload commentaire vocal échoué: Extension .{$ext} non autorisée");
-            return false;
-        }
-        
-        // Vérifier le type MIME
-        $allowedMimes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4'];
-        $fileMime = mime_content_type($tmpName);
-        if (!in_array($fileMime, $allowedMimes)) {
-            error_log("Warning: MIME type {$fileMime} pour audio, mais extension .{$ext} acceptée");
-        }
-        
-        // Créer le dossier audio/comments/ s'il n'existe pas
-        $uploadDir = __DIR__ . '/audio/comments';
-        if (!is_dir($uploadDir)) {
-            if (!@mkdir($uploadDir, 0777, true)) {
-                error_log("Impossible de créer dossier audio/comments");
-                return false;
-            }
-        }
-        
-        // Vérifier permissions d'écriture
-        if (!is_writable($uploadDir)) {
-            chmod($uploadDir, 0777);
-            if (!is_writable($uploadDir)) {
-                error_log("Dossier audio/comments n'est pas writable");
-                return false;
-            }
-        }
-        
-        // Générer nom unique - prefix "comment_" pour les commentaires vocaux
-        $audioName = 'comment_' . time() . '_' . uniqid() . '.' . $ext;
-        $uploadPath = $uploadDir . '/' . $audioName;
-        
-        // Sauvegarder le fichier
-        if (@move_uploaded_file($tmpName, $uploadPath)) {
-            error_log("Commentaire vocal uploadé: $audioName");
-            return $audioName; // Retourner juste le nom du fichier
-        }
-        
-        error_log("move_uploaded_file échoué pour commentaire vocal: tmp=" . $tmpName . ", dest=" . $uploadPath);
-        return false;
+        return self::uploadVocalFile($tmpName, $fileName, 'comment');
     }
 
+    // DEPRECATED: Utilisez uploadVocalFile($tmpName, $fileName, 'post')
     public static function uploadVocalPost($tmpName, $fileName) {
-        $allowedExt = ['mp3', 'wav', 'ogg', 'webm', 'm4a'];
-        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        
-        if (!in_array($ext, $allowedExt)) {
-            error_log("Upload publication vocale échoué: Extension .{$ext} non autorisée");
-            return false;
-        }
-        
-        // Vérifier le type MIME
-        $allowedMimes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4'];
-        $fileMime = mime_content_type($tmpName);
-        if (!in_array($fileMime, $allowedMimes)) {
-            error_log("Warning: MIME type {$fileMime} pour audio, mais extension .{$ext} acceptée");
-        }
-        
-        // Créer le dossier audio/posts/ s'il n'existe pas
-        $uploadDir = __DIR__ . '/audio/posts';
-        if (!is_dir($uploadDir)) {
-            if (!@mkdir($uploadDir, 0777, true)) {
-                error_log("Impossible de créer dossier audio/posts");
-                return false;
-            }
-        }
-        
-        // Vérifier permissions d'écriture
-        if (!is_writable($uploadDir)) {
-            chmod($uploadDir, 0777);
-            if (!is_writable($uploadDir)) {
-                error_log("Dossier audio/posts n'est pas writable");
-                return false;
-            }
-        }
-        
-        // Générer nom unique - prefix "post_" pour les publications vocales
-        $audioName = 'post_' . time() . '_' . uniqid() . '.' . $ext;
-        $uploadPath = $uploadDir . '/' . $audioName;
-        
-        // Sauvegarder le fichier
-        if (@move_uploaded_file($tmpName, $uploadPath)) {
-            error_log("Publication vocale uploadée: $audioName");
-            return $audioName; // Retourner juste le nom du fichier
-        }
-        
-        error_log("move_uploaded_file échoué pour publication vocale: tmp=" . $tmpName . ", dest=" . $uploadPath);
-        return false;
+        return self::uploadVocalFile($tmpName, $fileName, 'post');
     }
 }
 
@@ -2203,6 +2167,62 @@ class Router {
         
         Utils::jsonResponse(['success' => true, 'users' => $result]);
     }
+
+    /**
+     * Récupère les contacts de l'utilisateur connecté (suivi ET followers)
+     * Pour la création de canaux - affiche EN PRIORITÉ vos relations
+     */
+    private function actionGetMyContacts() {
+        if (!isset($_SESSION['user_id'])) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $current_user_id = $_SESSION['user_id'];
+        $follow = new AbonnementModel($this->db);
+
+        // Récupérer les followers ET following
+        $followers = $follow->getFollowers($current_user_id, 100, 0);
+        $following = $follow->getFollowing($current_user_id, 100, 0);
+
+        $result = [];
+        $seen_ids = [];
+
+        // Ajouter les followers d'abord (gens qui vous suivent)
+        foreach ($followers as $u) {
+            if (!isset($seen_ids[$u['user_id']])) {
+                $result[] = [
+                    'id' => $u['user_id'],
+                    'name' => $u['user_name'],
+                    'username' => '@' . $u['user_username'],
+                    'photo' => $u['user_photo_url'] ? 'imgApp/' . $u['user_photo_url'] : null,
+                    'type' => 'follower', // Indique le type de relation
+                    'isFollowing' => $follow->isFollowing($current_user_id, $u['user_id'])
+                ];
+                $seen_ids[$u['user_id']] = true;
+            }
+        }
+
+        // Ajouter les following (gens que vous suivez)
+        foreach ($following as $u) {
+            if (!isset($seen_ids[$u['user_id']])) {
+                $result[] = [
+                    'id' => $u['user_id'],
+                    'name' => $u['user_name'],
+                    'username' => '@' . $u['user_username'],
+                    'photo' => $u['user_photo_url'] ? 'imgApp/' . $u['user_photo_url'] : null,
+                    'type' => 'following',
+                    'isFollowing' => true
+                ];
+                $seen_ids[$u['user_id']] = true;
+            }
+        }
+
+        Utils::jsonResponse([
+            'success' => true,
+            'contacts' => $result,
+            'count' => count($result)
+        ]);
+    }
     
     /**
      * Récupère les followers d'un utilisateur
@@ -3037,15 +3057,23 @@ class Router {
         if (!$name || count($members) < 2) { // + le créateur = 3 membres min
             Utils::jsonResponse(['success' => false, 'message' => 'Nom requis et au moins 2 autres membres'], 400);
         }
-        // Vérifier que les membres sont bien suivis par l'utilisateur (abonnés ou abonnements)
-        $followModel = new AbonnementModel($this->db);
-        foreach ($members as $mid) {
-            if (!$followModel->isFollowing($_SESSION['user_id'], $mid) && !$followModel->isFollowing($mid, $_SESSION['user_id'])) {
-                Utils::jsonResponse(['success' => false, 'message' => "L'utilisateur $mid n'est pas dans vos relations"], 400);
-            }
-        }
+        
         $members[] = $_SESSION['user_id']; // ajouter le créateur
         $members = array_unique($members);
+        
+        // Vérifier qu'aucun membre n'est lui-même (sécurité basique)
+        $members = array_filter($members, function($mid) {
+            return $mid != 0 && $mid != null;
+        });
+        
+        // Vérifier que les IDs d'utilisateurs existent
+        $userModel = new Utilisateur($this->db);
+        foreach ($members as $mid) {
+            $user = $userModel->findById($mid);
+            if (!$user) {
+                Utils::jsonResponse(['success' => false, 'message' => "L'utilisateur $mid n'existe pas"], 400);
+            }
+        }
         
         $this->db->beginTransaction();
         try {

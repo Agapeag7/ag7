@@ -5903,6 +5903,10 @@ body.dark .messages-container::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 8px 20px rgba(4, 120, 87, 0.3);
 }
 
+.channel-delete-btn:hover {
+  color: #ef4444 !important;
+}
+
 /* Scrollbar personnalisée pour les checkboxes */
 .members-checkboxes::-webkit-scrollbar {
   width: 6px;

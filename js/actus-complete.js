@@ -47,10 +47,10 @@ const MAX_DURATION = 120;
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', async () => {
   
-  // Récupérer l'ID utilisateur et ATTENDRE
-  await fetchCurrentUser();
+  // NOTE: currentUserId est défini après connexion réussie via fetchCurrentUser()
+  // En attente d'authentification - setupActusUI attend que currentUserId soit défini
   
-  // Ensuite configurer l'UI
+  // Configurer l'UI
   setupActusNavigation();
   
   setupActusUI();

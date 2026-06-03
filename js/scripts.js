@@ -296,7 +296,12 @@ let currentUserProfile = {
             loginSection.classList.add('hidden');
             appSection.classList.remove('hidden');
 
+            // Charger le profil utilisateur complet
             await loadCurrentProfile();
+            // Initialiser l'ID utilisateur pour les modules (actus, etc.)
+            if (typeof fetchCurrentUser === 'function') {
+              await fetchCurrentUser();
+            }
             updateProfileUI();
             await loadStories();
 
@@ -2466,21 +2471,10 @@ editProfileForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Initialização - Charger le profil réel d'abord
-if (typeof loadCurrentProfile === 'function') {
-  loadCurrentProfile().then((success) => {
-    // Atualizar UI somente se loadCurrentProfile foi bem-sucedido
-    if (success) {
-      updateProfileUI();
-    }
-  }).catch(err => {
-    console.error('Impossible de charger le profil:', err);
-    // Inicializar com dados padrão e ainda atualizar UI
-    updateProfileUI();
-  });
-} else {
-  updateProfileUI();
-}
+// NOTE: loadCurrentProfile() est appelé APRÈS connexion réussie dans le formulaire d'auth (ligne 304)
+// Ne pas appeler au démarrage pour éviter erreurs 401 inutiles
+// Initialiser l'UI avec les données par défaut
+updateProfileUI();
 
 // ===== GESTION DES SONDAGES =====
 const createPollModal = document.getElementById('createPollModal');
