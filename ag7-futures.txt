@@ -1,14 +1,14 @@
 • Story collaborative pour un événement :
-
 Plusieurs amis peuvent contribuer à une même story publique. Chaque participant ajoute sa 
 photo ou vidéo ; la story est visible par les invités.
 
 
-• Sondages enrichis dans les publications
-
+• Sondages enrichis dans les publications :
 Créer un sondage avec image, chronomètre intégré. 
 Résultats affichés en direct sur la publication.
 
 
-a corriger :
+* Post Production :
+- Signalement utilisateur : possibilité aux utilisateurs de signaler une publication
+- Modération humaine ciblée : auditer uniquement les contenus signalés
 - 
