@@ -723,12 +723,12 @@ const MessagingManager = {
       // Recharger les conversations (appel API direct + affichage)
       const convResult = await ConversationsAPI.getConversations(50, 0);
       if (convResult.success) {
-        this.displayConversationList(convResult.conversations || [], 'conversation');
+        this.displayConversationList(convResult.conversations || [], 'conversation', true);
       }
       // Recharger les canaux
       const channelsResult = await ConversationsAPI.getChannels();
       if (channelsResult.success && channelsResult.channels) {
-        this.displayConversationList(channelsResult.channels, 'channel');
+        this.displayConversationList(channelsResult.channels, 'channel', false);
       }
     }, 30000);
 
