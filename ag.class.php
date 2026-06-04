@@ -3143,13 +3143,33 @@ class Router {
         $canal_id = (int)($_GET['canal_id'] ?? 0);
         $limit = (int)($_GET['limit'] ?? 50);
         $offset = (int)($_GET['offset'] ?? 0);
-        $stmt = $this->db->prepare("SELECT m.*, u.user_name, u.user_photo_url 
+        
+        if (!$canal_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'ID canal manquant'], 400);
+        }
+        
+        // Vérifier que l'utilisateur est membre du canal
+        $stmtMember = $this->db->prepare("SELECT 1 FROM canal_membres WHERE canal_id = ? AND user_id = ?");
+        $stmtMember->execute([$canal_id, $_SESSION['user_id']]);
+        if (!$stmtMember->fetch()) {
+            Utils::jsonResponse(['success' => false, 'message' => 'Accès refusé à ce canal'], 403);
+        }
+        
+        $stmt = $this->db->prepare("SELECT 
+            m.msg_id,
+            m.canal_id,
+            m.sender_id as msg_sender_id,
+            m.msg_content,
+            m.sent_at as msg_sent_at,
+            u.user_name,
+            u.user_photo_url 
             FROM messages_canal m
             JOIN utilisateurs u ON m.sender_id = u.user_id
             WHERE m.canal_id = ?
-            ORDER BY m.sent_at DESC LIMIT ? OFFSET ?");
+            ORDER BY m.sent_at ASC
+            LIMIT ? OFFSET ?");
         $stmt->execute([$canal_id, $limit, $offset]);
-        $messages = array_reverse($stmt->fetchAll());
+        $messages = $stmt->fetchAll();
         Utils::jsonResponse(['success' => true, 'messages' => $messages]);
     }
 
@@ -3159,13 +3179,32 @@ class Router {
             Utils::jsonResponse(['success' => false, 'message' => 'Non authentifié'], 401);
         }
         $canal_id = (int)($_POST['canal_id'] ?? 0);
-        // Vérifier admin
+        if (!$canal_id) {
+            Utils::jsonResponse(['success' => false, 'message' => 'ID canal manquant'], 400);
+        }
+        
+        // Vérifier que l'utilisateur est admin du canal
         $stmt = $this->db->prepare("SELECT role FROM canal_membres WHERE canal_id = ? AND user_id = ?");
         $stmt->execute([$canal_id, $_SESSION['user_id']]);
         $role = $stmt->fetchColumn();
-        if ($role !== 'admin') {
+        
+        // Amélioration: Vérifier aussi si l'utilisateur est le créateur (fallback)
+        if (!$role) {
+            $stmtCreator = $this->db->prepare("SELECT created_by FROM canaux WHERE canal_id = ?");
+            $stmtCreator->execute([$canal_id]);
+            $created_by = $stmtCreator->fetchColumn();
+            
+            if ($created_by != $_SESSION['user_id']) {
+                Utils::jsonResponse(['success' => false, 'message' => 'Seul l\'admin peut supprimer le canal'], 403);
+            }
+            // Si le créateur n'est pas dans canal_membres, le réinsérer comme admin
+            $insertStmt = $this->db->prepare("INSERT IGNORE INTO canal_membres (canal_id, user_id, role) VALUES (?, ?, 'admin')");
+            $insertStmt->execute([$canal_id, $_SESSION['user_id']]);
+        } elseif ($role !== 'admin') {
             Utils::jsonResponse(['success' => false, 'message' => 'Seul l\'admin peut supprimer le canal'], 403);
         }
+        
+        // Supprimer le canal (cascade delete les messages et membres via FK)
         $this->db->prepare("DELETE FROM canaux WHERE canal_id = ?")->execute([$canal_id]);
         Utils::jsonResponse(['success' => true]);
     }

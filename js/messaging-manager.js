@@ -723,16 +723,11 @@ const MessagingManager = {
     this.messageRefreshInterval = setInterval(async () => {
       if (this.currentConvId) {
         if (this.currentIsChannel) {
-          const result = await ConversationsAPI.sendChannelMessage(this.currentConvId, content);
-          if (!result.success) return;
-          const textarea = document.querySelector('.conversation-form-input');
-          if (textarea) textarea.value = '';
-          // Recharger les messages (correctement indenté)
+          // Recharger les messages du canal
           const msgs = await ConversationsAPI.getChannelMessages(this.currentConvId, 50);
           if (msgs.success) this.displayMessages(msgs.messages, true);
-          showNotification('success', 'Succès', 'Message envoyé');
-          return;
         } else {
+          // Recharger les messages de la conversation
           const msgs = await ConversationsAPI.getMessages(this.currentConvId, 50, 0);
           if (msgs.success) this.displayMessages(msgs.messages || []);
         }
