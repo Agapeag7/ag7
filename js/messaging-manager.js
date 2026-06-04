@@ -180,6 +180,21 @@ const MessagingManager = {
       conversationList.appendChild(separator);
     }
 
+    // Si on ajoute des canals, supprimer les anciens canals d'abord
+    if (type === 'channel') {
+      const separator = document.querySelector('.conversation-separator');
+      if (separator) {
+        // Supprimer le séparateur et tous les canals après lui
+        let nextEl = separator.nextSibling;
+        while (nextEl) {
+          const temp = nextEl;
+          nextEl = nextEl.nextSibling;
+          temp.remove();
+        }
+        separator.remove();
+      }
+    }
+
     items.forEach(item => {
       const li = document.createElement('li');
       li.className = `conversation-item-chat ${(type === 'channel' ? item.canal_id : item.conv_id) === this.currentConvId ? 'active' : ''}`;
