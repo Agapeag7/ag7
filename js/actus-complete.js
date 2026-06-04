@@ -868,11 +868,6 @@ function attachPostEvents() {
     const postAvatars = document.querySelectorAll('.post-avatar');
     const postAuthors = document.querySelectorAll('.post-author');
     
-    const openUserProfile = async (post) => {
-      if (!post || !post.user_id) return;
-      await displayUserProfile(post.user_id);
-    };
-    
     postAvatars.forEach(avatar => {
       avatar.style.cursor = 'pointer';
       avatar.addEventListener('click', (e) => {
@@ -880,7 +875,9 @@ function attachPostEvents() {
         const postCard = avatar.closest('.post-card');
         const postId = parseInt(postCard.dataset.id);
         const post = actusState.posts.find(p => p.id === postId);
-        openUserProfile(post);
+        if (post && post.user_id) {
+          window.openUserProfile(post.user_id);
+        }
       });
     });
     
@@ -891,7 +888,9 @@ function attachPostEvents() {
         const postCard = author.closest('.post-card');
         const postId = parseInt(postCard.dataset.id);
         const post = actusState.posts.find(p => p.id === postId);
-        openUserProfile(post);
+        if (post && post.user_id) {
+          window.openUserProfile(post.user_id);
+        }
       });
     });
     
@@ -1615,184 +1614,10 @@ function setupDeleteModal() {
   }
 }
 
-// ===== AFFICHER PROFIL UTILISATEUR =====
-async function displayUserProfile(userId) {
-    try {
-        const modal = document.getElementById('userProfileModal');
-        if (!modal) {
-            console.warn('Profile modal NOT FOUND');
-            return;
-        }
-
-        modal.classList.remove('hidden');
-
-        // Récupérer les infos utilisateur
-        const response = await fetch(`${window.location.href}?action=getUserProfile&user_id=${userId}`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            showNotification('error', 'Erreur', 'Impossible de charger le profil');
-            modal.classList.add('hidden');
-            return;
-        }
-
-        const profile = data.profile;
-
-        // Remplir les informations
-        document.getElementById('userProfileName').textContent = profile.user_name || 'Utilisateur';
-        document.getElementById('userProfileUsername').textContent = '@' + (profile.user_username || 'user');
-        document.getElementById('userProfileBio').textContent = profile.user_bio || '';
-        document.getElementById('userProfileLocation').textContent = profile.user_location || 'Localisation inconnue';
-        document.getElementById('userProfileMemberSince').textContent = 'Membre depuis ' + (profile.member_since || 'Janvier 2024');
-        document.getElementById('userProfileFollowersCount').textContent = profile.followers_count || 0;
-        document.getElementById('userProfileFollowingCount').textContent = profile.following_count || 0;
-
-        // Avatar
-        const avatarEl = document.getElementById('userProfileAvatar');
-        const coverEl = document.getElementById('userProfileCover');
-        if (profile.user_photo_url) {
-            avatarEl.style.backgroundImage = `url('imgApp/${profile.user_photo_url}')`;
-            avatarEl.style.backgroundSize = 'cover';
-            avatarEl.style.backgroundPosition = 'center';
-            avatarEl.textContent = '';
-        } else {
-            avatarEl.style.backgroundImage = '';
-            const initials = profile.user_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-            avatarEl.textContent = initials;
-        }
-
-        if (profile.user_cover_photo_url) {
-            coverEl.style.backgroundImage = `url('imgApp/${profile.user_cover_photo_url}')`;
-        } else {
-            coverEl.style.backgroundImage = 'none';
-        }
-
-        // Gestion du bouton "Suivre"
-        const followBtn = document.getElementById('userProfileFollowBtn');
-        const currentUserId = window.currentUserId || (currentUserProfile?.userid);
-        
-        // Récupérer le bouton "Message"
-        const messageBtn = document.getElementById('userProfileMessageBtn');
-        if (messageBtn) {
-            if (!currentUserId || parseInt(currentUserId) === parseInt(userId)) {
-                messageBtn.style.display = 'none';
-            } else {
-                messageBtn.style.display = 'flex';
-                // Supprimer les anciens écouteurs pour éviter les doublons
-                const newMessageBtn = messageBtn.cloneNode(true);
-                messageBtn.parentNode.replaceChild(newMessageBtn, messageBtn);
-                const updatedMsgBtn = document.getElementById('userProfileMessageBtn');
-                
-                updatedMsgBtn.onclick = async (e) => {
-                  e.preventDefault();
-                  try {
-                      const formData = new FormData();
-                      formData.append('action', 'getOrCreateConversation');
-                      formData.append('user_id', userId);
-                      const response = await fetch(window.location.href, {
-                          method: 'POST',
-                          body: formData,
-                          credentials: 'include'
-                      });
-                      const result = await response.json();
-                      if (result.success && result.conv_id) {
-                          // 2. Basculer vers l’onglet Chat
-                          const chatNav = document.querySelector('.nav-item[data-view="chat"]');
-                          if (chatNav) chatNav.click();
-                          // 3. Sélectionner la conversation dans la messagerie
-                          if (typeof MessagingManager !== 'undefined' && MessagingManager.selectConversation) {
-                              setTimeout(() => {
-                                  MessagingManager.selectConversation(result.conv_id, userId, document.getElementById('userProfileName').innerText);
-                              }, 300);
-                          }
-                          // 4. Fermer la modale
-                          const modal = document.getElementById('userProfileModal');
-                          if (modal) modal.classList.add('hidden');
-                          showNotification('success', 'Conversation ouverte', 'Vous pouvez maintenant envoyer un message');
-                      } else {
-                          showNotification('error', 'Erreur', result.message || 'Impossible de créer la conversation');
-                      }
-                  } catch (err) {
-                      console.error(err);
-                      showNotification('error', 'Erreur', 'Une erreur est survenue');
-                  }
-              };
-            }
-        }
-
-        if (!currentUserId || parseInt(currentUserId) === parseInt(userId)) {
-            followBtn.style.display = 'none';
-        } else {
-            followBtn.style.display = 'block';
-            const isFollowing = profile.is_following === true;
-            followBtn.textContent = isFollowing ? '✓ Suivi(e)' : 'Suivre';
-            followBtn.style.background = isFollowing ? 'var(--text-secondary)' : 'var(--emerald-500)';
-            followBtn.style.color = 'white';
-
-            // Supprimer les anciens écouteurs pour éviter les doublons
-            const newBtn = followBtn.cloneNode(true);
-            followBtn.parentNode.replaceChild(newBtn, followBtn);
-            const updatedBtn = document.getElementById('userProfileFollowBtn');
-
-            updatedBtn.onclick = async (e) => {
-                e.preventDefault();
-                const currentlyFollowing = updatedBtn.textContent === '✓ Suivi(e)';
-
-                try {
-                    const formData = new FormData();
-                    formData.append('action', currentlyFollowing ? 'unfollowUser' : 'followUser');
-                    formData.append('followed_id', userId);
-
-                    const response = await fetch(window.location.href, {
-                        method: 'POST',
-                        body: formData,
-                        credentials: 'include'
-                    });
-                    const result = await response.json();
-
-                    if (result.success) {
-                        if (currentlyFollowing) {
-                            updatedBtn.textContent = 'Suivre';
-                            updatedBtn.style.background = 'var(--emerald-500)';
-                        } else {
-                            updatedBtn.textContent = '✓ Suivi(e)';
-                            updatedBtn.style.background = 'var(--text-secondary)';
-                        }
-                        // Rafraîchir les compteurs du profil si nécessaire
-                        if (currentUserProfile && currentUserProfile.userid === currentUserId) {
-                            await loadCurrentProfile();
-                            updateProfileUI();
-                        }
-                        showNotification('success', currentlyFollowing ? 'Désabonné' : 'Abonné', '');
-                    } else {
-                        showNotification('error', 'Erreur', result.message || 'Action impossible');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showNotification('error', 'Erreur', 'Une erreur est survenue');
-                }
-            };
-        }
-
-        // Fermeture de la modale
-        const closeBtn = document.querySelector('.user-profile-close');
-        if (closeBtn) {
-            closeBtn.onclick = () => modal.classList.add('hidden');
-        }
-        modal.onclick = (e) => {
-            if (e.target === modal) modal.classList.add('hidden');
-        };
-
-    } catch (error) {
-        console.error('Erreur displayUserProfile:', error);
-        showNotification('error', 'Erreur', 'Une erreur est survenue');
-        document.getElementById('userProfileModal').classList.add('hidden');
-    }
-}
+// NOTE: displayUserProfile() supprimée le 4 juin 2026
+// C'était un doublon 100% de openUserProfile() dans scripts.js
+// Utiliser: window.openUserProfile(userId) à la place
+// Raison: Consolidation du code, élimination de 190 lignes en double
 
 // ===== PUBLIER UN POST =====
 async function handlePublishPost(e) {
