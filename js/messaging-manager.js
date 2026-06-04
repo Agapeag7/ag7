@@ -159,13 +159,15 @@ const MessagingManager = {
     return null;
   },
   
-  displayConversationList(items, type = 'conversation') {
+  displayConversationList(items, type = 'conversation', clearContainer = true) {
     const conversationList = document.querySelector('.conversation-list');
     if (!conversationList) return;
 
-    conversationList.innerHTML = '';
+    if (clearContainer) {
+      conversationList.innerHTML = '';
+    }
 
-    if (items.length === 0) {
+    if (items.length === 0 && clearContainer) {
       conversationList.innerHTML = '<li style="padding: 20px; text-align: center; color: var(--text-secondary);">Aucune conversation</li>';
       return;
     }
@@ -607,7 +609,7 @@ const MessagingManager = {
     // 1. Charger les conversations privées
     const convResult = await ConversationsAPI.getConversations(50, 0);
     if (convResult.success) {
-      this.displayConversationList(convResult.conversations || [], 'conversation');
+      this.displayConversationList(convResult.conversations || [], 'conversation', true);
     } else {
       showNotification('error', 'Erreur', convResult.message);
     }
@@ -615,7 +617,7 @@ const MessagingManager = {
     // 2. Charger les canaux
     const channelsResult = await ConversationsAPI.getChannels();
     if (channelsResult.success && channelsResult.channels) {
-      this.displayConversationList(channelsResult.channels, 'channel');
+      this.displayConversationList(channelsResult.channels, 'channel', false);
     } else if (!channelsResult.success) {
       showNotification('error', 'Erreur', channelsResult.message);
     }
