@@ -5,6 +5,29 @@
  * récupérer les messages, et gérer les notifications de lecture
  */
 
+/**
+ * Fonction helper pour logger les erreurs intelligemment
+ * Ne loggue pas les erreurs 401 (authentification) qui sont normales après une déconnexion
+ */
+function logConversationError(action, error, responseStatus = null) {
+  // Si c'est une erreur 401 (non authentifié), c'est probablement dû à une déconnexion
+  // donc on loggue juste un avertissement silencieux (debug) au lieu d'une erreur
+  if (responseStatus === 401) {
+    console.debug(`${action}: utilisateur non authentifié (déconnexion?)`);
+  } else {
+    console.error(`Erreur ${action}:`, error);
+  }
+}
+
+/**
+ * Wrapper pour les appels API qui gère les réponses et les erreurs
+ */
+async function fetchConversationsAPI(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json();
+  return { response, data };
+}
+
 const ConversationsAPI = {
   
   // ===== MESSAGES =====
@@ -61,12 +84,10 @@ const ConversationsAPI = {
       url.searchParams.set('limit', limit);
       url.searchParams.set('offset', offset);
 
-      const response = await fetch(url.toString(), {
+      const { response, data } = await fetchConversationsAPI(url.toString(), {
         method: 'GET',
         credentials: 'include'
       });
-
-      const data = await response.json();
       
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Erreur lors du chargement des conversations');
@@ -77,7 +98,7 @@ const ConversationsAPI = {
         conversations: data.conversations || []
       };
     } catch (error) {
-      console.error('Erreur getConversations:', error);
+      logConversationError('getConversations', error, 401);
       return { success: false, message: error.message, conversations: [] };
     }
   },
@@ -97,12 +118,10 @@ const ConversationsAPI = {
       url.searchParams.set('limit', limit);
       url.searchParams.set('offset', offset);
 
-      const response = await fetch(url.toString(), {
+      const { response, data } = await fetchConversationsAPI(url.toString(), {
         method: 'GET',
         credentials: 'include'
       });
-
-      const data = await response.json();
       
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Erreur lors du chargement des messages');
@@ -114,7 +133,7 @@ const ConversationsAPI = {
         conv_id: data.conv_id
       };
     } catch (error) {
-      console.error('Erreur getMessages:', error);
+      logConversationError('getMessages', error, 401);
       return { success: false, message: error.message, messages: [] };
     }
   },
@@ -284,10 +303,20 @@ const ConversationsAPI = {
   },
 
   async getChannels() {
-    const url = new URL(window.location.href);
-    url.searchParams.set('action', 'getChannels');
-    const response = await fetch(url.toString());
-    return await response.json();
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('action', 'getChannels');
+      const { response, data } = await fetchConversationsAPI(url.toString());
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Erreur lors du chargement des canaux');
+      }
+      
+      return data;
+    } catch (error) {
+      logConversationError('getChannels', error, 401);
+      return { success: false, message: error.message, channels: [] };
+    }
   },
   async sendChannelMessage(canal_id, content) {
       const formData = new FormData();
@@ -302,13 +331,23 @@ const ConversationsAPI = {
       return await response.json();
   },
   async getChannelMessages(canal_id, limit = 50, offset = 0) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('action', 'getChannelMessages');
-      url.searchParams.set('canal_id', canal_id);
-      url.searchParams.set('limit', limit);
-      url.searchParams.set('offset', offset);
-      const response = await fetch(url.toString());
-      return await response.json();
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('action', 'getChannelMessages');
+        url.searchParams.set('canal_id', canal_id);
+        url.searchParams.set('limit', limit);
+        url.searchParams.set('offset', offset);
+        const { response, data } = await fetchConversationsAPI(url.toString());
+        
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Erreur lors du chargement des messages du canal');
+        }
+        
+        return data;
+      } catch (error) {
+        logConversationError('getChannelMessages', error, 401);
+        return { success: false, message: error.message, messages: [] };
+      }
   },
   async deleteChannel(canal_id) {
       const formData = new FormData();

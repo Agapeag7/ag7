@@ -1,41 +1,66 @@
-- Section "Decouvrir" verifie si y'a pas de duplication sur la logique de ce modale :
-<div id="userProfileModal" class="user-profile-modal">
-      <div class="user-profile-card">
-        <button class="user-profile-close">×</button>
-        <div class="user-profile-header">
-          <div class="user-profile-cover" id="userProfileCover" style="background-image: url(&quot;imgApp/profile_1776953622_69ea2916066f3.jpg&quot;);"></div>
-          <div class="user-profile-avatar" id="userProfileAvatar" style="background-image: url(&quot;imgApp/profile_1776628045_69e5314d4b3a1.jpg&quot;); background-size: cover; background-position: center center;"></div>
+- Verifie la Responsivité(version mobile) de cette section :
+<div id="view-chat" class="view active">
+      <div class="chat-layout">
+        <!-- Liste conversations -->
+        <div class="chat-sidebar-list">
+          <div class="section-title">Messages</div>
+          <div class="search-box">
+            <input type="text" placeholder="Rechercher une conversation...">
+            <button><i class="fas fa-search"></i></button>
+          </div>
+          
+          <button id="newChannelBtn" class="btn-secondary" style="margin: 12px; width: calc(100% - 24px);">
+            <i class="fas fa-plus-circle"></i> Nouveau canal
+          </button>
+
+          <ul class="conversation-list"><li class="conversation-item-chat " data-conv-id="6"><div class="avatar">M</div><div class="conversation-info"><div class="conversation-name">mishma</div><div class="conversation-lastmsg">Aucun message</div></div><div class="conversation-meta"><div class="timestamp"></div></div></li><li class="conversation-item-chat " data-conv-id="5"><div class="avatar"><img src="imgApp/profile_1777810313_69f73b89bf235.jpg" alt="Thanks Muhongya" loading="lazy"></div><div class="conversation-info"><div class="conversation-name">Thanks Muhongya</div><div class="conversation-lastmsg">Aucun message</div></div><div class="conversation-meta"><div class="timestamp"></div></div></li><li class="conversation-item-chat " data-conv-id="3"><div class="avatar"><img src="imgApp/profile_1776410907_69e1e11b54f93.jpg" alt="agape" loading="lazy"></div><div class="conversation-info"><div class="conversation-name">agape</div><div class="conversation-lastmsg">ok</div></div><div class="conversation-meta"><div class="timestamp">31 mai</div></div></li><li class="conversation-item-chat " data-conv-id="2"><div class="avatar"><img src="imgApp/profile_1776628045_69e5314d4b3a1.jpg" alt="anderson" loading="lazy"></div><div class="conversation-info"><div class="conversation-name">anderson</div><div class="conversation-lastmsg">Bonjour !</div></div><div class="conversation-meta"><div class="timestamp">29 mai</div></div></li><li class="conversation-item-chat " data-conv-id="2"><div class="avatar"><i class="fas fa-users"></i></div><div class="conversation-info"><div class="conversation-name">reunion</div><div class="conversation-lastmsg">Aucun message</div></div><div class="conversation-meta"><span class="ephemeral-badge"><i class="fas fa-hourglass-half"></i> Éphémère</span></div></li><li class="conversation-item-chat " data-conv-id="1"><div class="avatar"><i class="fas fa-users"></i></div><div class="conversation-info"><div class="conversation-name">Anniversaire</div><div class="conversation-lastmsg">ok</div></div><div class="conversation-meta"><div class="timestamp">4j</div></div></li></ul>
         </div>
-        <div class="user-profile-info">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <h2 id="userProfileName" style="margin: 0;">anderson</h2>
-            <button class="user-profile-follow-btn following" id="userProfileFollowBtn" style="display: block; padding: 6px 16px; border-radius: 24px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px; background: var(--text-secondary); color: white;">✓ Suivi(e)</button>
-            <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: block; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
-              <i class="fas fa-comment-dots"></i>
-            </button>
-          </div>
-          <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@dm</p>
-          <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;">Pas de bio</p>
-          <div class="user-profile-meta">
-            <div class="meta-item">
-              <i class="fas fa-map-marker-alt"></i>
-              <span id="userProfileLocation"><i class="fas fa-map-marker-alt"></i> Non renseigné</span>
+        <!-- Zone de discussion -->
+        <div class="chat-conversation-area">
+          <div class="conversation-header" style="display: none;">
+            <button class="back-btn" id="backToList"><i class="fas fa-arrow-left"></i></button>
+            <div class="avatar" style="width:44px;height:44px;margin-right:14px;"><i class="fas fa-comments"></i></div>
+            <div>
+              <div class="conversation-name"></div>
+              <div style="font-size:13px;color:var(--text-secondary);"><span class="status-dot online"></span> <span class="conversation-status"></span></div>
             </div>
-            <div class="meta-item">
-              <i class="fas fa-calendar"></i>
-              <span id="userProfileMemberSince"><i class="fas fa-calendar"></i> Membre depuis Avril 2026</span>
+            <div style="margin-left: auto; display: flex; gap: 12px;">
+              <i class="fas fa-phone-alt" style="color: var(--text-secondary); cursor: pointer;"></i>
+              <i class="fas fa-video" style="color: var(--text-secondary); cursor: pointer;"></i>
             </div>
           </div>
-          <div class="user-profile-stats">
-            <div class="stat-item">
-              <span class="stat-number" id="userProfileFollowersCount">2</span>
-              <span class="stat-label">Abonnés</span>
+          <div class="messages-container"></div>
+          <div class="conversation-form" style="display: none;">
+            <button type="button" class="conversation-form-button"><i class="fas fa-face-smile"></i></button>
+            <div class="conversation-form-group">
+              <textarea class="conversation-form-input" rows="1" placeholder="Tapez votre message ici..."></textarea>
+              <button type="button" class="conversation-form-record"><i class="fas fa-microphone"></i></button>
             </div>
-            <div class="stat-item">
-              <span class="stat-number" id="userProfileFollowingCount">2</span>
-              <span class="stat-label">Abonnements</span>
-            </div>
+            <button type="button" class="conversation-form-button conversation-form-submit"><i class="fas fa-paper-plane"></i></button>
           </div>
         </div>
       </div>
+
+      <!-- Modale création canal -->
+      <div id="createChannelModal" class="create-channel-modal hidden">
+        <div class="create-channel-card">
+          <button class="create-channel-close">×</button>
+          <h2>Nouveau canal</h2>
+          <input type="text" id="channelName" placeholder="Nom du canal">
+          <textarea id="channelDesc" placeholder="Description (optionnel)"></textarea>
+          <div id="channelMembersSelect">
+            <label>Sélectionner au moins 2 membres (vos abonnés/abonnements)</label>
+            <div class="members-checkboxes" id="membersCheckboxes"></div>
+          </div>
+          <div>
+            <label><input type="checkbox" id="channelEphemeral"> Canal éphémère</label>
+            <div id="ephemeralDate" style="display:none;">
+              <label>Date d'expiration :</label>
+              <input type="datetime-local" id="channelExpiresAt">
+            </div>
+          </div>
+          <button id="confirmCreateChannel" class="btn-primary">Créer le canal</button>
+        </div>
+      </div>
     </div>
+

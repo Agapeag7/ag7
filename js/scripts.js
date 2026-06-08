@@ -413,6 +413,17 @@ let currentUserProfile = {
           // Déconnexion réussie
           showNotification('success', 'Déconnecté', 'À bientôt !');
           
+          // Arrêter les intervalles de refresh de la messagerie
+          if (MessagingManager && MessagingManager.stopAutoRefresh) {
+            MessagingManager.stopAutoRefresh();
+          }
+          // Réinitialiser les propriétés du MessagingManager
+          if (MessagingManager) {
+            MessagingManager.currentUserId = null;
+            MessagingManager.currentConvId = null;
+            MessagingManager.currentIsChannel = false;
+          }
+          
           // Réinitialiser toutes les données du profil
           
           setTimeout(() => {
@@ -425,7 +436,15 @@ let currentUserProfile = {
           console.error('Erreur logout:', err);
           showNotification('error', 'Erreur', 'Une erreur s\'est produite lors de la déconnexion');
           
-          // Réinitialiser les données du profil même en cas d'erreur            
+          // Arrêter les intervalles même en cas d'erreur
+          if (MessagingManager && MessagingManager.stopAutoRefresh) {
+            MessagingManager.stopAutoRefresh();
+          }
+          if (MessagingManager) {
+            MessagingManager.currentUserId = null;
+            MessagingManager.currentConvId = null;
+            MessagingManager.currentIsChannel = false;
+          }
           
           // Quand même rediriger vers le login
           setTimeout(() => {

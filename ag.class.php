@@ -39,7 +39,14 @@ class Database {
         try {
             $this->pdo = new \PDO($dsn, $user, $pass, $options);
         } catch (\PDOException $e) {
-            die('Erreur de connexion à la base de données: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Erreur de connexion à la base de données',
+                'error' => $e->getMessage()
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
         }
     }
     
