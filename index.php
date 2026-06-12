@@ -107,7 +107,6 @@ if (isset($_SESSION['user_id'])) {
       <li class="nav-item" data-view="settings"><a href="#" data-title="Paramètres"><i class="fas fa-sliders-h"></i><span>Réglages</span></a></li>
     </ul>
     <div class="nav-footer">
-      <div class="nav-item"><a href="#" data-title="Déconnexion" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a></div>
     </div>
   </div>
 
@@ -367,6 +366,10 @@ if (isset($_SESSION['user_id'])) {
           <span><i class="fas fa-user-secret" style="margin-right: 12px;"></i>Afficher statut en ligne</span>
           <input type="checkbox" checked>
         </div>
+      </div>
+      <div class="settings-group">
+        <h3 style="margin-bottom: 24px; font-size: 20px;"><i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Compte</h3>
+        <a href="#" data-title="Déconnexion" id="logoutBtn" style="display: inline-block; background: var(--red-500); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: 0.2s; text-decoration: none;"><i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Déconnexion</a>
       </div>
       <div style="margin-top: 20px; color: var(--text-secondary); font-size: 14px; text-align: center;">
         <i class="far fa-save"></i> Les préférences sont sauvegardées automatiquement
