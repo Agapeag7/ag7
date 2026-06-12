@@ -98,37 +98,48 @@ const MessagingManager = {
       const msgs = await ConversationsAPI.getChannelMessages(id, 50);
       if (msgs.success) this.displayMessages(msgs.messages, true);
       
-      let deleteBtn = header?.querySelector('.channel-delete-btn');
-      if (!deleteBtn) {
-        deleteBtn = document.createElement('button');
-        deleteBtn.className = 'channel-delete-btn';
-        deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-        deleteBtn.style.background = 'none';
-        deleteBtn.style.border = 'none';
-        deleteBtn.style.cursor = 'pointer';
-        deleteBtn.style.color = 'var(--text-secondary)';
-        deleteBtn.style.fontSize = '1.2rem';
-        deleteBtn.style.marginLeft = 'auto';
-        deleteBtn.title = 'Supprimer le canal';
-        header?.appendChild(deleteBtn);
-      }
-      deleteBtn.onclick = async () => {
-        showConfirmation(
-          'Supprimer le canal',
-          `Êtes-vous sûr de vouloir supprimer le canal "${name}" ? Cette action est irréversible.`,
-          async () => {
-            const result = await ConversationsAPI.deleteChannel(id);
-            if (result.success) {
-              showNotification('success', 'Canal supprimé', '');
-              await this.loadConversationsAndChannels(); // recharger la liste
-              this.showEmptyState(); // retourner à l'état vide
-              this.currentConvId = null;
-            } else {
-              showNotification('error', 'Erreur', result.message);
+      // Récupérer l'ID de l'admin du canal
+      const convItem = document.querySelector(`[data-conv-id="${id}"]`);
+      const adminId = convItem?.dataset.adminId ? parseInt(convItem.dataset.adminId) : null;
+      
+      // Créer le bouton de suppression SEULEMENT si l'utilisateur est l'admin
+      if (this.currentUserId === adminId) {
+        let deleteBtn = header?.querySelector('.channel-delete-btn');
+        if (!deleteBtn) {
+          deleteBtn = document.createElement('button');
+          deleteBtn.className = 'channel-delete-btn';
+          deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+          deleteBtn.style.background = 'none';
+          deleteBtn.style.border = 'none';
+          deleteBtn.style.cursor = 'pointer';
+          deleteBtn.style.color = 'var(--text-secondary)';
+          deleteBtn.style.fontSize = '1.2rem';
+          deleteBtn.style.marginLeft = 'auto';
+          deleteBtn.title = 'Supprimer le canal';
+          header?.appendChild(deleteBtn);
+        }
+        deleteBtn.onclick = async () => {
+          showConfirmation(
+            'Supprimer le canal',
+            `Êtes-vous sûr de vouloir supprimer le canal "${name}" ? Cette action est irréversible.`,
+            async () => {
+              const result = await ConversationsAPI.deleteChannel(id);
+              if (result.success) {
+                showNotification('success', 'Canal supprimé', '');
+                await this.loadConversationsAndChannels(); // recharger la liste
+                this.showEmptyState(); // retourner à l'état vide
+                this.currentConvId = null;
+              } else {
+                showNotification('error', 'Erreur', result.message);
+              }
             }
-          }
-        );
-      };
+          );
+        };
+      } else {
+        // Supprimer le bouton s'il existe (au cas où)
+        const existingBtn = header?.querySelector('.channel-delete-btn');
+        if (existingBtn) existingBtn.remove();
+      }
     } else {
       // Conversation privée
       const msgs = await ConversationsAPI.getMessages(id, 50, 0);
@@ -199,6 +210,9 @@ const MessagingManager = {
       const li = document.createElement('li');
       li.className = `conversation-item-chat ${(type === 'channel' ? item.canal_id : item.conv_id) === this.currentConvId ? 'active' : ''}`;
       li.dataset.convId = type === 'channel' ? item.canal_id : item.conv_id;
+      if (type === 'channel') {
+        li.dataset.adminId = item.created_by;
+      }
 
       // Avatar
       const avatarDiv = document.createElement('div');

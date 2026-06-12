@@ -10,8 +10,6 @@
  * Ne loggue pas les erreurs 401 (authentification) qui sont normales après une déconnexion
  */
 function logConversationError(action, error, responseStatus = null) {
-  // Si c'est une erreur 401 (non authentifié), c'est probablement dû à une déconnexion
-  // donc on loggue juste un avertissement silencieux (debug) au lieu d'une erreur
   if (responseStatus === 401) {
     console.debug(`${action}: utilisateur non authentifié (déconnexion?)`);
   } else {
