@@ -183,27 +183,25 @@ const MessagingManager = {
       return;
     }
 
-    // Ajouter un séparateur pour les canaux
-    if (type === 'channel') {
-      const separator = document.createElement('li');
-      separator.className = 'conversation-separator';
-      separator.textContent = 'Canaux';
-      conversationList.appendChild(separator);
-    }
-
     // Si on ajoute des canals, supprimer les anciens canals d'abord
     if (type === 'channel') {
-      const separator = document.querySelector('.conversation-separator');
-      if (separator) {
+      const existingSeparator = document.querySelector('.conversation-separator');
+      if (existingSeparator) {
         // Supprimer le séparateur et tous les canals après lui
-        let nextEl = separator.nextSibling;
+        let nextEl = existingSeparator.nextSibling;
         while (nextEl) {
           const temp = nextEl;
           nextEl = nextEl.nextSibling;
           temp.remove();
         }
-        separator.remove();
+        existingSeparator.remove();
       }
+      
+      // Maintenant ajouter le nouveau séparateur
+      const separator = document.createElement('li');
+      separator.className = 'conversation-separator';
+      separator.textContent = 'Canaux';
+      conversationList.appendChild(separator);
     }
 
     items.forEach(item => {
