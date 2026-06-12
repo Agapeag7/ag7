@@ -1,2 +1,0 @@
-- ce bouton Deconnexion deplace et met-le dans la section Reglages (Paramètres) :
-<a href="#" data-title="Déconnexion" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
