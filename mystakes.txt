@@ -1,9 +1,13 @@
+[Violation] 'requestIdleCallback' handler took 53ms
+messaging-manager.js:747 [Violation] 'setInterval' handler took 582ms
+messaging-manager.js:747 [Violation] 'setInterval' handler took 63ms
+[Violation] 'requestIdleCallback' handler took 96ms
 api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
 getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
+updateUnreadCount @ messaging-manager.js:612
+(anonymous) @ messaging-manager.js:748
 setInterval
-startAutoRefresh @ messaging-manager.js:749
+startAutoRefresh @ messaging-manager.js:747
 init @ messaging-manager.js:72
 await in init
 (anonymous) @ scripts.js:361
@@ -13,13 +17,13 @@ Promise.then
 (anonymous) @ scripts.js:277
 api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
     at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:614:22)
+    at async Object.updateUnreadCount (messaging-manager.js:612:22)
 getUnreadCount @ api-conversations.js:196
 await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
+updateUnreadCount @ messaging-manager.js:612
+(anonymous) @ messaging-manager.js:748
 setInterval
-startAutoRefresh @ messaging-manager.js:749
+startAutoRefresh @ messaging-manager.js:747
 init @ messaging-manager.js:72
 await in init
 (anonymous) @ scripts.js:361
@@ -29,10 +33,10 @@ Promise.then
 (anonymous) @ scripts.js:277
 api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
 getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
+updateUnreadCount @ messaging-manager.js:612
+(anonymous) @ messaging-manager.js:748
 setInterval
-startAutoRefresh @ messaging-manager.js:749
+startAutoRefresh @ messaging-manager.js:747
 init @ messaging-manager.js:72
 await in init
 (anonymous) @ scripts.js:310
@@ -42,157 +46,13 @@ Promise.then
 (anonymous) @ scripts.js:277
 api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
     at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:614:22)
+    at async Object.updateUnreadCount (messaging-manager.js:612:22)
 getUnreadCount @ api-conversations.js:196
 await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
+updateUnreadCount @ messaging-manager.js:612
+(anonymous) @ messaging-manager.js:748
 setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:310
-setTimeout
-(anonymous) @ scripts.js:295
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
-getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
-    at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:614:22)
-getUnreadCount @ api-conversations.js:196
-await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
-getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:310
-setTimeout
-(anonymous) @ scripts.js:295
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
-    at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:614:22)
-getUnreadCount @ api-conversations.js:196
-await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:310
-setTimeout
-(anonymous) @ scripts.js:295
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
-getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:24  GET https://localhost/ag7/?action=getConversations&limit=50&offset=0 401 (Unauthorized)
-fetchConversationsAPI @ api-conversations.js:24
-getConversations @ api-conversations.js:85
-(anonymous) @ messaging-manager.js:738
-setInterval
-startAutoRefresh @ messaging-manager.js:736
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
-    at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:614:22)
-getUnreadCount @ api-conversations.js:196
-await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:14 getConversations: utilisateur non authentifié (déconnexion?)
-api-conversations.js:24  GET https://localhost/ag7/?action=getChannels 401 (Unauthorized)
-fetchConversationsAPI @ api-conversations.js:24
-getChannels @ api-conversations.js:307
-(anonymous) @ messaging-manager.js:743
-setInterval
-startAutoRefresh @ messaging-manager.js:736
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:14 getChannels: utilisateur non authentifié (déconnexion?)
-api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
-getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
-init @ messaging-manager.js:72
-await in init
-(anonymous) @ scripts.js:310
-setTimeout
-(anonymous) @ scripts.js:295
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
-    at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:614:22)
-getUnreadCount @ api-conversations.js:196
-await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:614
-(anonymous) @ messaging-manager.js:750
-setInterval
-startAutoRefresh @ messaging-manager.js:749
+startAutoRefresh @ messaging-manager.js:747
 init @ messaging-manager.js:72
 await in init
 (anonymous) @ scripts.js:310

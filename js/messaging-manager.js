@@ -15,6 +15,7 @@ const MessagingManager = {
   currentIsChannel: false,
   messageRefreshInterval: null,
   conversationsRefreshInterval: null,
+  unreadRefreshInterval: null,
   lastMessageCount: 0,
 
   showEmptyState() {
@@ -744,7 +745,7 @@ const MessagingManager = {
       }
     }, 30000);
 
-    setInterval(() => {
+    this.unreadRefreshInterval = setInterval(() => {
       this.updateUnreadCount();
     }, 10000);
 
@@ -770,6 +771,7 @@ const MessagingManager = {
   stopAutoRefresh() {
     if (this.conversationsRefreshInterval) clearInterval(this.conversationsRefreshInterval);
     if (this.messageRefreshInterval) clearInterval(this.messageRefreshInterval);
+    if (this.unreadRefreshInterval) clearInterval(this.unreadRefreshInterval);
   }
 };
 
