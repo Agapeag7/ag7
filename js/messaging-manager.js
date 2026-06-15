@@ -62,7 +62,8 @@ const MessagingManager = {
    * Initialiser le gestionnaire de messagerie
    */
   async init() {
-    this.currentUserId = await this.getCurrentUserId();
+    // Utiliser l'ID utilisateur passé par PHP au lieu de faire un appel API
+    this.currentUserId = window.currentUserId;
     if (!this.currentUserId) {
         console.warn('MessagingManager: utilisateur non connecté, initialisation reportée');
         return;
@@ -160,15 +161,8 @@ const MessagingManager = {
    * Récupérer l'ID de l'utilisateur connecté
    */
   async getCurrentUserId() {
-    try {
-      const result = await ActusAPI.getFeed(1, 0);
-      if (result.success && result.current_user_id) {
-        return result.current_user_id;
-      }
-    } catch (error) {
-      console.error('Erreur récupération user_id:', error);
-    }
-    return null;
+    // Retourner l'ID utilisateur depuis la variable globale définie en PHP
+    return window.currentUserId || null;
   },
   
   displayConversationList(items, type = 'conversation', clearContainer = true) {

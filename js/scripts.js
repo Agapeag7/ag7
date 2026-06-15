@@ -293,6 +293,14 @@ let currentUserProfile = {
           
           // Connexion réussie
           setTimeout(async () => {
+            // Mettre à jour l'ID utilisateur global depuis PHP
+            if (data.user && data.user.user_id) {
+              window.currentUserId = data.user.user_id;
+            }
+            if (data.user && data.user.user_username) {
+              window.currentUsername = data.user.user_username;
+            }
+            
             loginSection.classList.add('hidden');
             appSection.classList.remove('hidden');
 
@@ -332,6 +340,11 @@ let currentUserProfile = {
           setTimeout(async () => {
             // Charger le profil directement depuis la réponse du login
             const profile = data.profile;
+            
+            // Mettre à jour l'ID utilisateur global depuis PHP
+            window.currentUserId = profile.user_id;
+            window.currentUsername = profile.user_username;
+            
             currentUserProfile = {
               name: profile.user_name || "User",
               username: '@' + (profile.user_username || "user"),
@@ -413,6 +426,10 @@ let currentUserProfile = {
           // Déconnexion réussie
           showNotification('success', 'Déconnecté', 'À bientôt !');
           
+          // Réinitialiser les variables globales d'utilisateur
+          window.currentUserId = null;
+          window.currentUsername = null;
+          
           // Arrêter les intervalles de refresh de la messagerie
           if (MessagingManager && MessagingManager.stopAutoRefresh) {
             MessagingManager.stopAutoRefresh();
@@ -435,6 +452,10 @@ let currentUserProfile = {
         .catch(err => {
           console.error('Erreur logout:', err);
           showNotification('error', 'Erreur', 'Une erreur s\'est produite lors de la déconnexion');
+          
+          // Réinitialiser les variables globales d'utilisateur même en cas d'erreur
+          window.currentUserId = null;
+          window.currentUsername = null;
           
           // Arrêter les intervalles même en cas d'erreur
           if (MessagingManager && MessagingManager.stopAutoRefresh) {

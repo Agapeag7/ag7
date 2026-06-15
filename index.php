@@ -760,6 +760,12 @@ if (isset($_SESSION['user_id'])) {
 <script src="js/api-conversations.js" defer></script>
 <script src="js/messaging-manager.js" defer></script>
 
+<!-- Passer l'ID utilisateur depuis PHP à JavaScript -->
+<script>
+  window.currentUserId = <?php echo isset($user_id) ? json_encode((int)$user_id) : 'null'; ?>;
+  window.currentUsername = <?php echo isset($user_username) ? json_encode($user_username) : 'null'; ?>;
+</script>
+
 <script src="js/scripts.js" defer></script>
 
 <!-- Petite police système pour un rendu optimal -->
