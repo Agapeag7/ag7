@@ -246,7 +246,8 @@ let currentUserProfile = {
       // Envoyer au backend
       fetch(window.location.href, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       })
       .then(response => {
         // Gérer les différents codes HTTP
@@ -414,7 +415,8 @@ let currentUserProfile = {
         
         fetch(window.location.href, {
           method: 'POST',
-          body: formData
+          body: formData,
+          credentials: 'include'
         })
         .then(response => {
           if (!response.ok) {

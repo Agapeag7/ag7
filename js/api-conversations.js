@@ -177,19 +177,21 @@ const ConversationsAPI = {
       const url = new URL(window.location.href);
       url.searchParams.set('action', 'getUnreadCount');
 
-      const response = await fetch(url.toString(), {
+      const { response, data } = await fetchConversationsAPI(url.toString(), {
         method: 'GET',
         credentials: 'include'
       });
 
-      const data = await response.json();
-      
+      if (response.status === 401) {
+        return { success: false, message: 'Non authentifié', unread_count: 0 };
+      }
+
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Erreur lors de la récupération du compteur');
       }
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         unread_count: data.unread_count || 0
       };
     } catch (error) {

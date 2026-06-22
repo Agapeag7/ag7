@@ -62,6 +62,7 @@ const MessagingManager = {
    * Initialiser le gestionnaire de messagerie
    */
   async init() {
+    this.stopAutoRefresh();
     // Utiliser l'ID utilisateur passé par PHP au lieu de faire un appel API
     this.currentUserId = window.currentUserId;
     if (!this.currentUserId) {
@@ -603,6 +604,10 @@ const MessagingManager = {
    * Mettre à jour le badge de messages non-lus
    */
   async updateUnreadCount() {
+    if (!this.currentUserId) {
+      return;
+    }
+
     try {
       const result = await ConversationsAPI.getUnreadCount();
       
@@ -618,8 +623,6 @@ const MessagingManager = {
         }
         
         this.lastMessageCount = count;
-
-
       }
     } catch (error) {
       console.error('Erreur updateUnreadCount:', error);
@@ -725,6 +728,8 @@ const MessagingManager = {
    */
   startAutoRefresh() {
     if (!this.currentUserId) return;
+
+    this.stopAutoRefresh();
 
     this.conversationsRefreshInterval = setInterval(async () => {
       // Recharger les conversations (appel API direct + affichage)

@@ -1,89 +1,37 @@
-[Violation] 'OMR' handler took 436ms
-messaging-manager.js:748 [Violation] 'setInterval' handler took 316ms
-[Violation] 'requestIdleCallback' handler took 70ms
+bcbc765d-fa70-469a-9410-a4daa5050c9e:669 [Violation] 'DOMContentLoaded' handler took 412ms
+scripts.js:26 [Violation] 'setTimeout' handler took 84ms
+messaging-manager.js:742 [Violation] 'setInterval' handler took 1128ms
+actus-complete.js:460 [Violation] 'setTimeout' handler took 62ms
+[Violation] 'requestIdleCallback' handler took 72ms
+scripts.js:2160 [Violation] 'click' handler took 202ms
+scripts.js:530 [Violation] 'click' handler took 569ms
+scripts.js:410 [Violation] 'click' handler took 267ms
 api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
 getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:613
-(anonymous) @ messaging-manager.js:749
+updateUnreadCount @ messaging-manager.js:607
+(anonymous) @ messaging-manager.js:743
 setInterval
-startAutoRefresh @ messaging-manager.js:748
-init @ messaging-manager.js:73
+startAutoRefresh @ messaging-manager.js:742
+init @ messaging-manager.js:74
 await in init
-(anonymous) @ scripts.js:361
+(anonymous) @ scripts.js:374
 setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:24  GET https://localhost/ag7/?action=getConversations&limit=50&offset=0 401 (Unauthorized)
-fetchConversationsAPI @ api-conversations.js:24
-getConversations @ api-conversations.js:85
-(anonymous) @ messaging-manager.js:737
-setInterval
-startAutoRefresh @ messaging-manager.js:735
-init @ messaging-manager.js:73
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
+(anonymous) @ scripts.js:340
 Promise.then
 (anonymous) @ scripts.js:277
 api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
     at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:613:22)
+    at async Object.updateUnreadCount (messaging-manager.js:607:22)
 getUnreadCount @ api-conversations.js:196
 await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:613
-(anonymous) @ messaging-manager.js:749
+updateUnreadCount @ messaging-manager.js:607
+(anonymous) @ messaging-manager.js:743
 setInterval
-startAutoRefresh @ messaging-manager.js:748
-init @ messaging-manager.js:73
+startAutoRefresh @ messaging-manager.js:742
+init @ messaging-manager.js:74
 await in init
-(anonymous) @ scripts.js:361
+(anonymous) @ scripts.js:374
 setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:14 getConversations: utilisateur non authentifié (déconnexion?)
-api-conversations.js:24  GET https://localhost/ag7/?action=getChannels 401 (Unauthorized)
-fetchConversationsAPI @ api-conversations.js:24
-getChannels @ api-conversations.js:307
-(anonymous) @ messaging-manager.js:742
-setInterval
-startAutoRefresh @ messaging-manager.js:735
-init @ messaging-manager.js:73
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:14 getChannels: utilisateur non authentifié (déconnexion?)
-api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
-getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:613
-(anonymous) @ messaging-manager.js:749
-setInterval
-startAutoRefresh @ messaging-manager.js:748
-init @ messaging-manager.js:73
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
-    at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:613:22)
-getUnreadCount @ api-conversations.js:196
-await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:613
-(anonymous) @ messaging-manager.js:749
-setInterval
-startAutoRefresh @ messaging-manager.js:748
-init @ messaging-manager.js:73
-await in init
-(anonymous) @ scripts.js:361
-setTimeout
-(anonymous) @ scripts.js:332
+(anonymous) @ scripts.js:340
 Promise.then
 (anonymous) @ scripts.js:277
