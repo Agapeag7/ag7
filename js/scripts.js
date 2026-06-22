@@ -1637,13 +1637,9 @@ async function openUserProfile(userId) {
                 const res = await fetch(window.location.href, { method: 'POST', body: formData });
                 const result = await res.json();
                 if (result.success && result.conv_id) {
-                    // Basculer vers la vue Chat et sélectionner la conversation
-                    switchView('chat');
-                    setTimeout(() => {
-                        if (typeof MessagingManager !== 'undefined') {
-                            MessagingManager.selectConversation(result.conv_id, userId, profile.user_name);
-                        }
-                    }, 300);
+                    if (typeof MessagingManager !== 'undefined') {
+                        await MessagingManager.openConversationInChat(result.conv_id, profile.user_name);
+                    }
                     modal.classList.add('hidden');
                 } else {
                     showNotification('error', 'Erreur', result.message || 'Impossible de créer la conversation');

@@ -1,37 +1,9 @@
-bcbc765d-fa70-469a-9410-a4daa5050c9e:669 [Violation] 'DOMContentLoaded' handler took 412ms
-scripts.js:26 [Violation] 'setTimeout' handler took 84ms
-messaging-manager.js:742 [Violation] 'setInterval' handler took 1128ms
-actus-complete.js:460 [Violation] 'setTimeout' handler took 62ms
-[Violation] 'requestIdleCallback' handler took 72ms
-scripts.js:2160 [Violation] 'click' handler took 202ms
-scripts.js:530 [Violation] 'click' handler took 569ms
-scripts.js:410 [Violation] 'click' handler took 267ms
-api-conversations.js:180  GET https://localhost/ag7/?action=getUnreadCount 401 (Unauthorized)
-getUnreadCount @ api-conversations.js:180
-updateUnreadCount @ messaging-manager.js:607
-(anonymous) @ messaging-manager.js:743
-setInterval
-startAutoRefresh @ messaging-manager.js:742
-init @ messaging-manager.js:74
-await in init
-(anonymous) @ scripts.js:374
-setTimeout
-(anonymous) @ scripts.js:340
-Promise.then
-(anonymous) @ scripts.js:277
-api-conversations.js:196 Erreur getUnreadCount: Error: Non authentifié
-    at Object.getUnreadCount (api-conversations.js:188:15)
-    at async Object.updateUnreadCount (messaging-manager.js:607:22)
-getUnreadCount @ api-conversations.js:196
-await in getUnreadCount
-updateUnreadCount @ messaging-manager.js:607
-(anonymous) @ messaging-manager.js:743
-setInterval
-startAutoRefresh @ messaging-manager.js:742
-init @ messaging-manager.js:74
-await in init
-(anonymous) @ scripts.js:374
-setTimeout
-(anonymous) @ scripts.js:340
-Promise.then
-(anonymous) @ scripts.js:277
+scripts.js:1641 Uncaught (in promise) ReferenceError: switchView is not defined
+    at messageBtn.onclick (scripts.js:1641:21)
+messageBtn.onclick @ scripts.js:1641
+
+
+Voici le bouton :
+<button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: block; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
+              <i class="fas fa-comment-dots"></i>
+            </button>

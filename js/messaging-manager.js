@@ -158,6 +158,28 @@ const MessagingManager = {
     document.querySelector(`[data-conv-id="${id}"]`)?.classList.add('active');
   },
 
+  async openConversationInChat(convId, name) {
+    if (!this.currentUserId) {
+      console.warn('MessagingManager: impossible d\'ouvrir la conversation sans utilisateur connecté');
+      return;
+    }
+
+    // Basculer vers la vue chat
+    const chatView = document.getElementById('view-chat');
+    if (chatView) {
+      document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+      chatView.classList.add('active');
+    }
+
+    const chatNavItem = document.querySelector('.nav-item[data-view="chat"]');
+    if (chatNavItem) {
+      document.querySelectorAll('.nav-item[data-view]').forEach(item => item.classList.remove('active'));
+      chatNavItem.classList.add('active');
+    }
+
+    await this.selectConversationOrChannel(convId, name, 'conversation');
+  },
+
   /**
    * Récupérer l'ID de l'utilisateur connecté
    */
