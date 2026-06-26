@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : ven. 12 juin 2026 à 13:38
+-- Généré le : ven. 26 juin 2026 à 14:47
 -- Version du serveur : 10.4.32-MariaDB
 -- Version de PHP : 8.2.12
 
@@ -68,7 +68,9 @@ CREATE TABLE `abonnements` (
   `follow_date` datetime NOT NULL DEFAULT current_timestamp()
 ) ;
 
-
+--
+-- Déchargement des données de la table `abonnements`
+--
 
 -- --------------------------------------------------------
 
@@ -83,7 +85,9 @@ CREATE TABLE `canal_membres` (
   `joined_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `canal_membres`
+--
 
 -- --------------------------------------------------------
 
@@ -102,7 +106,9 @@ CREATE TABLE `canaux` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `canaux`
+--
 
 -- --------------------------------------------------------
 
@@ -124,7 +130,9 @@ CREATE TABLE `commentaires` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `commentaires`
+--
 
 --
 -- Déclencheurs `commentaires`
@@ -159,7 +167,9 @@ CREATE TABLE `conversations` (
   `last_message_time` datetime DEFAULT NULL
 ) ;
 
-
+--
+-- Déchargement des données de la table `conversations`
+--
 
 -- --------------------------------------------------------
 
@@ -179,7 +189,9 @@ CREATE TABLE `images_publications` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `images_publications`
+--
 
 --
 -- Déclencheurs `images_publications`
@@ -209,7 +221,9 @@ CREATE TABLE `likes_commentaires` (
   `like_date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `likes_commentaires`
+--
 
 --
 -- Déclencheurs `likes_commentaires`
@@ -239,7 +253,9 @@ CREATE TABLE `likes_publications` (
   `like_date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `likes_publications`
+--
 
 --
 -- Déclencheurs `likes_publications`
@@ -274,7 +290,9 @@ CREATE TABLE `messages` (
   `msg_read_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `messages`
+--
 
 -- --------------------------------------------------------
 
@@ -290,7 +308,9 @@ CREATE TABLE `messages_canal` (
   `sent_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `messages_canal`
+--
 
 -- --------------------------------------------------------
 
@@ -349,7 +369,9 @@ CREATE TABLE `polls` (
   `poll_expires_at` datetime DEFAULT NULL COMMENT 'Date d''expiration du sondage'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `polls`
+--
 
 -- --------------------------------------------------------
 
@@ -367,7 +389,9 @@ CREATE TABLE `poll_options` (
   `option_description` varchar(500) DEFAULT NULL COMMENT 'Petite description optionnelle'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `poll_options`
+--
 
 -- --------------------------------------------------------
 
@@ -383,7 +407,9 @@ CREATE TABLE `poll_votes` (
   `vote_created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `poll_votes`
+--
 
 --
 -- Déclencheurs `poll_votes`
@@ -424,7 +450,9 @@ CREATE TABLE `publications` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `publications`
+--
 
 --
 -- Déclencheurs `publications`
@@ -457,7 +485,47 @@ CREATE TABLE `stories` (
   `story_created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `story_viewers` int(11) NOT NULL DEFAULT 0,
   `story_duration` int(11) NOT NULL DEFAULT 24 COMMENT 'Durée en heures',
-  `story_expires_at` datetime NOT NULL
+  `story_expires_at` datetime NOT NULL,
+  `event_id` int(11) DEFAULT NULL,
+  `is_collaborative` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `stories`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `story_events`
+--
+
+CREATE TABLE `story_events` (
+  `event_id` int(11) NOT NULL,
+  `event_name` varchar(255) NOT NULL,
+  `event_description` text DEFAULT NULL,
+  `event_cover_url` varchar(255) DEFAULT NULL,
+  `created_by` int(11) NOT NULL,
+  `is_public` tinyint(1) DEFAULT 1,
+  `invite_code` varchar(32) DEFAULT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `story_event_members`
+--
+
+CREATE TABLE `story_event_members` (
+  `id` int(11) NOT NULL,
+  `event_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `role` enum('owner','contributor','viewer') DEFAULT 'contributor',
+  `joined_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -500,7 +568,9 @@ CREATE TABLE `utilisateurs` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
+--
+-- Déchargement des données de la table `utilisateurs`
+--
 
 -- --------------------------------------------------------
 
@@ -513,6 +583,10 @@ CREATE TABLE `vues_stories` (
   `view_user_id` int(11) NOT NULL,
   `view_date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `vues_stories`
+--
 
 --
 -- Déclencheurs `vues_stories`
@@ -755,7 +829,24 @@ ALTER TABLE `stories`
   ADD PRIMARY KEY (`story_id`),
   ADD KEY `idx_story_user` (`story_user_id`),
   ADD KEY `idx_story_created` (`story_created_at`),
-  ADD KEY `idx_story_expires` (`story_expires_at`);
+  ADD KEY `idx_story_expires` (`story_expires_at`),
+  ADD KEY `event_id` (`event_id`);
+
+--
+-- Index pour la table `story_events`
+--
+ALTER TABLE `story_events`
+  ADD PRIMARY KEY (`event_id`),
+  ADD UNIQUE KEY `invite_code` (`invite_code`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Index pour la table `story_event_members`
+--
+ALTER TABLE `story_event_members`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `event_user` (`event_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Index pour la table `user_photos`
@@ -791,13 +882,13 @@ ALTER TABLE `vues_stories`
 -- AUTO_INCREMENT pour la table `canaux`
 --
 ALTER TABLE `canaux`
-  MODIFY `canal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `canal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT pour la table `commentaires`
 --
 ALTER TABLE `commentaires`
-  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT pour la table `conversations`
@@ -821,7 +912,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT pour la table `messages_canal`
 --
 ALTER TABLE `messages_canal`
-  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT pour la table `notifications`
@@ -863,7 +954,19 @@ ALTER TABLE `publications`
 -- AUTO_INCREMENT pour la table `stories`
 --
 ALTER TABLE `stories`
-  MODIFY `story_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `story_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+
+--
+-- AUTO_INCREMENT pour la table `story_events`
+--
+ALTER TABLE `story_events`
+  MODIFY `event_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `story_event_members`
+--
+ALTER TABLE `story_event_members`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `user_photos`
@@ -994,7 +1097,21 @@ ALTER TABLE `publications`
 -- Contraintes pour la table `stories`
 --
 ALTER TABLE `stories`
-  ADD CONSTRAINT `stories_ibfk_1` FOREIGN KEY (`story_user_id`) REFERENCES `utilisateurs` (`user_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `stories_ibfk_1` FOREIGN KEY (`story_user_id`) REFERENCES `utilisateurs` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `stories_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `story_events` (`event_id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `story_events`
+--
+ALTER TABLE `story_events`
+  ADD CONSTRAINT `story_events_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `utilisateurs` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `story_event_members`
+--
+ALTER TABLE `story_event_members`
+  ADD CONSTRAINT `story_event_members_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `story_events` (`event_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `story_event_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `utilisateurs` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Contraintes pour la table `user_photos`
