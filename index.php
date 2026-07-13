@@ -717,7 +717,7 @@ if (isset($_SESSION['user_id'])) {
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <h2 id="userProfileName" style="margin: 0;">Nom utilisateur</h2>
             <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: none; padding: 6px 16px; border-radius: 24px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;">Suivre</button>
-            <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
+            <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px; font-weight: 600;">
               <i class="fas fa-comment-dots"></i>
             </button>
           </div>

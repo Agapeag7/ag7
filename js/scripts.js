@@ -1572,8 +1572,8 @@ async function openUserProfile(userId) {
         document.getElementById('userProfileName').innerText = profile.user_name;
         document.getElementById('userProfileUsername').innerText = '@' + profile.user_username;
         document.getElementById('userProfileBio').innerText = profile.user_bio || 'Pas de bio';
-        document.getElementById('userProfileLocation').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${profile.user_location || 'Non renseigné'}`;
-        document.getElementById('userProfileMemberSince').innerHTML = `<i class="fas fa-calendar"></i> Membre depuis ${profile.member_since || 'inconnue'}`;
+        document.getElementById('userProfileLocation').textContent = profile.user_location || 'Non renseigné';
+        document.getElementById('userProfileMemberSince').textContent = `Membre depuis ${profile.member_since || 'inconnue'}`;
         document.getElementById('userProfileFollowersCount').innerText = profile.followers_count || 0;
         document.getElementById('userProfileFollowingCount').innerText = profile.following_count || 0;
         

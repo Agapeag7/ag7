@@ -1,0 +1,40 @@
+<div id="userProfileModal" class="user-profile-modal">
+      <div class="user-profile-card">
+        <button class="user-profile-close">×</button>
+        <div class="user-profile-header">
+          <div class="user-profile-cover" id="userProfileCover" style="background-image: url(&quot;imgApp/profile_1777810724_69f73d242c616.jpg&quot;);"></div>
+          <div class="user-profile-avatar" id="userProfileAvatar" style="background-image: url(&quot;imgApp/profile_1777810313_69f73b89bf235.jpg&quot;); background-size: cover;"></div>
+        </div>
+        <div class="user-profile-info">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2 id="userProfileName" style="margin: 0;">Thanks Muhongya</h2>
+            <button class="user-profile-follow-btn" id="userProfileFollowBtn" style="display: block; padding: 6px 16px; border-radius: 24px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px;">Suivre</button>
+            <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: none; padding: 6px 16px; border-radius: 24px; font-size: 14px; font-weight: 600;">
+              <i class="fas fa-comment-dots"></i>
+            </button>
+          </div>
+          <p id="userProfileUsername" style="color: var(--text-secondary); margin-bottom: 12px;">@ThanksCode</p>
+          <p id="userProfileBio" style="color: var(--text-secondary); margin-bottom: 16px;">Seul l'avenir nous dira qui nous sommes</p>
+          <div class="user-profile-meta">
+            <div class="meta-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span id="userProfileLocation"><i class="fas fa-map-marker-alt"></i> Non renseigné</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              <span id="userProfileMemberSince"><i class="fas fa-calendar"></i> Membre depuis Mai 2026</span>
+            </div>
+          </div>
+          <div class="user-profile-stats">
+            <div class="stat-item">
+              <span class="stat-number" id="userProfileFollowersCount">1</span>
+              <span class="stat-label">Abonnés</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="userProfileFollowingCount">0</span>
+              <span class="stat-label">Abonnements</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
