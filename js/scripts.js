@@ -370,11 +370,6 @@ let currentUserProfile = {
             updateProfileUI();
             await loadStories();
 
-            // ===== AJOUTER ICI =====
-            if (typeof MessagingManager !== 'undefined') {
-              MessagingManager.init();
-            }
-
             authForm.reset();
             setAuthMode(true);
             selectedProfilePhoto = null;

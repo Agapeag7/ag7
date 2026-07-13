@@ -18,6 +18,8 @@ const MessagingManager = {
   conversationsRefreshInterval: null,
   unreadRefreshInterval: null,
   lastMessageCount: 0,
+  listenersAttached: false,
+  isSending: false,
 
   showEmptyState() {
     const header = document.querySelector('.conversation-header');
@@ -70,7 +72,9 @@ const MessagingManager = {
         console.warn('MessagingManager: utilisateur non connecté, initialisation reportée');
         return;
     }
-    this.attachEventListeners();
+    if (!this.listenersAttached) {
+      this.attachEventListeners();
+    }
     await this.loadConversationsAndChannels();
     this.showEmptyState();
     this.startAutoRefresh();
@@ -381,10 +385,16 @@ const MessagingManager = {
    * Envoyer un message
    */
   async sendMessage(content) {
+    if (this.isSending) {
+      return;
+    }
+
     if (!this.currentConvId || !content.trim()) {
       showNotification('warning', 'Attention', 'Veuillez entrer un message');
       return;
     }
+
+    this.isSending = true;
 
     try {
       if (this.currentIsChannel) {
@@ -430,6 +440,8 @@ const MessagingManager = {
     } catch (error) {
       console.error('Erreur sendMessage:', error);
       showNotification('error', 'Erreur', error.message);
+    } finally {
+      this.isSending = false;
     }
   },
 
@@ -715,6 +727,10 @@ const MessagingManager = {
    * Attacher les écouteurs d'événements
    */
   attachEventListeners() {
+    if (this.listenersAttached) {
+      return;
+    }
+
     const submitBtn = document.querySelector('.conversation-form-submit');
     if (submitBtn) {
       submitBtn.addEventListener('click', () => {
@@ -733,6 +749,8 @@ const MessagingManager = {
         }
       });
     }
+
+    this.listenersAttached = true;
 
     // Bouton retour à la liste (mobile)
     const backBtn = document.querySelector('#backToList');
