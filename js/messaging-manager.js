@@ -12,6 +12,7 @@
 const MessagingManager = {
   currentConvId: null,
   currentUserId: null,
+  currentRecipientId: null,
   currentIsChannel: false,
   messageRefreshInterval: null,
   conversationsRefreshInterval: null,
@@ -79,6 +80,13 @@ const MessagingManager = {
   async selectConversationOrChannel(id, name, type = 'conversation', userId = null) {
     this.currentConvId = id;
     this.currentIsChannel = (type === 'channel');
+    this.currentRecipientId = null;
+
+    if (type === 'conversation') {
+      const convItem = document.querySelector(`[data-conv-id="${id}"]`);
+      const userIdFromDom = convItem?.dataset.userId ? parseInt(convItem.dataset.userId, 10) : null;
+      this.currentRecipientId = userId || userIdFromDom || null;
+    }
 
     // Gestion mobile (identique)
     const sidebar = document.querySelector('.chat-sidebar-list');
@@ -158,7 +166,7 @@ const MessagingManager = {
     document.querySelector(`[data-conv-id="${id}"]`)?.classList.add('active');
   },
 
-  async openConversationInChat(convId, name) {
+  async openConversationInChat(convId, name, userId = null) {
     if (!this.currentUserId) {
       console.warn('MessagingManager: impossible d\'ouvrir la conversation sans utilisateur connecté');
       return;
@@ -177,7 +185,7 @@ const MessagingManager = {
       chatNavItem.classList.add('active');
     }
 
-    await this.selectConversationOrChannel(convId, name, 'conversation');
+    await this.selectConversationOrChannel(convId, name, 'conversation', userId);
   },
 
   /**
@@ -228,6 +236,8 @@ const MessagingManager = {
       li.dataset.convId = type === 'channel' ? item.canal_id : item.conv_id;
       if (type === 'channel') {
         li.dataset.adminId = item.created_by;
+      } else if (item.other_user_id) {
+        li.dataset.userId = item.other_user_id;
       }
 
       // Avatar
@@ -395,7 +405,7 @@ const MessagingManager = {
 
       // Récupérer l'ID du destinataire depuis la conversation sélectionnée
       const convItem = document.querySelector(`[data-conv-id="${this.currentConvId}"]`);
-      const recipientId = convItem?.dataset.userId;
+      const recipientId = this.currentRecipientId || convItem?.dataset.userId || null;
       if (!recipientId) {
         showNotification('error', 'Erreur', 'Destinataire non identifié');
         return;

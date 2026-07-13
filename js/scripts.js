@@ -1605,8 +1605,8 @@ async function openUserProfile(userId) {
         // Gestion boutons (suivre / message)
         if (!isOwnProfile) {
             followBtn.style.display = 'block';
-            messageBtn.style.display = 'block';
-            const isFollowing = profile.is_following || false;
+            const isFollowing = !!profile.is_following;
+            messageBtn.style.display = isFollowing ? 'block' : 'none';
             followBtn.innerText = isFollowing ? '✓ Suivi(e)' : 'Suivre';
             followBtn.classList.toggle('following', isFollowing);
             
@@ -1638,7 +1638,7 @@ async function openUserProfile(userId) {
                 const result = await res.json();
                 if (result.success && result.conv_id) {
                     if (typeof MessagingManager !== 'undefined') {
-                        await MessagingManager.openConversationInChat(result.conv_id, profile.user_name);
+                        await MessagingManager.openConversationInChat(result.conv_id, profile.user_name, userId);
                     }
                     modal.classList.add('hidden');
                 } else {

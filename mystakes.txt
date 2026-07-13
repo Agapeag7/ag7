@@ -1,9 +1,12 @@
-scripts.js:1641 Uncaught (in promise) ReferenceError: switchView is not defined
-    at messageBtn.onclick (scripts.js:1641:21)
-messageBtn.onclick @ scripts.js:1641
-
-
-Voici le bouton :
+- Dans la section "Decouvrir" Ce bouton sur le Modale doit apparaitre uniquement pour les utilisateurs qu'on a follow (Suivi(e)):
 <button class="user-profile-message-btn btn-primary" id="userProfileMessageBtn" style="display: block; padding: 6px 16px; border-radius: 24px; font-size: 14px;">
               <i class="fas fa-comment-dots"></i>
             </button>
+
+- en voulant envoyer des messages à d'autres utilisateurs j'ai cette notification :
+"Erreur" : "Destinataire non identifié"
+
+if (!recipientId) {
+        showNotification('error', 'Erreur', 'Destinataire non identifié');
+        return;
+      }
